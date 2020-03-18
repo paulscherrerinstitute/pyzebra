@@ -3,6 +3,7 @@ from bokeh.io import curdoc
 from bokeh.layouts import column, gridplot, row
 from bokeh.models import (
     BasicTicker,
+    BoxEditTool,
     Button,
     ColumnDataSource,
     DataRange1d,
@@ -15,6 +16,7 @@ from bokeh.models import (
     PanTool,
     Plot,
     Range1d,
+    Rect,
     ResetTool,
     SaveTool,
     Spinner,
@@ -85,11 +87,6 @@ plot = Plot(
 # ---- tools
 plot.toolbar.logo = None
 
-hovertool = HoverTool(tooltips=[("intensity", "@image")], names=["image_glyph"])
-
-plot.add_tools(PanTool(), WheelZoomTool(maintain_focus=False), SaveTool(), ResetTool(), hovertool)
-plot.toolbar.active_scroll = plot.tools[1]
-
 # ---- axes
 plot.add_layout(LinearAxis(), place="above")
 plot.add_layout(LinearAxis(major_label_orientation="vertical"), place="right")
@@ -141,6 +138,53 @@ proj_h.add_layout(Grid(dimension=1, ticker=BasicTicker()))
 proj_h_line_source = ColumnDataSource(dict(x=[], y=[]))
 proj_h.add_glyph(proj_h_line_source, Line(x="x", y="y", line_color="steelblue"))
 
+# add tools
+hovertool = HoverTool(tooltips=[("intensity", "@image")], names=["image_glyph"])
+
+box_edit_source = ColumnDataSource(dict(x=[], y=[], width=[], height=[]))
+box_edit_glyph = Rect(x="x", y="y", width="width", height="height", fill_alpha=0, line_color="red")
+box_edit_renderer = plot.add_glyph(box_edit_source, box_edit_glyph)
+boxedittool = BoxEditTool(renderers=[box_edit_renderer])
+
+def test_callback(_attr, _old, new):
+    x_val = np.arange(curent_h5_data.shape[0])
+    left = int(np.floor(new["x"][0]))
+    right = int(np.ceil(new["x"][0] + new["width"][0]))
+    bottom = int(np.floor(new["y"][0]))
+    top = int(np.ceil(new["y"][0] + new["height"][0]))
+    y_val = np.sum(curent_h5_data[:, bottom:top, left:right], axis=(1, 2))
+    roi_avg_plot_line_source.data.update(x=x_val, y=y_val)
+
+box_edit_source.on_change("data", test_callback)
+
+plot.add_tools(
+    PanTool(), WheelZoomTool(maintain_focus=False), SaveTool(), ResetTool(), hovertool, boxedittool,
+)
+plot.toolbar.active_scroll = plot.tools[1]
+
+
+roi_avg_plot = Plot(
+    x_range=DataRange1d(),
+    y_range=DataRange1d(),
+    plot_height=IMAGE_H * 3,
+    plot_width=IMAGE_W * 3,
+    toolbar_location="left",
+)
+
+# ---- tools
+roi_avg_plot.toolbar.logo = None
+
+# ---- axes
+roi_avg_plot.add_layout(LinearAxis(), place="below")
+roi_avg_plot.add_layout(LinearAxis(major_label_orientation="vertical"), place="left")
+
+# ---- grid lines
+roi_avg_plot.add_layout(Grid(dimension=0, ticker=BasicTicker()))
+roi_avg_plot.add_layout(Grid(dimension=1, ticker=BasicTicker()))
+
+roi_avg_plot_line_source = ColumnDataSource(dict(x=[], y=[]))
+roi_avg_plot.add_glyph(roi_avg_plot_line_source, Line(x="x", y="y", line_color="steelblue"))
+
 
 def prev_button_callback():
     global current_index
@@ -185,7 +229,7 @@ doc.add_root(
     column(
         fileinput,
         filelist,
-        layout_image,
+        row(layout_image, roi_avg_plot),
         row(prev_button, next_button),
         row(index_spinner, animate_toggle),
     )
