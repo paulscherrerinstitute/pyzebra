@@ -1,28 +1,29 @@
 import numpy as np
 from bokeh.io import curdoc
-from bokeh.layouts import column, row
+from bokeh.layouts import column, gridplot, row
 from bokeh.models import (
     BasicTicker,
     Button,
     ColumnDataSource,
-    Range1d,
+    DataRange1d,
+    Dropdown,
     Grid,
     HoverTool,
     Image,
+    Line,
     LinearAxis,
     PanTool,
     Plot,
+    Range1d,
     ResetTool,
     SaveTool,
-    WheelZoomTool,
-    Dropdown,
+    Spinner,
     TextInput,
     Toggle,
-    Spinner,
+    WheelZoomTool,
 )
 
 import pyzebra
-
 
 IMAGE_W = 256
 IMAGE_H = 128
@@ -33,7 +34,10 @@ global curent_h5_data, current_index
 
 
 def update_image():
-    image_source.data.update(image=[curent_h5_data[current_index]])
+    current_image = curent_h5_data[current_index]
+    proj_v_line_source.data.update(x=np.arange(0, IMAGE_W) + 0.5, y=np.mean(current_image, axis=0))
+    proj_h_line_source.data.update(x=np.mean(current_image, axis=1), y=np.arange(0, IMAGE_H) + 0.5)
+    image_source.data.update(image=[current_image])
     index_spinner.value = current_index
 
 
@@ -102,6 +106,41 @@ image_source = ColumnDataSource(
 image_glyph = Image(image="image", x="x", y="y", dw="dw", dh="dh")
 image_renderer = plot.add_glyph(image_source, image_glyph, name="image_glyph")
 
+# ---- projections
+proj_v = Plot(
+    x_range=plot.x_range,
+    y_range=DataRange1d(),
+    plot_height=200,
+    plot_width=IMAGE_W * 3,
+    toolbar_location=None,
+)
+
+proj_v.add_layout(LinearAxis(major_label_orientation="vertical"), place="right")
+proj_v.add_layout(LinearAxis(major_label_text_font_size="0pt"), place="below")
+
+proj_v.add_layout(Grid(dimension=0, ticker=BasicTicker()))
+proj_v.add_layout(Grid(dimension=1, ticker=BasicTicker()))
+
+proj_v_line_source = ColumnDataSource(dict(x=[], y=[]))
+proj_v.add_glyph(proj_v_line_source, Line(x="x", y="y", line_color="steelblue"))
+
+proj_h = Plot(
+    x_range=DataRange1d(),
+    y_range=plot.y_range,
+    plot_height=IMAGE_H * 3,
+    plot_width=200,
+    toolbar_location=None,
+)
+
+proj_h.add_layout(LinearAxis(), place="above")
+proj_h.add_layout(LinearAxis(major_label_text_font_size="0pt"), place="left")
+
+proj_h.add_layout(Grid(dimension=0, ticker=BasicTicker()))
+proj_h.add_layout(Grid(dimension=1, ticker=BasicTicker()))
+
+proj_h_line_source = ColumnDataSource(dict(x=[], y=[]))
+proj_h.add_glyph(proj_h_line_source, Line(x="x", y="y", line_color="steelblue"))
+
 
 def prev_button_callback():
     global current_index
@@ -140,8 +179,14 @@ def animate_toggle_callback(active):
 animate_toggle = Toggle(label="Animate")
 animate_toggle.on_click(animate_toggle_callback)
 
+layout_image = gridplot([[proj_v, None], [plot, proj_h]], merge_tools=False)
+
 doc.add_root(
     column(
-        fileinput, filelist, plot, row(prev_button, next_button), row(index_spinner, animate_toggle)
+        fileinput,
+        filelist,
+        layout_image,
+        row(prev_button, next_button),
+        row(index_spinner, animate_toggle),
     )
 )
