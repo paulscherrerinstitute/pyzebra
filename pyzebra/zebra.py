@@ -1,32 +1,32 @@
 import h5py
 
 
-def read_cami(filepath):
-    """Read and parse content of a cami file.
+def read_h5meta(filepath):
+    """Read and parse content of a h5meta file.
 
     Args:
-        filepath (str): File path of a cami file.
+        filepath (str): File path of a h5meta file.
 
     Returns:
         dict: A dictionary with section names and their content.
     """
-    cami_content = dict()
-    with open(filepath, "r") as cami_file:
-        line = cami_file.readline()
+    h5meta_content = dict()
+    with open(filepath, "r") as h5meta_file:
+        line = h5meta_file.readline()
         while line:
             if line.startswith("#begin"):
                 # read section
                 section = line[7:-1]  # len("#begin ") = 7
-                cami_content[section] = []
-                line = cami_file.readline()
+                h5meta_content[section] = []
+                line = h5meta_file.readline()
                 while not line.startswith("#end"):
-                    cami_content[section].append(line[:-1])
-                    line = cami_file.readline()
+                    h5meta_content[section].append(line[:-1])
+                    line = h5meta_file.readline()
 
             # read next line after section's end
-            line = cami_file.readline()
+            line = h5meta_file.readline()
 
-    return cami_content
+    return h5meta_content
 
 
 def read_detector_data(filepath):
@@ -48,18 +48,18 @@ def read_detector_data(filepath):
     return detector_data
 
 
-def open_cami(filepath):
-    """Open cami scan (?)
+def open_h5meta(filepath):
+    """Open h5meta file
 
     Args:
-        filepath (str): File path of a cami file.
+        filepath (str): File path of a h5meta file.
 
     Returns:
         dict: A dictionary with h5 names and their detector data.
     """
     data = dict()
-    cami_content = read_cami(filepath)
-    for file in cami_content["filelist"]:
+    h5meta_content = read_h5meta(filepath)
+    for file in h5meta_content["filelist"]:
         data[file] = read_detector_data(file)
 
     return data

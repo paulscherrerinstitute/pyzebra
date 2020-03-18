@@ -50,14 +50,14 @@ filelist.on_change("value", filelist_callback)
 
 
 def fileinput_callback(_attr, _old, new):
-    cami_list = pyzebra.read_cami(new)
-    file_list = cami_list["filelist"]
+    h5meta_list = pyzebra.read_h5meta(new)
+    file_list = h5meta_list["filelist"]
     filelist.menu = file_list
 
 
 fileinput = TextInput()
 fileinput.on_change("value", fileinput_callback)
-#fileinput.value = "/home/usov_i/psi-projects/sinq/data/1.cami"
+fileinput.value = "/Users/zaharko/1work/ZeBRa/ZebraSoftware/python_for_zebra/hdfdata/1.cami"
 
 
 def index_spinner_callback(_attr, _old, new):
