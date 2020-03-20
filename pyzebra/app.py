@@ -147,16 +147,21 @@ box_edit_glyph = Rect(x="x", y="y", width="width", height="height", fill_alpha=0
 box_edit_renderer = plot.add_glyph(box_edit_source, box_edit_glyph)
 boxedittool = BoxEditTool(renderers=[box_edit_renderer])
 
-def test_callback(_attr, _old, new):
-    x_val = np.arange(curent_h5_data.shape[0])
-    left = int(np.floor(new["x"][0]))
-    right = int(np.ceil(new["x"][0] + new["width"][0]))
-    bottom = int(np.floor(new["y"][0]))
-    top = int(np.ceil(new["y"][0] + new["height"][0]))
-    y_val = np.sum(curent_h5_data[:, bottom:top, left:right], axis=(1, 2))
+def box_edit_callback(_attr, _old, new):
+    if new["x"]:
+        x_val = np.arange(curent_h5_data.shape[0])
+        left = int(np.floor(new["x"][0]))
+        right = int(np.ceil(new["x"][0] + new["width"][0]))
+        bottom = int(np.floor(new["y"][0]))
+        top = int(np.ceil(new["y"][0] + new["height"][0]))
+        y_val = np.sum(curent_h5_data[:, bottom:top, left:right], axis=(1, 2))
+    else:
+        x_val = []
+        y_val = []
+
     roi_avg_plot_line_source.data.update(x=x_val, y=y_val)
 
-box_edit_source.on_change("data", test_callback)
+box_edit_source.on_change("data", box_edit_callback)
 
 plot.add_tools(
     PanTool(), WheelZoomTool(maintain_focus=False), SaveTool(), ResetTool(), hovertool, boxedittool,
