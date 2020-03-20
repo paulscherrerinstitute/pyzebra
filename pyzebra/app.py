@@ -13,18 +13,21 @@ from bokeh.models import (
     Image,
     Line,
     LinearAxis,
+    LinearColorMapper,
     PanTool,
     Plot,
     Range1d,
     Rect,
     ResetTool,
     SaveTool,
+    Select,
     Spinner,
     TextInput,
     Title,
     Toggle,
     WheelZoomTool,
 )
+from bokeh.palettes import Cividis256, Greys256, Plasma256  # pylint: disable=E0611
 
 import pyzebra
 
@@ -309,6 +312,26 @@ def animate_toggle_callback(active):
 animate_toggle = Toggle(label="Animate")
 animate_toggle.on_click(animate_toggle_callback)
 
+
+cmap_dict = {
+    "gray": Greys256,
+    "gray_reversed": Greys256[::-1],
+    "plasma": Plasma256,
+    "cividis": Cividis256,
+}
+
+
+def colormap_callback(_attr, _old, new):
+    image_glyph.color_mapper = LinearColorMapper(palette=cmap_dict[new])
+    overview_plot_x_image_glyph.color_mapper = LinearColorMapper(palette=cmap_dict[new])
+    overview_plot_y_image_glyph.color_mapper = LinearColorMapper(palette=cmap_dict[new])
+
+
+colormap = Select(title="Colormap:", options=list(cmap_dict.keys()))
+colormap.on_change("value", colormap_callback)
+colormap.value = "plasma"
+
+
 layout_image = gridplot([[proj_v, None], [plot, proj_h]], merge_tools=False)
 
 doc.add_root(
@@ -319,6 +342,7 @@ doc.add_root(
             layout_image,
             row(prev_button, next_button),
             row(index_spinner, animate_toggle),
+            row(colormap),
         ),
         column(row(overview_plot_x, overview_plot_y), roi_avg_plot),
     )
