@@ -64,6 +64,6 @@ def open_h5meta(filepath):
     h5meta_content = read_h5meta(filepath)
     for file in h5meta_content["filelist"]:
         data[file] = read_detector_data(file)
-        angles[file]  = read_angle_data(file)
+        angles[file]  = read_detector_data(file)
 
     return data, angles
