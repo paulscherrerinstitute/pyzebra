@@ -1,3 +1,5 @@
+import argparse
+
 import numpy as np
 from bokeh.io import curdoc
 from bokeh.layouts import column, gridplot, row
@@ -30,6 +32,21 @@ from bokeh.models import (
 from bokeh.palettes import Cividis256, Greys256, Plasma256  # pylint: disable=E0611
 
 import pyzebra
+
+parser = argparse.ArgumentParser(
+    prog="pyzebra", formatter_class=argparse.ArgumentDefaultsHelpFormatter
+)
+
+parser.add_argument(
+    "--init-meta",
+    metavar="PATH",
+    type=str,
+    default="",
+    help="initial path to .cami file",
+)
+
+args = parser.parse_args()
+
 
 IMAGE_W = 256
 IMAGE_H = 128
@@ -79,7 +96,8 @@ def fileinput_callback(_attr, _old, new):
 
 fileinput = TextInput()
 fileinput.on_change("value", fileinput_callback)
-fileinput.value = "/das/work/p15/p15876/pyzebra_data/1.cami"
+if args.init_meta:
+    fileinput.value = args.init_meta
 
 
 def index_spinner_callback(_attr, _old, new):
