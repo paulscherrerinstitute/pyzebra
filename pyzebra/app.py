@@ -31,6 +31,7 @@ IMAGE_W = 256
 IMAGE_H = 128
 
 doc = curdoc()
+doc.title = "pyzebra"
 
 global curent_h5_data, current_index
 
@@ -63,7 +64,7 @@ def fileinput_callback(_attr, _old, new):
 
 fileinput = TextInput()
 fileinput.on_change("value", fileinput_callback)
-fileinput.value = "/Users/zaharko/1work/ZeBRa/ZebraSoftware/python_for_zebra/hdfdata/1.cami"
+fileinput.value = "/das/work/p15/p15876/pyzebra_data/1.cami"
 
 
 def index_spinner_callback(_attr, _old, new):
