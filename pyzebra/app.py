@@ -21,6 +21,7 @@ from bokeh.models import (
     SaveTool,
     Spinner,
     TextInput,
+    Title,
     Toggle,
     WheelZoomTool,
 )
@@ -50,6 +51,17 @@ def filelist_callback(_attr, _old, new):
     curent_h5_data = data
     current_index = 0
     update_image()
+
+    # update overview plots
+    overview_x = np.mean(data, axis=1)
+    overview_y = np.mean(data, axis=2)
+
+    overview_plot_x_image_source.data.update(
+        image=[overview_x], dh=[overview_x.shape[0]], dw=[overview_x.shape[1]]
+    )
+    overview_plot_y_image_source.data.update(
+        image=[overview_y], dh=[overview_y.shape[0]], dw=[overview_y.shape[1]]
+    )
 
 
 filelist = Dropdown()
@@ -147,6 +159,7 @@ box_edit_glyph = Rect(x="x", y="y", width="width", height="height", fill_alpha=0
 box_edit_renderer = plot.add_glyph(box_edit_source, box_edit_glyph)
 boxedittool = BoxEditTool(renderers=[box_edit_renderer])
 
+
 def box_edit_callback(_attr, _old, new):
     if new["x"]:
         x_val = np.arange(curent_h5_data.shape[0])
@@ -161,12 +174,79 @@ def box_edit_callback(_attr, _old, new):
 
     roi_avg_plot_line_source.data.update(x=x_val, y=y_val)
 
+
 box_edit_source.on_change("data", box_edit_callback)
 
 plot.add_tools(
     PanTool(), WheelZoomTool(maintain_focus=False), SaveTool(), ResetTool(), hovertool, boxedittool,
 )
 plot.toolbar.active_scroll = plot.tools[1]
+
+
+overview_plot_x = Plot(
+    title=Title(text="Projections on X-axis"),
+    x_range=DataRange1d(),
+    y_range=DataRange1d(),
+    plot_height=400,
+    plot_width=400,
+    toolbar_location="left",
+)
+
+# ---- tools
+overview_plot_x.toolbar.logo = None
+
+# ---- axes
+overview_plot_x.add_layout(LinearAxis(axis_label="Coordinate X, pix"), place="below")
+overview_plot_x.add_layout(
+    LinearAxis(axis_label="Frame", major_label_orientation="vertical"), place="left"
+)
+
+# ---- grid lines
+overview_plot_x.add_layout(Grid(dimension=0, ticker=BasicTicker()))
+overview_plot_x.add_layout(Grid(dimension=1, ticker=BasicTicker()))
+
+# ---- rgba image glyph
+overview_plot_x_image_source = ColumnDataSource(
+    dict(image=[np.zeros((1, 1), dtype="float32")], x=[0], y=[0], dw=[1], dh=[1])
+)
+
+overview_plot_x_image_glyph = Image(image="image", x="x", y="y", dw="dw", dh="dh")
+overview_plot_x_image_renderer = overview_plot_x.add_glyph(
+    overview_plot_x_image_source, overview_plot_x_image_glyph, name="image_glyph"
+)
+
+
+overview_plot_y = Plot(
+    title=Title(text="Projections on Y-axis"),
+    x_range=DataRange1d(),
+    y_range=DataRange1d(),
+    plot_height=400,
+    plot_width=400,
+    toolbar_location="left",
+)
+
+# ---- tools
+overview_plot_y.toolbar.logo = None
+
+# ---- axes
+overview_plot_y.add_layout(LinearAxis(axis_label="Coordinate Y, pix"), place="below")
+overview_plot_y.add_layout(
+    LinearAxis(axis_label="Frame", major_label_orientation="vertical"), place="left"
+)
+
+# ---- grid lines
+overview_plot_y.add_layout(Grid(dimension=0, ticker=BasicTicker()))
+overview_plot_y.add_layout(Grid(dimension=1, ticker=BasicTicker()))
+
+# ---- rgba image glyph
+overview_plot_y_image_source = ColumnDataSource(
+    dict(image=[np.zeros((1, 1), dtype="float32")], x=[0], y=[0], dw=[1], dh=[1])
+)
+
+overview_plot_y_image_glyph = Image(image="image", x="x", y="y", dw="dw", dh="dh")
+overview_plot_y_image_renderer = overview_plot_y.add_glyph(
+    overview_plot_y_image_source, overview_plot_y_image_glyph, name="image_glyph"
+)
 
 
 roi_avg_plot = Plot(
@@ -232,11 +312,14 @@ animate_toggle.on_click(animate_toggle_callback)
 layout_image = gridplot([[proj_v, None], [plot, proj_h]], merge_tools=False)
 
 doc.add_root(
-    column(
-        fileinput,
-        filelist,
-        row(layout_image, roi_avg_plot),
-        row(prev_button, next_button),
-        row(index_spinner, animate_toggle),
+    row(
+        column(
+            fileinput,
+            filelist,
+            layout_image,
+            row(prev_button, next_button),
+            row(index_spinner, animate_toggle),
+        ),
+        column(row(overview_plot_x, overview_plot_y), roi_avg_plot),
     )
 )
