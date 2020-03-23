@@ -60,10 +60,8 @@ def open_h5meta(filepath):
         dict: A dictionary with h5 names and their detector data and angles.
     """
     data = dict()
-    angles = dict()
     h5meta_content = read_h5meta(filepath)
     for file in h5meta_content["filelist"]:
         data[file] = read_detector_data(file)
-        angles[file]  = read_detector_data(file)
 
-    return data, angles
+    return data
