@@ -44,11 +44,16 @@ def read_detector_data(filepath):
         n, cols, rows = detector_data.shape
         detector_data = detector_data.reshape(n, rows, cols)
 
-        rot_angle = h5f["/entry1/area_detector2/rotation_angle"][:]
-        pol_angle = h5f["/entry1/ZEBRA/area_detector2/polar_angle"][:]
-        tlt_angle = h5f["/entry1/ZEBRA/area_detector2/tilt_angle"][:]
+        rot_angle = h5f["/entry1/area_detector2/rotation_angle"][:] # om, sometimes ph
+        pol_angle = h5f["/entry1/ZEBRA/area_detector2/polar_angle"][:] # gammad
+        tlt_angle = h5f["/entry1/ZEBRA/area_detector2/tilt_angle"][:]  # nud
+        ddist     = h5f["/entry1/ZEBRA/area_detector2/distance"][:]    
+        wave      = h5f["/entry1/ZEBRA/monochromator/wavelength"][:] 
+        chi_angle = h5f["/entry1/ZEBRA/sample/chi"][:] # ch
+        phi_angle = h5f["/entry1/ZEBRA/sample/chi"][:] # ph
+        UB        = h5f["/entry1/ZEBRA/sample/UB"][:] 
 
-    return detector_data, pol_angle, rot_angle, tlt_angle
+    return detector_data,pol_angle,rot_angle,tlt_angle,chi_angle,phi_angle,ddist,wave,UB
 
 def open_h5meta(filepath):
     """Open h5meta file like *.cami
