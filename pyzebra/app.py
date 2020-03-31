@@ -38,11 +38,7 @@ parser = argparse.ArgumentParser(
 )
 
 parser.add_argument(
-    "--init-meta",
-    metavar="PATH",
-    type=str,
-    default="",
-    help="initial path to .cami file",
+    "--init-meta", metavar="PATH", type=str, default="", help="initial path to .cami file",
 )
 
 args = parser.parse_args()
@@ -54,19 +50,48 @@ IMAGE_H = 128
 doc = curdoc()
 doc.title = "pyzebra"
 
-global curent_h5_data, current_index
+global curent_h5_data, current_index, det_data
 
 
 def update_image():
     current_image = curent_h5_data[current_index]
     proj_v_line_source.data.update(x=np.arange(0, IMAGE_W) + 0.5, y=np.mean(current_image, axis=0))
     proj_h_line_source.data.update(x=np.mean(current_image, axis=1), y=np.arange(0, IMAGE_H) + 0.5)
+
+    image_source.data.update(
+        h=[np.zeros((1, 1))],
+        k=[np.zeros((1, 1))],
+        l=[np.zeros((1, 1))],
+    )
     image_source.data.update(image=[current_image])
     index_spinner.value = current_index
 
 
+def calculate_hkl():
+    h = np.empty(shape=(IMAGE_H, IMAGE_W))
+    k = np.empty(shape=(IMAGE_H, IMAGE_W))
+    l = np.empty(shape=(IMAGE_H, IMAGE_W))
+
+    wave = det_data["wave"]
+    ddist = det_data["ddist"]
+    gammad = det_data["pol_angle"][current_index]
+    om = det_data["rot_angle"][current_index]
+    ch = det_data["chi_angle"][current_index]
+    ph = det_data["phi_angle"][current_index]
+    nud = det_data["tlt_angle"]
+    ub = det_data["UB"]
+
+    for xi in np.arange(IMAGE_W):
+        for yi in np.arange(IMAGE_H):
+            h[yi, xi], k[yi, xi], l[yi, xi] = pyzebra.ang2hkl(
+                wave, ddist, gammad, om, ch, ph, nud, ub, xi, yi
+            )
+
+    return h, k, l
+
+
 def filelist_callback(_attr, _old, new):
-    global curent_h5_data, current_index
+    global curent_h5_data, current_index, det_data
     det_data = pyzebra.read_detector_data(new)
     data = det_data["data"]
     curent_h5_data = data
@@ -132,8 +157,25 @@ plot.add_layout(Grid(dimension=1, ticker=BasicTicker()))
 
 # ---- rgba image glyph
 image_source = ColumnDataSource(
-    dict(image=[np.zeros((1, 1), dtype="float32")], x=[0], y=[0], dw=[IMAGE_W], dh=[IMAGE_H],)
+    dict(
+        image=[np.zeros((IMAGE_H, IMAGE_W), dtype="float32")],
+        h=[np.zeros((1, 1))],
+        k=[np.zeros((1, 1))],
+        l=[np.zeros((1, 1))],
+        x=[0],
+        y=[0],
+        dw=[IMAGE_W],
+        dh=[IMAGE_H],
+    )
 )
+
+h_glyph = Image(image="h", x="x", y="y", dw="dw", dh="dh", global_alpha=0)
+k_glyph = Image(image="k", x="x", y="y", dw="dw", dh="dh", global_alpha=0)
+l_glyph = Image(image="l", x="x", y="y", dw="dw", dh="dh", global_alpha=0)
+
+plot.add_glyph(image_source, h_glyph)
+plot.add_glyph(image_source, k_glyph)
+plot.add_glyph(image_source, l_glyph)
 
 image_glyph = Image(image="image", x="x", y="y", dw="dw", dh="dh")
 image_renderer = plot.add_glyph(image_source, image_glyph, name="image_glyph")
@@ -174,7 +216,7 @@ proj_h_line_source = ColumnDataSource(dict(x=[], y=[]))
 proj_h.add_glyph(proj_h_line_source, Line(x="x", y="y", line_color="steelblue"))
 
 # add tools
-hovertool = HoverTool(tooltips=[("intensity", "@image")], names=["image_glyph"])
+hovertool = HoverTool(tooltips=[("intensity", "@image"), ("h", "@h"), ("k", "@k"), ("l", "@l")])
 
 box_edit_source = ColumnDataSource(dict(x=[], y=[], width=[], height=[]))
 box_edit_glyph = Rect(x="x", y="y", width="width", height="height", fill_alpha=0, line_color="red")
@@ -351,6 +393,16 @@ colormap.on_change("value", colormap_callback)
 colormap.value = "plasma"
 
 
+def hkl_button_callback():
+    h, k, l = calculate_hkl()
+    image_source.data.update(h=[h], k=[k], l=[l])
+
+
+hkl_button = Button(label="Calculate hkl (slow)")
+hkl_button.on_click(hkl_button_callback)
+
+
+# Final layout
 layout_image = gridplot([[proj_v, None], [plot, proj_h]], merge_tools=False)
 
 doc.add_root(
@@ -362,6 +414,7 @@ doc.add_root(
             row(prev_button, next_button),
             row(index_spinner, animate_toggle),
             row(colormap),
+            row(hkl_button),
         ),
         column(row(overview_plot_x, overview_plot_y), roi_avg_plot),
     )
