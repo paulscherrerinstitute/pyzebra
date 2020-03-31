@@ -18,6 +18,7 @@ from bokeh.models import (
     LinearColorMapper,
     PanTool,
     Plot,
+    RadioButtonGroup,
     Range1d,
     Rect,
     ResetTool,
@@ -67,7 +68,7 @@ def update_image():
     index_spinner.value = current_index
 
 
-def calculate_hkl():
+def calculate_hkl(setup_type="nb_bi"):
     h = np.empty(shape=(IMAGE_H, IMAGE_W))
     k = np.empty(shape=(IMAGE_H, IMAGE_W))
     l = np.empty(shape=(IMAGE_H, IMAGE_W))
@@ -76,10 +77,17 @@ def calculate_hkl():
     ddist = det_data["ddist"]
     gammad = det_data["pol_angle"][current_index]
     om = det_data["rot_angle"][current_index]
-    ch = det_data["chi_angle"][current_index]
-    ph = det_data["phi_angle"][current_index]
     nud = det_data["tlt_angle"]
     ub = det_data["UB"]
+
+    if setup_type == "nb_bi":
+        ch = det_data["chi_angle"][current_index]
+        ph = det_data["phi_angle"][current_index]
+    elif setup_type == "nb":
+        ch = 0
+        ph = 0
+    else:
+        raise ValueError(f"Unknown setup type '{setup_type}'")
 
     for xi in np.arange(IMAGE_W):
         for yi in np.arange(IMAGE_H):
@@ -393,8 +401,12 @@ colormap.on_change("value", colormap_callback)
 colormap.value = "plasma"
 
 
+radio_button_group = RadioButtonGroup(labels=["nb", "nb_bi"], active=0)
+
+
 def hkl_button_callback():
-    h, k, l = calculate_hkl()
+    setup_type = "nb_bi" if radio_button_group.active else "nb"
+    h, k, l = calculate_hkl(setup_type)
     image_source.data.update(h=[h], k=[k], l=[l])
 
 
@@ -414,7 +426,7 @@ doc.add_root(
             row(prev_button, next_button),
             row(index_spinner, animate_toggle),
             row(colormap),
-            row(hkl_button),
+            row(radio_button_group, hkl_button),
         ),
         column(row(overview_plot_x, overview_plot_y), roi_avg_plot),
     )
