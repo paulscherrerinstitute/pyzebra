@@ -38,22 +38,24 @@ def read_detector_data(filepath):
         ndarray: A 3D array of data, rot_angle, pol_angle, tilt_angle.
     """
     with h5py.File(filepath, "r") as h5f:
-        detector_data = h5f["/entry1/area_detector2/data"][:]
+        data = h5f["/entry1/area_detector2/data"][:]
 
         # reshape data to a correct shape (2006 issue)
-        n, cols, rows = detector_data.shape
-        detector_data = detector_data.reshape(n, rows, cols)
+        n, cols, rows = data.shape
+        data = data.reshape(n, rows, cols)
 
-        rot_angle = h5f["/entry1/area_detector2/rotation_angle"][:] # om, sometimes ph
-        pol_angle = h5f["/entry1/ZEBRA/area_detector2/polar_angle"][:] # gammad
-        tlt_angle = h5f["/entry1/ZEBRA/area_detector2/tilt_angle"][:]  # nud
-        ddist     = h5f["/entry1/ZEBRA/area_detector2/distance"][:]    
-        wave      = h5f["/entry1/ZEBRA/monochromator/wavelength"][:] 
-        chi_angle = h5f["/entry1/sample/chi"][:] # ch
-        phi_angle = h5f["/entry1/sample/phi"][:] # ph
-        UB        = h5f["/entry1/sample/UB"][:] 
+        det_data = {"data": data}
 
-    return detector_data,pol_angle,rot_angle,tlt_angle,chi_angle,phi_angle,ddist,wave,UB
+        det_data["rot_angle"] = h5f["/entry1/area_detector2/rotation_angle"][:] # om, sometimes ph
+        det_data["pol_angle"] = h5f["/entry1/ZEBRA/area_detector2/polar_angle"][:] # gammad
+        det_data["tlt_angle"] = h5f["/entry1/ZEBRA/area_detector2/tilt_angle"][:]  # nud
+        det_data["ddist"]     = h5f["/entry1/ZEBRA/area_detector2/distance"][:]    
+        det_data["wave"]      = h5f["/entry1/ZEBRA/monochromator/wavelength"][:] 
+        det_data["chi_angle"] = h5f["/entry1/sample/chi"][:] # ch
+        det_data["phi_angle"] = h5f["/entry1/sample/phi"][:] # ph
+        det_data["UB"]        = h5f["/entry1/sample/UB"][:] 
+
+    return det_data
 
 def open_h5meta(filepath):
     """Open h5meta file like *.cami

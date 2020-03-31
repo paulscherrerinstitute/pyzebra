@@ -67,7 +67,8 @@ def update_image():
 
 def filelist_callback(_attr, _old, new):
     global curent_h5_data, current_index
-    data, _, _, _ = pyzebra.read_detector_data(new)
+    det_data = pyzebra.read_detector_data(new)
+    data = det_data["data"]
     curent_h5_data = data
     current_index = 0
     update_image()
