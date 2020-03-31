@@ -333,9 +333,6 @@ def ang2hkl(wave, ddist, gammad, om, ch, ph, nud, ub, x, y):
     ga, nu = det2pol(ddist, gammad, nud, x, y)
     z1 = z1frmd(wave, ga, om, ch, ph, nu)
     ubinv = np.linalg.inv(ub)
-    
-    h = ubinv[0, 0] * z1[0] + ubinv[0, 1] * z1[1] + ubinv[0, 2] * z1[2]
-    k = ubinv[1, 0] * z1[0] + ubinv[1, 1] * z1[1] + ubinv[1, 2] * z1[2]
-    l = ubinv[2, 0] * z1[0] + ubinv[2, 1] * z1[1] + ubinv[2, 2] * z1[2]
+    hkl = ubinv @ z1
 
-    return h, k, l
+    return hkl
