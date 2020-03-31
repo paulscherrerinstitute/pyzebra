@@ -53,7 +53,7 @@ def read_detector_data(filepath):
         det_data["wave"]      = h5f["/entry1/ZEBRA/monochromator/wavelength"][:] 
         det_data["chi_angle"] = h5f["/entry1/sample/chi"][:] # ch
         det_data["phi_angle"] = h5f["/entry1/sample/phi"][:] # ph
-        det_data["UB"]        = h5f["/entry1/sample/UB"][:] 
+        det_data["UB"]        = h5f["/entry1/sample/UB"][:].reshape(3,3)
 
     return det_data
 
