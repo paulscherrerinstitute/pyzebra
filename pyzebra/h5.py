@@ -49,9 +49,9 @@ def read_detector_data(filepath):
         tlt_angle = h5f["/entry1/ZEBRA/area_detector2/tilt_angle"][:]  # nud
         ddist     = h5f["/entry1/ZEBRA/area_detector2/distance"][:]    
         wave      = h5f["/entry1/ZEBRA/monochromator/wavelength"][:] 
-        chi_angle = h5f["/entry1/ZEBRA/sample/chi"][:] # ch
-        phi_angle = h5f["/entry1/ZEBRA/sample/chi"][:] # ph
-        UB        = h5f["/entry1/ZEBRA/sample/UB"][:] 
+        chi_angle = h5f["/entry1/sample/chi"][:] # ch
+        phi_angle = h5f["/entry1/sample/phi"][:] # ph
+        UB        = h5f["/entry1/sample/UB"][:] 
 
     return detector_data,pol_angle,rot_angle,tlt_angle,chi_angle,phi_angle,ddist,wave,UB
 
