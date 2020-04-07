@@ -130,8 +130,8 @@ def det2pol(ddist,gammad,nud,x,y):
     """    
     xnorm = 128
     ynorm = 64
-    xpix = 0.7
-    ypix = 1.4
+    xpix = 0.734
+    ypix = 1.4809
     
     xobs = (x - xnorm)*xpix
     yobs = (y - ynorm)*ypix
@@ -297,12 +297,11 @@ def angtohkl(wave,ddist,gammad,om,ch,ph,nud,x,y):
     Returns:
         
     """
-    import numpy as np
     pir = 180/np.pi
     
 #define ub matrix if testing angtohkl(wave=1.18,ddist=616,gammad=48.66,om=-22.80,ch=0,ph=0,nud=0,x=128,y=64) against f90:
-    ub = np.array([-0.0178803,-0.0749231,0.0282804,-0.0070082,-0.0368001,-0.0577467,0.1609116,-0.0099281,0.0006274]).reshape(3,3)
-    
+#    ub = np.array([-0.0178803,-0.0749231,0.0282804,-0.0070082,-0.0368001,-0.0577467,0.1609116,-0.0099281,0.0006274]).reshape(3,3)
+    ub = np.array([0.04489,0.02045,-0.2334,-0.06447,0.00129,-0.16356,-0.00328,0.2542,0.0196]).reshape(3,3)    
     print('The input values are: ga=', gammad, ', om=', om, ', ch=', ch, ', ph=', ph, ', nu=', nud, ', x=', x, ', y=', y)
     
     ga, nu = det2pol(ddist,gammad,nud,x,y)
