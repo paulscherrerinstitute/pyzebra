@@ -60,9 +60,7 @@ def update_image():
     proj_h_line_source.data.update(x=np.mean(current_image, axis=1), y=np.arange(0, IMAGE_H) + 0.5)
 
     image_source.data.update(
-        h=[np.zeros((1, 1))],
-        k=[np.zeros((1, 1))],
-        l=[np.zeros((1, 1))],
+        h=[np.zeros((1, 1))], k=[np.zeros((1, 1))], l=[np.zeros((1, 1))],
     )
     image_source.data.update(image=[current_image])
     index_spinner.value = current_index
@@ -255,10 +253,13 @@ plot.add_tools(
 plot.toolbar.active_scroll = plot.tools[1]
 
 
+# shared frame range
+frame_range = DataRange1d()
+
 overview_plot_x = Plot(
     title=Title(text="Projections on X-axis"),
     x_range=DataRange1d(),
-    y_range=DataRange1d(),
+    y_range=frame_range,
     plot_height=400,
     plot_width=400,
     toolbar_location="left",
@@ -266,6 +267,9 @@ overview_plot_x = Plot(
 
 # ---- tools
 overview_plot_x.toolbar.logo = None
+overview_plot_x.add_tools(
+    PanTool(), WheelZoomTool(maintain_focus=False), SaveTool(), ResetTool(),
+)
 
 # ---- axes
 overview_plot_x.add_layout(LinearAxis(axis_label="Coordinate X, pix"), place="below")
@@ -291,7 +295,7 @@ overview_plot_x_image_renderer = overview_plot_x.add_glyph(
 overview_plot_y = Plot(
     title=Title(text="Projections on Y-axis"),
     x_range=DataRange1d(),
-    y_range=DataRange1d(),
+    y_range=frame_range,
     plot_height=400,
     plot_width=400,
     toolbar_location="left",
@@ -299,6 +303,9 @@ overview_plot_y = Plot(
 
 # ---- tools
 overview_plot_y.toolbar.logo = None
+overview_plot_y.add_tools(
+    PanTool(), WheelZoomTool(maintain_focus=False), SaveTool(), ResetTool(),
+)
 
 # ---- axes
 overview_plot_y.add_layout(LinearAxis(axis_label="Coordinate Y, pix"), place="below")
@@ -428,6 +435,13 @@ doc.add_root(
             row(colormap),
             row(radio_button_group, hkl_button),
         ),
-        column(row(overview_plot_x, overview_plot_y), roi_avg_plot),
+        column(
+            gridplot(
+                [[overview_plot_x, overview_plot_y]],
+                toolbar_options=dict(logo=None),
+                merge_tools=True,
+            ),
+            roi_avg_plot,
+        ),
     )
 )
