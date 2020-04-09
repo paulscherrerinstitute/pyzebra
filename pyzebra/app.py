@@ -67,6 +67,15 @@ def update_image():
     image_source.data.update(image=[current_image])
     index_spinner.value = current_index
 
+    if auto_toggle.active:
+        im_max = int(np.max(current_image))
+        im_min = int(np.min(current_image))
+        
+        display_min_spinner.value = im_min
+        display_max_spinner.value = im_max
+        
+        image_glyph.color_mapper.low = im_min
+        image_glyph.color_mapper.high = im_max
 
 def calculate_hkl(setup_type="nb_bi"):
     h = np.empty(shape=(IMAGE_H, IMAGE_W))
@@ -413,6 +422,46 @@ colormap.value = "plasma"
 
 radio_button_group = RadioButtonGroup(labels=["nb", "nb_bi"], active=0)
 
+STEP = 1
+
+# ---- colormap auto toggle button
+def auto_toggle_callback(state):
+    if state:
+        display_min_spinner.disabled = True
+        display_max_spinner.disabled = True
+    else:
+        display_min_spinner.disabled = False
+        display_max_spinner.disabled = False
+
+    update_image()
+
+auto_toggle = Toggle(label="Auto Range", active=True, button_type="default")
+auto_toggle.on_click(auto_toggle_callback)
+
+
+# ---- colormap display max value
+def display_max_spinner_callback(_attr, _old_value, new_value):
+    display_min_spinner.high = new_value - STEP
+    image_glyph.color_mapper.high = new_value
+
+
+display_max_spinner = Spinner(
+    title="Maximal Display Value:", low=0 + STEP, value=1, step=STEP, disabled=auto_toggle.active,
+)
+display_max_spinner.on_change("value", display_max_spinner_callback)
+
+
+# ---- colormap display min value
+def display_min_spinner_callback(_attr, _old_value, new_value):
+    display_max_spinner.low = new_value + STEP
+    image_glyph.color_mapper.low = new_value
+
+
+display_min_spinner = Spinner(
+    title="Minimal Display Value:", high=1 - STEP, value=0, step=STEP, disabled=auto_toggle.active,
+)
+display_min_spinner.on_change("value", display_min_spinner_callback)
+
 
 def hkl_button_callback():
     setup_type = "nb_bi" if radio_button_group.active else "nb"
@@ -450,17 +499,13 @@ selection_button.on_click(selection_button_callback)
 # Final layout
 layout_image = gridplot([[proj_v, None], [plot, proj_h]], merge_tools=False)
 
+animate_layout = column(index_spinner, next_button, prev_button, animate_toggle)
+colormap_layout = column(colormap, auto_toggle, display_max_spinner, display_min_spinner)
+hkl_layout = column(radio_button_group, hkl_button)
+
 doc.add_root(
     row(
-        column(
-            fileinput,
-            filelist,
-            layout_image,
-            row(prev_button, next_button),
-            row(index_spinner, animate_toggle),
-            row(colormap),
-            row(radio_button_group, hkl_button),
-        ),
+        column(fileinput, filelist, layout_image, row(colormap_layout, animate_layout, hkl_layout)),
         column(
             gridplot(
                 [[overview_plot_x, overview_plot_y]],
