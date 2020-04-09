@@ -6,6 +6,7 @@ from bokeh.layouts import column, gridplot, row
 from bokeh.models import (
     BasicTicker,
     BoxEditTool,
+    BoxZoomTool,
     Button,
     ColumnDataSource,
     DataRange1d,
@@ -269,7 +270,7 @@ overview_plot_x = Plot(
 # ---- tools
 overview_plot_x.toolbar.logo = None
 overview_plot_x.add_tools(
-    PanTool(), WheelZoomTool(maintain_focus=False), SaveTool(), ResetTool(),
+    PanTool(), BoxZoomTool(), WheelZoomTool(maintain_focus=False), ResetTool(),
 )
 
 # ---- axes
@@ -306,7 +307,7 @@ overview_plot_y = Plot(
 # ---- tools
 overview_plot_y.toolbar.logo = None
 overview_plot_y.add_tools(
-    PanTool(), WheelZoomTool(maintain_focus=False), SaveTool(), ResetTool(),
+    PanTool(), BoxZoomTool(), WheelZoomTool(maintain_focus=False), ResetTool(),
 )
 
 # ---- axes
