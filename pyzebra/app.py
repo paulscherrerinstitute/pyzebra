@@ -25,6 +25,7 @@ from bokeh.models import (
     SaveTool,
     Select,
     Spinner,
+    TextAreaInput,
     TextInput,
     Title,
     Toggle,
@@ -255,10 +256,10 @@ plot.toolbar.active_scroll = plot.tools[1]
 
 # shared frame range
 frame_range = DataRange1d()
-
+det_x_range = DataRange1d()
 overview_plot_x = Plot(
     title=Title(text="Projections on X-axis"),
-    x_range=DataRange1d(),
+    x_range=det_x_range,
     y_range=frame_range,
     plot_height=400,
     plot_width=400,
@@ -292,9 +293,10 @@ overview_plot_x_image_renderer = overview_plot_x.add_glyph(
 )
 
 
+det_y_range = DataRange1d()
 overview_plot_y = Plot(
     title=Title(text="Projections on Y-axis"),
-    x_range=DataRange1d(),
+    x_range=det_y_range,
     y_range=frame_range,
     plot_height=400,
     plot_width=400,
@@ -421,6 +423,29 @@ hkl_button = Button(label="Calculate hkl (slow)")
 hkl_button.on_click(hkl_button_callback)
 
 
+selection_list = TextAreaInput()
+
+
+def selection_button_callback():
+    selection = [
+        int(np.floor(frame_range.start)),
+        int(np.ceil(frame_range.end)),
+        int(np.floor(det_y_range.start)),
+        int(np.ceil(det_y_range.end)),
+        int(np.floor(det_x_range.start)),
+        int(np.ceil(det_x_range.end)),
+    ]
+
+    if selection_list.value == "":
+        selection_list.value = f"{selection}"
+    else:
+        selection_list.value = f"{selection_list.value},\n{selection}"
+
+
+selection_button = Button(label="Add selection")
+selection_button.on_click(selection_button_callback)
+
+
 # Final layout
 layout_image = gridplot([[proj_v, None], [plot, proj_h]], merge_tools=False)
 
@@ -441,6 +466,7 @@ doc.add_root(
                 toolbar_options=dict(logo=None),
                 merge_tools=True,
             ),
+            row(selection_button, selection_list),
             roi_avg_plot,
         ),
     )
