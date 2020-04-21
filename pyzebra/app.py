@@ -238,7 +238,7 @@ hovertool = HoverTool(tooltips=[("intensity", "@image"), ("h", "@h"), ("k", "@k"
 box_edit_source = ColumnDataSource(dict(x=[], y=[], width=[], height=[]))
 box_edit_glyph = Rect(x="x", y="y", width="width", height="height", fill_alpha=0, line_color="red")
 box_edit_renderer = plot.add_glyph(box_edit_source, box_edit_glyph)
-boxedittool = BoxEditTool(renderers=[box_edit_renderer])
+boxedittool = BoxEditTool(renderers=[box_edit_renderer], num_objects=1)
 
 
 def box_edit_callback(_attr, _old, new):
