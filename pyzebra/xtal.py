@@ -370,16 +370,7 @@ def box_int(file,box):
     ddist=dat["ddist"]
 
 # defining indices
-    i0=box[0]
-    iN=box[2]
-    j0=box[1]
-    jN=box[3]
-    fr0=box[4]
-    frN=box[5]
-
-    iX=iN-i0
-    jY=jN-j0
-    nF=frN-fr0
+    i0, j0, iN, jN, fr0, frN = box
 
 # omega fit
     om=dat["rot_angle"][fr0:frN]
