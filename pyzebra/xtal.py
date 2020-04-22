@@ -1,4 +1,7 @@
 import numpy as np
+import math
+from scipy.optimize import curve_fit
+import pyzebra
 
 def z4frgn(wave,ga,nu):
     """CALCULATES DIFFRACTION VECTOR IN LAB SYSTEM FROM GA AND NU
@@ -335,3 +338,107 @@ def ang2hkl(wave, ddist, gammad, om, ch, ph, nud, ub, x, y):
     hkl = ubinv @ z1
 
     return hkl
+
+def gauss(x, *p):
+    """Defines Gaussian function
+
+    Args:
+        A - amplitude, mu - position of the center, sigma - width
+
+    Returns:
+        Gaussian function
+    """    
+    A, mu, sigma = p
+    return A*np.exp(-(x-mu)**2/(2.*sigma**2))
+    
+def box_int(file,box):
+    """Calculates center of the peak in the NB-geometry angles and Intensity of the peak
+
+    Args:
+        file name, box size [x_min:x_max, y_min:y_max, frame_min:frame_max]
+
+    Returns:
+        gamma, omPeak, nu polar angles, Int and data for 3 fit plots
+    """    
+
+    dat=pyzebra.read_detector_data(file)
+    
+    sttC=dat["pol_angle"][0]
+    om=dat["rot_angle"]
+    nuC=dat["tlt_angle"][0]
+    ddist=dat["ddist"]
+
+# defining indices
+    i0=box[0]
+    iN=box[2]
+    j0=box[1]
+    jN=box[3]
+    fr0=box[4]
+    frN=box[5]
+
+    iX=iN-i0
+    jY=jN-j0
+    nF=frN-fr0
+
+# omega fit
+    cnts=np.zeros(nF)
+    om=dat["rot_angle"][fr0:frN]
+    j=0
+    for i in range(fr0,frN):
+        sliceXY = dat["data"][i,j0:jN,i0:iN]
+        cnts[j] = np.sum(sliceXY)
+        j=j+1
+
+    p0 = [1., 0., 1.]
+    coeff, var_matrix = curve_fit(gauss, range(len(cnts)), cnts, p0=p0)    
+
+    frC = fr0+coeff[1]
+    omF = dat["rot_angle"][math.floor(frC)]
+    omC = dat["rot_angle"][math.ceil(frC)]
+    frStep = frC-math.floor(frC)
+    omStep = omC-omF    
+    omP = omF + omStep*frStep
+    Int = coeff[1]*abs(coeff[2]*omStep)*math.sqrt(2)*math.sqrt(np.pi)
+# omega plot
+    x0 = range(len(cnts))
+    y0 = cnts
+    x0_fit = np.linspace(0, len(cnts), 100)
+    y0_fit = gauss(x0_fit, *coeff)
+
+# gamma fit
+    sliceXZ=np.zeros((nF,iX)) 
+    sliceYZ=np.zeros((nF,jY))
+
+    j=0
+    for i in range(fr0,frN):
+        sliceXY = dat["data"][i,j0:jN,i0:iN]
+        sliceXZ[j] = np.sum(sliceXY,axis=0)
+        sliceYZ[j] = np.sum(sliceXY,axis=1)
+        j=j+1
+
+    projX = np.sum(sliceXZ, axis=0)
+    p0 = [1., 0., 1.]
+    coeff, var_matrix = curve_fit(gauss, range(len(projX)), projX, p0=p0)
+    x= i0+coeff[1]
+# gamma plot
+    x1 = range(len(projX))
+    y1 = projX
+    x1_fit = np.linspace(0, len(projX), 100)
+    y1_fit = gauss(x1_fit, *coeff)
+
+
+# nu fit
+    projY = np.sum(sliceYZ, axis=0)
+    p0 = [1., 0., 1.]
+    coeff, var_matrix = curve_fit(gauss, range(len(projY)), projY, p0=p0)
+    y= j0+coeff[1]
+# nu plot 
+    x2 = range(len(projY))
+    y2 = projY
+    x2_fit = np.linspace(0, len(projY), 100)
+    y2_fit = gauss(x2_fit, *coeff)
+
+
+    ga, nu = pyzebra.det2pol(ddist,sttC,nuC,x,y)
+        
+    return ga[0], omP, nu[0], Int # x0,y0,x0_fit,y0_fit,x1,y1,x1_fit,y1_fit,x2,y2,x2_fit,y2_fit
