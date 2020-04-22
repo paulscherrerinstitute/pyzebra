@@ -340,23 +340,25 @@ def ang2hkl(wave, ddist, gammad, om, ch, ph, nud, ub, x, y):
 
     return hkl
 
-def gauss(x, *p):
+def gauss(x, A, mu, sigma):
     """Defines Gaussian function
 
     Args:
-        A - amplitude, mu - position of the center, sigma - width
+        A - amplitude
+        mu - position of the center
+        sigma - width
 
     Returns:
         Gaussian function
     """    
-    A, mu, sigma = p
     return A*np.exp(-(x-mu)**2/(2.*sigma**2))
     
-def box_int(file,box):
+def box_int(file,i0,j0,iN,jN,fr0,frN):
     """Calculates center of the peak in the NB-geometry angles and Intensity of the peak
 
     Args:
-        file name, box size [x_min:x_max, y_min:y_max, frame_min:frame_max]
+        file name
+        box coordinates - i0,j0,iN,jN,fr0,frN
 
     Returns:
         gamma, omPeak, nu polar angles, Int and data for 3 fit plots
@@ -369,14 +371,7 @@ def box_int(file,box):
     nuC=dat["tlt_angle"][0]
     ddist=dat["ddist"]
 
-# defining indices
-    i0=box[0]
-    iN=box[2]
-    j0=box[1]
-    jN=box[3]
-    fr0=box[4]
-    frN=box[5]
-
+# defining ranges
     iX=iN-i0
     jY=jN-j0
     nF=frN-fr0
