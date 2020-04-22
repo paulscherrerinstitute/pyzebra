@@ -382,13 +382,8 @@ def box_int(file,box):
     nF=frN-fr0
 
 # omega fit
-    cnts=np.zeros(nF)
     om=dat["rot_angle"][fr0:frN]
-    j=0
-    for i in range(fr0,frN):
-        sliceXY = dat["data"][i,j0:jN,i0:iN]
-        cnts[j] = np.sum(sliceXY)
-        j=j+1
+    cnts = dat["data"][fr0:frN,j0:jN,i0:iN].sum(axis=(1,2))
 
     p0 = [1., 0., 1.]
     coeff, var_matrix = curve_fit(gauss, range(len(cnts)), cnts, p0=p0)    
@@ -411,15 +406,9 @@ def box_int(file,box):
     plt.xlabel('Frame N of the box')
     label='om'
 # gamma fit
-    sliceXZ=np.zeros((nF,iX)) 
-    sliceYZ=np.zeros((nF,jY))
-
-    j=0
-    for i in range(fr0,frN):
-        sliceXY = dat["data"][i,j0:jN,i0:iN]
-        sliceXZ[j] = np.sum(sliceXY,axis=0)
-        sliceYZ[j] = np.sum(sliceXY,axis=1)
-        j=j+1
+    sliceXY = dat["data"][fr0:frN,j0:jN,i0:iN]
+    sliceXZ = np.sum(sliceXY,axis=1)
+    sliceYZ = np.sum(sliceXY,axis=2)
 
     projX = np.sum(sliceXZ, axis=0)
     p0 = [1., 0., 1.]
