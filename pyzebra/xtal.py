@@ -1,6 +1,7 @@
 import numpy as np
 import math
 from scipy.optimize import curve_fit
+from matplotlib import pyplot as plt
 import pyzebra
 
 def z4frgn(wave,ga,nu):
@@ -400,11 +401,15 @@ def box_int(file,box):
     omP = omF + omStep*frStep
     Int = coeff[1]*abs(coeff[2]*omStep)*math.sqrt(2)*math.sqrt(np.pi)
 # omega plot
-    x0 = range(len(cnts))
-    y0 = cnts
-    x0_fit = np.linspace(0, len(cnts), 100)
-    y0_fit = gauss(x0_fit, *coeff)
-
+    x_fit = np.linspace(0, len(cnts), 100)
+    y_fit = gauss(x_fit, *coeff)
+    plt.figure()
+    plt.subplot(131)
+    plt.plot(range(len(cnts)), cnts)
+    plt.plot(x_fit, y_fit)
+    plt.ylabel('Intensity in the box')
+    plt.xlabel('Frame N of the box')
+    label='om'
 # gamma fit
     sliceXZ=np.zeros((nF,iX)) 
     sliceYZ=np.zeros((nF,jY))
@@ -421,11 +426,13 @@ def box_int(file,box):
     coeff, var_matrix = curve_fit(gauss, range(len(projX)), projX, p0=p0)
     x= i0+coeff[1]
 # gamma plot
-    x1 = range(len(projX))
-    y1 = projX
-    x1_fit = np.linspace(0, len(projX), 100)
-    y1_fit = gauss(x1_fit, *coeff)
-
+    x_fit = np.linspace(0, len(projX), 100)
+    y_fit = gauss(x_fit, *coeff)
+    plt.subplot(132)
+    plt.plot(range(len(projX)), projX)
+    plt.plot(x_fit, y_fit)
+    plt.ylabel('Intensity in the box')
+    plt.xlabel('X-pixel of the box')
 
 # nu fit
     projY = np.sum(sliceYZ, axis=0)
@@ -433,11 +440,13 @@ def box_int(file,box):
     coeff, var_matrix = curve_fit(gauss, range(len(projY)), projY, p0=p0)
     y= j0+coeff[1]
 # nu plot 
-    x2 = range(len(projY))
-    y2 = projY
-    x2_fit = np.linspace(0, len(projY), 100)
-    y2_fit = gauss(x2_fit, *coeff)
-
+    x_fit = np.linspace(0, len(projY), 100)
+    y_fit = gauss(x_fit, *coeff)
+    plt.subplot(133)
+    plt.plot(range(len(projY)), projY)
+    plt.plot(x_fit, y_fit)
+    plt.ylabel('Intensity in the box')
+    plt.xlabel('Y-pixel of the box')
 
     ga, nu = pyzebra.det2pol(ddist,sttC,nuC,x,y)
         
