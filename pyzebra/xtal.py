@@ -374,7 +374,7 @@ def box_int(file,box):
 
 # omega fit
     om=dat["rot_angle"][fr0:frN]
-    cnts = dat["data"][fr0:frN,j0:jN,i0:iN].sum(axis=(1,2))
+    cnts = np.sum(dat["data"][fr0:frN,j0:jN,i0:iN], axis=(1,2))
 
     p0 = [1., 0., 1.]
     coeff, var_matrix = curve_fit(gauss, range(len(cnts)), cnts, p0=p0)    
