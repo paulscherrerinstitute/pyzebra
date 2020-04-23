@@ -70,12 +70,13 @@ def update_image():
     if auto_toggle.active:
         im_max = int(np.max(current_image))
         im_min = int(np.min(current_image))
-        
+
         display_min_spinner.value = im_min
         display_max_spinner.value = im_max
-        
+
         image_glyph.color_mapper.low = im_min
         image_glyph.color_mapper.high = im_max
+
 
 def calculate_hkl(setup_type="nb_bi"):
     h = np.empty(shape=(IMAGE_H, IMAGE_W))
@@ -434,6 +435,7 @@ def auto_toggle_callback(state):
         display_max_spinner.disabled = False
 
     update_image()
+
 
 auto_toggle = Toggle(label="Auto Range", active=True, button_type="default")
 auto_toggle.on_click(auto_toggle_callback)
