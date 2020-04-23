@@ -406,7 +406,7 @@ def box_int(file, box):
     """Calculates center of the peak in the NB-geometry angles and Intensity of the peak
 
     Args:
-        file name, box size [x_min:x_max, y_min:y_max, frame_min:frame_max]
+        file name, box size [x0:xN, y0:yN, fr0:frN]
 
     Returns:
         gamma, omPeak, nu polar angles, Int and data for 3 fit plots
@@ -420,11 +420,11 @@ def box_int(file, box):
     ddist = dat["ddist"]
 
     # defining indices
-    i0, j0, iN, jN, fr0, frN = box
+    x0, y0, xN, yN, fr0, frN = box
 
     # omega fit
     om = dat["rot_angle"][fr0:frN]
-    cnts = np.sum(dat["data"][fr0:frN, j0:jN, i0:iN], axis=(1, 2))
+    cnts = np.sum(dat["data"][fr0:frN, y0:yN, x0:xN], axis=(1, 2))
 
     p0 = [1.0, 0.0, 1.0]
     coeff, var_matrix = curve_fit(gauss, range(len(cnts)), cnts, p0=p0)
@@ -447,14 +447,14 @@ def box_int(file, box):
     plt.xlabel("Frame N of the box")
     label = "om"
     # gamma fit
-    sliceXY = dat["data"][fr0:frN, j0:jN, i0:iN]
+    sliceXY = dat["data"][fr0:frN, y0:yN, x0:xN]
     sliceXZ = np.sum(sliceXY, axis=1)
     sliceYZ = np.sum(sliceXY, axis=2)
 
     projX = np.sum(sliceXZ, axis=0)
     p0 = [1.0, 0.0, 1.0]
     coeff, var_matrix = curve_fit(gauss, range(len(projX)), projX, p0=p0)
-    x = i0 + coeff[1]
+    x = x0 + coeff[1]
     # gamma plot
     x_fit = np.linspace(0, len(projX), 100)
     y_fit = gauss(x_fit, *coeff)
@@ -468,7 +468,7 @@ def box_int(file, box):
     projY = np.sum(sliceYZ, axis=0)
     p0 = [1.0, 0.0, 1.0]
     coeff, var_matrix = curve_fit(gauss, range(len(projY)), projY, p0=p0)
-    y = j0 + coeff[1]
+    y = y0 + coeff[1]
     # nu plot
     x_fit = np.linspace(0, len(projY), 100)
     y_fit = gauss(x_fit, *coeff)
