@@ -420,7 +420,7 @@ def box_int(file, box):
     ddist = dat["ddist"]
 
     # defining indices
-    x0, y0, xN, yN, fr0, frN = box
+    x0, xN, y0, yN, fr0, frN = box
 
     # omega fit
     om = dat["rot_angle"][fr0:frN]

@@ -480,12 +480,12 @@ selection_list = TextAreaInput()
 
 def selection_button_callback():
     selection = [
-        int(np.floor(frame_range.start)),
-        int(np.ceil(frame_range.end)),
-        int(np.floor(det_y_range.start)),
-        int(np.ceil(det_y_range.end)),
         int(np.floor(det_x_range.start)),
         int(np.ceil(det_x_range.end)),
+        int(np.floor(det_y_range.start)),
+        int(np.ceil(det_y_range.end)),
+        int(np.floor(frame_range.start)),
+        int(np.ceil(frame_range.end)),
     ]
 
     if selection_list.value == "":
