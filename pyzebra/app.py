@@ -53,6 +53,7 @@ doc = curdoc()
 doc.title = "pyzebra"
 
 global curent_h5_data, current_index, det_data
+roi_selection = {}
 
 
 def update_image():
@@ -477,6 +478,7 @@ selection_list = TextAreaInput(rows=7)
 
 
 def selection_button_callback():
+    global roi_selection
     selection = [
         int(np.floor(det_x_range.start)),
         int(np.ceil(det_x_range.end)),
@@ -486,10 +488,13 @@ def selection_button_callback():
         int(np.ceil(frame_range.end)),
     ]
 
-    if selection_list.value == "":
-        selection_list.value = f"{selection}"
+    filename_id = filelist.value[-8:-4]
+    if filename_id in roi_selection:
+        roi_selection[f"{filename_id}"].append(selection)
     else:
-        selection_list.value = f"{selection_list.value},\n{selection}"
+        roi_selection[f"{filename_id}"] = [selection]
+
+    selection_list.value = str(roi_selection)
 
 
 selection_button = Button(label="Add selection")
