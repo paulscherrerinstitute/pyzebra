@@ -473,7 +473,7 @@ hkl_button = Button(label="Calculate hkl (slow)")
 hkl_button.on_click(hkl_button_callback)
 
 
-selection_list = TextAreaInput()
+selection_list = TextAreaInput(rows=7)
 
 
 def selection_button_callback():
@@ -507,13 +507,13 @@ doc.add_root(
     row(
         column(fileinput, filelist, layout_image, row(colormap_layout, animate_layout, hkl_layout)),
         column(
+            roi_avg_plot,
             gridplot(
                 [[overview_plot_x, overview_plot_y]],
                 toolbar_options=dict(logo=None),
                 merge_tools=True,
             ),
             row(selection_button, selection_list),
-            roi_avg_plot,
         ),
     )
 )
