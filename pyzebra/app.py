@@ -10,7 +10,6 @@ from bokeh.models import (
     Button,
     ColumnDataSource,
     DataRange1d,
-    Dropdown,
     Grid,
     HoverTool,
     Image,
@@ -128,20 +127,19 @@ def filelist_callback(_attr, _old, new):
     )
 
 
-filelist = Dropdown()
+filelist = Select()
 filelist.on_change("value", filelist_callback)
 
 
 def fileinput_callback(_attr, _old, new):
     h5meta_list = pyzebra.read_h5meta(new)
     file_list = h5meta_list["filelist"]
-    filelist.menu = file_list
+    filelist.options = file_list
+    filelist.value = file_list[0]
 
 
 fileinput = TextInput()
 fileinput.on_change("value", fileinput_callback)
-if args.init_meta:
-    fileinput.value = args.init_meta
 
 
 def index_spinner_callback(_attr, _old, new):
@@ -519,3 +517,7 @@ doc.add_root(
         ),
     )
 )
+
+# initiate fileinput
+if args.init_meta:
+    fileinput.value = args.init_meta
