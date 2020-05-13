@@ -22,7 +22,6 @@ from bokeh.models import (
     Range1d,
     Rect,
     ResetTool,
-    SaveTool,
     Select,
     Spinner,
     TextAreaInput,
@@ -258,10 +257,11 @@ def box_edit_callback(_attr, _old, new):
 
 box_edit_source.on_change("data", box_edit_callback)
 
+wheelzoomtool = WheelZoomTool(maintain_focus=False)
 plot.add_tools(
-    PanTool(), WheelZoomTool(maintain_focus=False), SaveTool(), ResetTool(), hovertool, boxedittool,
+    PanTool(), BoxZoomTool(), wheelzoomtool, ResetTool(), hovertool, boxedittool,
 )
-plot.toolbar.active_scroll = plot.tools[1]
+plot.toolbar.active_scroll = wheelzoomtool
 
 
 # shared frame range
@@ -277,10 +277,12 @@ overview_plot_x = Plot(
 )
 
 # ---- tools
+wheelzoomtool = WheelZoomTool(maintain_focus=False)
 overview_plot_x.toolbar.logo = None
 overview_plot_x.add_tools(
-    PanTool(), BoxZoomTool(), WheelZoomTool(maintain_focus=False), ResetTool(),
+    PanTool(), BoxZoomTool(), wheelzoomtool, ResetTool(),
 )
+overview_plot_x.toolbar.active_scroll = wheelzoomtool
 
 # ---- axes
 overview_plot_x.add_layout(LinearAxis(axis_label="Coordinate X, pix"), place="below")
@@ -314,10 +316,12 @@ overview_plot_y = Plot(
 )
 
 # ---- tools
+wheelzoomtool = WheelZoomTool(maintain_focus=False)
 overview_plot_y.toolbar.logo = None
 overview_plot_y.add_tools(
-    PanTool(), BoxZoomTool(), WheelZoomTool(maintain_focus=False), ResetTool(),
+    PanTool(), BoxZoomTool(), wheelzoomtool, ResetTool(),
 )
+overview_plot_y.toolbar.active_scroll = wheelzoomtool
 
 # ---- axes
 overview_plot_y.add_layout(LinearAxis(axis_label="Coordinate Y, pix"), place="below")
@@ -508,18 +512,16 @@ animate_layout = column(index_spinner, next_button, prev_button, animate_toggle)
 colormap_layout = column(colormap, auto_toggle, display_max_spinner, display_min_spinner)
 hkl_layout = column(radio_button_group, hkl_button)
 
+layout_overview = gridplot(
+    [[overview_plot_x, overview_plot_y]],
+    toolbar_options=dict(logo=None),
+    merge_tools=True,
+)
+
 doc.add_root(
     row(
         column(fileinput, filelist, layout_image, row(colormap_layout, animate_layout, hkl_layout)),
-        column(
-            roi_avg_plot,
-            gridplot(
-                [[overview_plot_x, overview_plot_y]],
-                toolbar_options=dict(logo=None),
-                merge_tools=True,
-            ),
-            row(selection_button, selection_list),
-        ),
+        column(roi_avg_plot, layout_overview, row(selection_button, selection_list),),
     )
 )
 
