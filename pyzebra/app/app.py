@@ -4,6 +4,7 @@ from bokeh.io import curdoc
 from bokeh.models import Tabs
 
 import panel_data_viewer
+import panel_anatric
 
 parser = argparse.ArgumentParser(
     prog="pyzebra", formatter_class=argparse.ArgumentDefaultsHelpFormatter
@@ -20,5 +21,6 @@ doc.title = "pyzebra"
 
 # Final layout
 tab_data_viewer = panel_data_viewer.create(args.init_meta)
+tab_anatric = panel_anatric.create()
 
-doc.add_root(Tabs(tabs=[tab_data_viewer]))
+doc.add_root(Tabs(tabs=[tab_data_viewer, tab_anatric]))
