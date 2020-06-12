@@ -19,6 +19,6 @@ doc = curdoc()
 doc.title = "pyzebra"
 
 # Final layout
-tab_main = panel_data_viewer.create(args.init_meta)
+tab_data_viewer = panel_data_viewer.create(args.init_meta)
 
-doc.add_root(Tabs(tabs=[tab_main]))
+doc.add_root(Tabs(tabs=[tab_data_viewer]))
