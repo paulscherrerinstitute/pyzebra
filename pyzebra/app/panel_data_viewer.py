@@ -181,7 +181,7 @@ def create(init_meta):
     plot.add_glyph(image_source, l_glyph)
 
     image_glyph = Image(image="image", x="x", y="y", dw="dw", dh="dh")
-    image_renderer = plot.add_glyph(image_source, image_glyph, name="image_glyph")
+    plot.add_glyph(image_source, image_glyph, name="image_glyph")
 
     # ---- projections
     proj_v = Plot(
@@ -286,7 +286,7 @@ def create(init_meta):
     )
 
     overview_plot_x_image_glyph = Image(image="image", x="x", y="y", dw="dw", dh="dh")
-    overview_plot_x_image_renderer = overview_plot_x.add_glyph(
+    overview_plot_x.add_glyph(
         overview_plot_x_image_source, overview_plot_x_image_glyph, name="image_glyph"
     )
 
@@ -324,7 +324,7 @@ def create(init_meta):
     )
 
     overview_plot_y_image_glyph = Image(image="image", x="x", y="y", dw="dw", dh="dh")
-    overview_plot_y_image_renderer = overview_plot_y.add_glyph(
+    overview_plot_y.add_glyph(
         overview_plot_y_image_source, overview_plot_y_image_glyph, name="image_glyph"
     )
 
@@ -372,6 +372,7 @@ def create(init_meta):
         next_button_callback()
 
     cb = None
+
     def animate_toggle_callback(active):
         nonlocal cb
         if active:
