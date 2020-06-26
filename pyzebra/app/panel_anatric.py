@@ -1,3 +1,5 @@
+import xml.etree.ElementTree as ET
+
 from bokeh.layouts import column, row
 from bokeh.models import Button, Panel, RadioButtonGroup, Spinner, TextInput
 
@@ -5,7 +7,39 @@ import pyzebra
 
 
 def create():
+    def fileinput_callback(_attr, _old, new):
+        tree = ET.parse(new)
+        alg_elem = tree.find("Algorithm")
+
+        if alg_elem.attrib["implementation"] == "adaptivemaxcog":
+            mode_radio_button_group.active = 0
+
+            threshold_spinner.value = float(alg_elem.find("threshold").attrib["value"])
+            shell_spinner.value = float(alg_elem.find("shell").attrib["value"])
+            steepness_spinner.value = float(alg_elem.find("steepness").attrib["value"])
+            duplicateDistance_spinner.value = float(
+                alg_elem.find("duplicateDistance").attrib["value"]
+            )
+            maxequal_spinner.value = float(alg_elem.find("maxequal").attrib["value"])
+            # apd_window_spinner.value = float(alg_elem.find("window").attrib["value"])
+
+        elif alg_elem.attrib["implementation"] == "adaptivedynamic":
+            mode_radio_button_group.active = 1
+
+            # admi_window_spinner.value = float(alg_elem.find("window").attrib["value"])
+            # .value = float(alg_elem.find("border").attrib["value"])
+            # minWindow_spinner.value = float(alg_elem.find("minWindow").attrib["value"])
+            # reflectionFile_spinner.value = float(alg_elem.find("reflectionFile").attrib["value"])
+            targetMonitor_spinner.value = float(alg_elem.find("targetMonitor").attrib["value"])
+            smoothSize_spinner.value = float(alg_elem.find("smoothSize").attrib["value"])
+            loop_spinner.value = float(alg_elem.find("loop").attrib["value"])
+            minPeakCount_spinner.value = float(alg_elem.find("minPeakCount").attrib["value"])
+            # displacementCurve_spinner.value = float(alg_elem.find("threshold").attrib["value"])
+        else:
+            raise ValueError("Unknown processing mode.")
+
     fileinput = TextInput(width=600)
+    fileinput.on_change("value", fileinput_callback)
 
     # General parameters
     # ---- logfile
