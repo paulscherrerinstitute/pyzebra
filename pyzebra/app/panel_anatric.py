@@ -75,7 +75,7 @@ def create():
     threshold_spinner = Spinner(title="Threshold", value=None)
 
     # ---- shell
-    shell_spinner = Spinner(title="Shell", value=None)
+    shell_spinner = Spinner(title="Shell", value=None, low=0)
 
     # ---- steepness
     steepness_spinner = Spinner(title="Steepness", value=None)
