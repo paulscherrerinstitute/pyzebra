@@ -1,7 +1,7 @@
 import xml.etree.ElementTree as ET
 
 from bokeh.layouts import column, row
-from bokeh.models import Button, Panel, RadioButtonGroup, Spinner, TextInput
+from bokeh.models import Button, Div, Panel, RadioButtonGroup, RangeSlider, Spinner, TextInput
 
 import pyzebra
 
@@ -9,8 +9,14 @@ import pyzebra
 def create():
     def fileinput_callback(_attr, _old, new):
         tree = ET.parse(new)
-        alg_elem = tree.find("Algorithm")
 
+        filelist_elem = tree.find("FileList")
+        filelist_format_textinput.value = filelist_elem.attrib["format"]
+        filelist_datapath_textinput.value = filelist_elem.find("datapath").attrib["value"]
+        range_vals = filelist_elem.find("range").attrib
+        filelist_range_rangeslider.value = (int(range_vals["start"]), int(range_vals["end"]))
+
+        alg_elem = tree.find("Algorithm")
         if alg_elem.attrib["implementation"] == "adaptivemaxcog":
             mode_radio_button_group.active = 0
 
@@ -38,13 +44,17 @@ def create():
         else:
             raise ValueError("Unknown processing mode.")
 
-    fileinput = TextInput(width=600)
+    fileinput = TextInput(title="Path to XML configuration file:", width=600)
     fileinput.on_change("value", fileinput_callback)
 
     # General parameters
     # ---- logfile
 
     # ---- FileList
+    filelist_div = Div(text="File List:", width=100)
+    filelist_format_textinput = TextInput(title="format")
+    filelist_datapath_textinput = TextInput(title="datapath")
+    filelist_range_rangeslider = RangeSlider(title="range", start=0, end=2000, value=(0, 2000))
 
     # ---- crystal
 
@@ -114,7 +124,14 @@ def create():
     process_button.on_click(process_button_callback)
 
     tab_layout = row(
-        column(fileinput, process_button),
+        column(
+            fileinput,
+            filelist_div,
+            filelist_format_textinput,
+            filelist_datapath_textinput,
+            filelist_range_rangeslider,
+            process_button,
+        ),
         column(
             mode_radio_button_group,
             row(
