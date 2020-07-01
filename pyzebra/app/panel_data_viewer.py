@@ -70,35 +70,6 @@ def create(init_meta):
             image_glyph.color_mapper.low = im_min
             image_glyph.color_mapper.high = im_max
 
-    def calculate_hkl(setup_type="nb_bi"):
-        h = np.empty(shape=(IMAGE_H, IMAGE_W))
-        k = np.empty(shape=(IMAGE_H, IMAGE_W))
-        l = np.empty(shape=(IMAGE_H, IMAGE_W))
-
-        wave = det_data["wave"]
-        ddist = det_data["ddist"]
-        gammad = det_data["pol_angle"][current_index]
-        om = det_data["rot_angle"][current_index]
-        nud = det_data["tlt_angle"]
-        ub = det_data["UB"]
-
-        if setup_type == "nb_bi":
-            ch = det_data["chi_angle"][current_index]
-            ph = det_data["phi_angle"][current_index]
-        elif setup_type == "nb":
-            ch = 0
-            ph = 0
-        else:
-            raise ValueError(f"Unknown setup type '{setup_type}'")
-
-        for xi in np.arange(IMAGE_W):
-            for yi in np.arange(IMAGE_H):
-                h[yi, xi], k[yi, xi], l[yi, xi] = pyzebra.ang2hkl(
-                    wave, ddist, gammad, om, ch, ph, nud, ub, xi, yi
-                )
-
-        return h, k, l
-
     def filelist_callback(_attr, _old, new):
         nonlocal curent_h5_data, current_index, det_data
         det_data = pyzebra.read_detector_data(new)
@@ -447,7 +418,7 @@ def create(init_meta):
 
     def hkl_button_callback():
         setup_type = "nb_bi" if radio_button_group.active else "nb"
-        h, k, l = calculate_hkl(setup_type)
+        h, k, l = calculate_hkl(det_data, current_index, setup_type)
         image_source.data.update(h=[h], k=[k], l=[l])
 
     hkl_button = Button(label="Calculate hkl (slow)")
@@ -498,3 +469,33 @@ def create(init_meta):
         fileinput.value = init_meta
 
     return Panel(child=tab_layout, title="Data Viewer")
+
+
+def calculate_hkl(det_data, index, setup_type="nb_bi"):
+    h = np.empty(shape=(IMAGE_H, IMAGE_W))
+    k = np.empty(shape=(IMAGE_H, IMAGE_W))
+    l = np.empty(shape=(IMAGE_H, IMAGE_W))
+
+    wave = det_data["wave"]
+    ddist = det_data["ddist"]
+    gammad = det_data["pol_angle"][index]
+    om = det_data["rot_angle"][index]
+    nud = det_data["tlt_angle"]
+    ub = det_data["UB"]
+
+    if setup_type == "nb_bi":
+        ch = det_data["chi_angle"][index]
+        ph = det_data["phi_angle"][index]
+    elif setup_type == "nb":
+        ch = 0
+        ph = 0
+    else:
+        raise ValueError(f"Unknown setup type '{setup_type}'")
+
+    for xi in np.arange(IMAGE_W):
+        for yi in np.arange(IMAGE_H):
+            h[yi, xi], k[yi, xi], l[yi, xi] = pyzebra.ang2hkl(
+                wave, ddist, gammad, om, ch, ph, nud, ub, xi, yi
+            )
+
+    return h, k, l
