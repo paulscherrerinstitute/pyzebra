@@ -3,8 +3,8 @@ import argparse
 from bokeh.io import curdoc
 from bokeh.models import Tabs
 
-import panel_data_viewer
 import panel_anatric
+import panel_data_viewer
 
 parser = argparse.ArgumentParser(
     prog="pyzebra", formatter_class=argparse.ArgumentDefaultsHelpFormatter
