@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 def main():
     """The pyzebra command line interface.
 
-    This is a wrapper around a bokeh server that provides an interface to launch the application, 
+    This is a wrapper around a bokeh server that provides an interface to launch the application,
     bundled with the pyzebra package.
     """
     app_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app", "app.py")

@@ -220,7 +220,7 @@ def dandth(wave, z1):
 def angs4c(wave, z1, ch2, ph2):
     """CALCULATE 2-THETA, OMEGA (=THETA), CHI, PHI TO PUT THE
        VECTOR Z1 IN THE BISECTING DIFFRACTION CONDITION
-       
+
     Args:
         wave, z1, ch2, ph2
 
@@ -246,9 +246,9 @@ def angs4c(wave, z1, ch2, ph2):
 def fixdnu(wave, z1, ch2, ph2, nu):
     """CALCULATE A SETTING CH,PH,GA,OM TO PUT THE DIFFRACTED BEAM AT NU.
        PH PUTS THE DIFFRACTION VECTOR Z1 INTO THE CHI CIRCLE (AS FOR
-       BISECTING GEOMETRY), CH BRINGS THE VECTOR TO THE APPROPRIATE NU 
+       BISECTING GEOMETRY), CH BRINGS THE VECTOR TO THE APPROPRIATE NU
        AND OM THEN POSITIONS THE BEAM AT GA.
-       
+
     Args:
         wave, z1, ch2, ph2
 
@@ -308,7 +308,7 @@ def angtohkl(wave, ddist, gammad, om, ch, ph, nud, x, y):
         gammad, om, ch, ph, nud, xobs, yobs
 
     Returns:
-        
+
     """
     pir = 180 / np.pi
 
