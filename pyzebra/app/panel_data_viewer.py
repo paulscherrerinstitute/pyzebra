@@ -40,9 +40,9 @@ IMAGE_H = 128
 def create(init_meta):
     doc = curdoc()
 
-    curent_h5_data = None
+    curent_h5_data = np.array([])
     current_index = None
-    det_data = None
+    det_data = {}
     roi_selection = {}
 
     def update_image():
