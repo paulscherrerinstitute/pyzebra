@@ -28,6 +28,27 @@ def create():
             (int(range_vals["start"]), int(range_vals["end"]))
         )
 
+        crystal_elem = tree.find("crystal")
+        crystal_sample_textinput.value = crystal_elem.find("Sample").attrib["name"]
+
+        lambda_elem = crystal_elem.find("lambda")
+        if lambda_elem is not None:
+            lambda_textinput.value = lambda_elem.attrib["value"]
+
+        zeroOM_elem = crystal_elem.find("zeroOM")
+        if zeroOM_elem is not None:
+            zeroOM_textinput.value = zeroOM_elem.attrib["value"]
+
+        zeroSTT_elem = crystal_elem.find("zeroSTT")
+        if zeroSTT_elem is not None:
+            zeroSTT_textinput.value = zeroSTT_elem.attrib["value"]
+
+        zeroCHI_elem = crystal_elem.find("zeroCHI")
+        if zeroCHI_elem is not None:
+            zeroCHI_textinput.value = zeroCHI_elem.attrib["value"]
+
+        ub_textareainput.value = crystal_elem.find("UB").text
+
         alg_elem = tree.find("Algorithm")
         if alg_elem.attrib["implementation"] == "adaptivemaxcog":
             mode_radio_button_group.active = 0
@@ -73,6 +94,12 @@ def create():
     filelist_ranges_textareainput = TextAreaInput(title="ranges:", height=100)
 
     # ---- crystal
+    crystal_sample_textinput = TextInput(title="Sample Name:")
+    lambda_textinput = TextInput(title="lambda:", width=140)
+    ub_textareainput = TextAreaInput(title="UB matrix:", height=100)
+    zeroOM_textinput = TextInput(title="zeroOM:", width=140)
+    zeroSTT_textinput = TextInput(title="zeroSTT:", width=140)
+    zeroCHI_textinput = TextInput(title="zeroCHI:", width=140)
 
     # ---- DataFactory
 
@@ -146,6 +173,9 @@ def create():
             row(filelist_type, filelist_format_textinput),
             filelist_datapath_textinput,
             filelist_ranges_textareainput,
+            crystal_sample_textinput,
+            row(lambda_textinput, zeroOM_textinput, zeroSTT_textinput, zeroCHI_textinput),
+            ub_textareainput,
             process_button,
         ),
         column(
