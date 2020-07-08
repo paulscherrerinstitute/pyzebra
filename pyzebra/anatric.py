@@ -13,10 +13,7 @@ class AnatricConfig:
 
     def load_from_file(self, filename):
         tree = ET.parse(filename)
-
-        logfile_elem = tree.find("logfile")
-        self.logfile = logfile_elem.attrib["file"]
-        self.logfile_verbosity = logfile_elem.attrib["verbosity"]
+        self._tree = tree
 
         filelist_elem = tree.find("FileList")
         if filelist_elem is None:
@@ -88,5 +85,21 @@ class AnatricConfig:
         else:
             raise ValueError("Unknown processing mode.")
 
-    def export(self, filename):
-        pass
+    @property
+    def logfile(self):
+        return self._tree.find("logfile").attrib["file"]
+
+    @logfile.setter
+    def logfile(self, value):
+        self._tree.find("logfile").attrib["file"] = value
+
+    @property
+    def logfile_verbosity(self):
+        return self._tree.find("logfile").attrib["verbosity"]
+
+    @logfile_verbosity.setter
+    def logfile_verbosity(self, value):
+        self._tree.find("logfile").attrib["verbosity"] = value
+
+    def save_as(self, filename):
+        self._tree.write(filename)
