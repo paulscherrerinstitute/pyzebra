@@ -224,7 +224,7 @@ def create():
     def process_button_callback():
         pyzebra.anatric(fileinput.value)
 
-    process_button = Button(label="Process")
+    process_button = Button(label="Process", button_type="primary")
     process_button.on_click(process_button_callback)
 
     tab_layout = row(
