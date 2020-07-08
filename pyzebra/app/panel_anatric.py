@@ -1,5 +1,3 @@
-import xml.etree.ElementTree as ET
-
 from bokeh.layouts import column, row
 from bokeh.models import Button, Panel, RadioButtonGroup, Select, Spinner, TextAreaInput, TextInput
 
@@ -8,78 +6,45 @@ import pyzebra
 
 def create():
     def fileinput_callback(_attr, _old, new):
-        tree = ET.parse(new)
+        config = pyzebra.AnatricConfig(new)
 
-        logfile_elem = tree.find("logfile")
-        logfile_textinput.value = logfile_elem.attrib["file"]
-        logfile_verbosity_select.value = logfile_elem.attrib["verbosity"]
+        logfile_textinput.value = config.logfile
+        logfile_verbosity_select.value = config.logfile_verbosity
 
-        filelist_elem = tree.find("FileList")
-        if filelist_elem is None:
-            filelist_elem = tree.find("SinqFileList")
-            filelist_type.value = "SINQ"
-        else:
-            filelist_type.value = "TRICS"
+        filelist_type.value = config.filelist_type
+        filelist_format_textinput.value = config.filelist_format
+        filelist_datapath_textinput.value = config.filelist_datapath
+        filelist_ranges_textareainput.value = str(config.filelist_ranges)
 
-        filelist_format_textinput.value = filelist_elem.attrib["format"]
-        filelist_datapath_textinput.value = filelist_elem.find("datapath").attrib["value"]
-        range_vals = filelist_elem.find("range").attrib
-        filelist_ranges_textareainput.value = str(
-            (int(range_vals["start"]), int(range_vals["end"]))
-        )
+        crystal_sample_textinput.value = config.crystal_sample
+        lambda_textinput.value = config.crystal_lambda
+        zeroOM_textinput.value = config.crystal_zeroOM
+        zeroSTT_textinput.value = config.crystal_zeroSTT
+        zeroCHI_textinput.value = config.crystal_zeroCHI
+        ub_textareainput.value = config.crystal_UB
 
-        crystal_elem = tree.find("crystal")
-        crystal_sample_textinput.value = crystal_elem.find("Sample").attrib["name"]
+        dist1_textinput.value = config.dist1
+        reflectionPrinter_format_select.value = config.reflectionPrinter_format
 
-        lambda_elem = crystal_elem.find("lambda")
-        if lambda_elem is not None:
-            lambda_textinput.value = lambda_elem.attrib["value"]
+        set_active_widgets(config.algorithm)
+        if config.algorithm == "adaptivemaxcog":
+            threshold_spinner.value = float(config.threshold)
+            shell_spinner.value = float(config.shell)
+            steepness_spinner.value = float(config.steepness)
+            duplicateDistance_spinner.value = float(config.duplicateDistance)
+            maxequal_spinner.value = float(config.maxequal)
+            # apd_window_spinner.value = float(config.apd_window)
 
-        zeroOM_elem = crystal_elem.find("zeroOM")
-        if zeroOM_elem is not None:
-            zeroOM_textinput.value = zeroOM_elem.attrib["value"]
-
-        zeroSTT_elem = crystal_elem.find("zeroSTT")
-        if zeroSTT_elem is not None:
-            zeroSTT_textinput.value = zeroSTT_elem.attrib["value"]
-
-        zeroCHI_elem = crystal_elem.find("zeroCHI")
-        if zeroCHI_elem is not None:
-            zeroCHI_textinput.value = zeroCHI_elem.attrib["value"]
-
-        ub_textareainput.value = crystal_elem.find("UB").text
-
-        dataFactory_elem = tree.find("DataFactory")
-        dist1_textinput.value = dataFactory_elem.find("dist1").attrib["value"]
-
-        reflectionPrinter_elem = tree.find("ReflectionPrinter")
-        reflectionPrinter_format_select.value = reflectionPrinter_elem.attrib["format"]
-
-        alg_elem = tree.find("Algorithm")
-        if alg_elem.attrib["implementation"] == "adaptivemaxcog":
-            set_active_widgets("adaptivemaxcog")
-
-            threshold_spinner.value = float(alg_elem.find("threshold").attrib["value"])
-            shell_spinner.value = float(alg_elem.find("shell").attrib["value"])
-            steepness_spinner.value = float(alg_elem.find("steepness").attrib["value"])
-            duplicateDistance_spinner.value = float(
-                alg_elem.find("duplicateDistance").attrib["value"]
-            )
-            maxequal_spinner.value = float(alg_elem.find("maxequal").attrib["value"])
-            # apd_window_spinner.value = float(alg_elem.find("window").attrib["value"])
-
-        elif alg_elem.attrib["implementation"] == "adaptivedynamic":
-            set_active_widgets("adaptivedynamic")
-
-            # admi_window_spinner.value = float(alg_elem.find("window").attrib["value"])
-            # .value = float(alg_elem.find("border").attrib["value"])
-            # minWindow_spinner.value = float(alg_elem.find("minWindow").attrib["value"])
-            # reflectionFile_spinner.value = float(alg_elem.find("reflectionFile").attrib["value"])
-            targetMonitor_spinner.value = float(alg_elem.find("targetMonitor").attrib["value"])
-            smoothSize_spinner.value = float(alg_elem.find("smoothSize").attrib["value"])
-            loop_spinner.value = float(alg_elem.find("loop").attrib["value"])
-            minPeakCount_spinner.value = float(alg_elem.find("minPeakCount").attrib["value"])
-            # displacementCurve_spinner.value = float(alg_elem.find("threshold").attrib["value"])
+        elif config.algorithm == "adaptivedynamic":
+            # admi_window_spinner.value = float(config.admi_window)
+            # border_spinner.value = float(config.border)
+            # minWindow_spinner.value = float(config.minWindow)
+            # reflectionFile_spinner.value = float(config.reflectionFile)
+            targetMonitor_spinner.value = float(config.targetMonitor)
+            smoothSize_spinner.value = float(config.smoothSize)
+            loop_spinner.value = float(config.loop)
+            minPeakCount_spinner.value = float(config.minPeakCount)
+            # displacementCurve_spinner.value = float(config.displacementCurve)
         else:
             raise ValueError("Unknown processing mode.")
 
