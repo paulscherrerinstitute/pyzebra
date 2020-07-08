@@ -1,16 +1,7 @@
 import xml.etree.ElementTree as ET
 
 from bokeh.layouts import column, row
-from bokeh.models import (
-    Button,
-    Div,
-    Panel,
-    RadioButtonGroup,
-    RangeSlider,
-    Select,
-    Spinner,
-    TextInput,
-)
+from bokeh.models import Button, Panel, RadioButtonGroup, Select, Spinner, TextAreaInput, TextInput
 
 import pyzebra
 
@@ -24,10 +15,18 @@ def create():
         logfile_verbosity_select.value = logfile_elem.attrib["verbosity"]
 
         filelist_elem = tree.find("FileList")
+        if filelist_elem is None:
+            filelist_elem = tree.find("SinqFileList")
+            filelist_type.value = "SINQ"
+        else:
+            filelist_type.value = "TRICS"
+
         filelist_format_textinput.value = filelist_elem.attrib["format"]
         filelist_datapath_textinput.value = filelist_elem.find("datapath").attrib["value"]
         range_vals = filelist_elem.find("range").attrib
-        filelist_range_rangeslider.value = (int(range_vals["start"]), int(range_vals["end"]))
+        filelist_ranges_textareainput.value = str(
+            (int(range_vals["start"]), int(range_vals["end"]))
+        )
 
         alg_elem = tree.find("Algorithm")
         if alg_elem.attrib["implementation"] == "adaptivemaxcog":
@@ -68,10 +67,10 @@ def create():
     )
 
     # ---- FileList
-    filelist_div = Div(text="File List:", width=100)
-    filelist_format_textinput = TextInput(title="format")
-    filelist_datapath_textinput = TextInput(title="datapath")
-    filelist_range_rangeslider = RangeSlider(title="range", start=0, end=2000, value=(0, 2000))
+    filelist_type = Select(title="File List:", options=["TRICS", "SINQ"], width=100)
+    filelist_format_textinput = TextInput(title="format:", width=490)
+    filelist_datapath_textinput = TextInput(title="datapath:")
+    filelist_ranges_textareainput = TextAreaInput(title="ranges:", height=100)
 
     # ---- crystal
 
@@ -144,10 +143,9 @@ def create():
         column(
             fileinput,
             row(logfile_textinput, logfile_verbosity_select),
-            filelist_div,
-            filelist_format_textinput,
+            row(filelist_type, filelist_format_textinput),
             filelist_datapath_textinput,
-            filelist_range_rangeslider,
+            filelist_ranges_textareainput,
             process_button,
         ),
         column(
