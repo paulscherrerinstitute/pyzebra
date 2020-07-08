@@ -49,6 +49,9 @@ def create():
 
         ub_textareainput.value = crystal_elem.find("UB").text
 
+        dataFactory_elem = tree.find("DataFactory")
+        dist1_textinput.value = dataFactory_elem.find("dist1").attrib["value"]
+
         alg_elem = tree.find("Algorithm")
         if alg_elem.attrib["implementation"] == "adaptivemaxcog":
             mode_radio_button_group.active = 0
@@ -102,6 +105,7 @@ def create():
     zeroCHI_textinput = TextInput(title="zeroCHI:", width=140)
 
     # ---- DataFactory
+    dist1_textinput = TextInput(title="Dist1:")
 
     # ---- BackgroundProcessor
 
@@ -176,6 +180,7 @@ def create():
             crystal_sample_textinput,
             row(lambda_textinput, zeroOM_textinput, zeroSTT_textinput, zeroCHI_textinput),
             ub_textareainput,
+            dist1_textinput,
             process_button,
         ),
         column(
