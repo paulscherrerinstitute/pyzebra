@@ -1,7 +1,16 @@
 import xml.etree.ElementTree as ET
 
 from bokeh.layouts import column, row
-from bokeh.models import Button, Div, Panel, RadioButtonGroup, RangeSlider, Spinner, TextInput
+from bokeh.models import (
+    Button,
+    Div,
+    Panel,
+    RadioButtonGroup,
+    RangeSlider,
+    Select,
+    Spinner,
+    TextInput,
+)
 
 import pyzebra
 
@@ -9,6 +18,10 @@ import pyzebra
 def create():
     def fileinput_callback(_attr, _old, new):
         tree = ET.parse(new)
+
+        logfile_elem = tree.find("logfile")
+        logfile_textinput.value = logfile_elem.attrib["file"]
+        logfile_verbosity_select.value = logfile_elem.attrib["verbosity"]
 
         filelist_elem = tree.find("FileList")
         filelist_format_textinput.value = filelist_elem.attrib["format"]
@@ -49,6 +62,10 @@ def create():
 
     # General parameters
     # ---- logfile
+    logfile_textinput = TextInput(title="Logfile:", value="logfile.log", width=520)
+    logfile_verbosity_select = Select(
+        title="verbosity:", options=["0", "5", "10", "15", "30"], width=70
+    )
 
     # ---- FileList
     filelist_div = Div(text="File List:", width=100)
@@ -126,6 +143,7 @@ def create():
     tab_layout = row(
         column(
             fileinput,
+            row(logfile_textinput, logfile_verbosity_select),
             filelist_div,
             filelist_format_textinput,
             filelist_datapath_textinput,
