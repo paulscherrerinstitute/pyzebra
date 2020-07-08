@@ -52,6 +52,9 @@ def create():
         dataFactory_elem = tree.find("DataFactory")
         dist1_textinput.value = dataFactory_elem.find("dist1").attrib["value"]
 
+        reflectionPrinter_elem = tree.find("ReflectionPrinter")
+        reflectionPrinter_format_select.value = reflectionPrinter_elem.attrib["format"]
+
         alg_elem = tree.find("Algorithm")
         if alg_elem.attrib["implementation"] == "adaptivemaxcog":
             mode_radio_button_group.active = 0
@@ -105,13 +108,29 @@ def create():
     zeroCHI_textinput = TextInput(title="zeroCHI:", width=140)
 
     # ---- DataFactory
-    dist1_textinput = TextInput(title="Dist1:")
+    dist1_textinput = TextInput(title="Dist1:", width=290)
 
     # ---- BackgroundProcessor
 
     # ---- DetectorEfficency
 
     # ---- ReflectionPrinter
+    reflectionPrinter_format_select = Select(
+        title="ReflectionPrinter format:",
+        options=[
+            "rafin",
+            "rafinf",
+            "rafin2d",
+            "rafin2di",
+            "orient",
+            "shelx",
+            "jana2k",
+            "jana2kf",
+            "raw",
+            "oksana",
+        ],
+        width=300,
+    )
 
     mode_radio_button_group = RadioButtonGroup(
         labels=["Adaptive Peak Detection", "Adaptive Dynamic Mask Integration"], active=0
@@ -180,7 +199,7 @@ def create():
             crystal_sample_textinput,
             row(lambda_textinput, zeroOM_textinput, zeroSTT_textinput, zeroCHI_textinput),
             ub_textareainput,
-            dist1_textinput,
+            row(dist1_textinput, reflectionPrinter_format_select),
             process_button,
         ),
         column(
