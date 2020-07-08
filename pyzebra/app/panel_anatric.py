@@ -57,7 +57,7 @@ def create():
 
         alg_elem = tree.find("Algorithm")
         if alg_elem.attrib["implementation"] == "adaptivemaxcog":
-            mode_radio_button_group.active = 0
+            set_active_widgets("adaptivemaxcog")
 
             threshold_spinner.value = float(alg_elem.find("threshold").attrib["value"])
             shell_spinner.value = float(alg_elem.find("shell").attrib["value"])
@@ -69,7 +69,7 @@ def create():
             # apd_window_spinner.value = float(alg_elem.find("window").attrib["value"])
 
         elif alg_elem.attrib["implementation"] == "adaptivedynamic":
-            mode_radio_button_group.active = 1
+            set_active_widgets("adaptivedynamic")
 
             # admi_window_spinner.value = float(alg_elem.find("window").attrib["value"])
             # .value = float(alg_elem.find("border").attrib["value"])
@@ -82,6 +82,36 @@ def create():
             # displacementCurve_spinner.value = float(alg_elem.find("threshold").attrib["value"])
         else:
             raise ValueError("Unknown processing mode.")
+
+    def set_active_widgets(implementation):
+        if implementation == "adaptivemaxcog":
+            mode_radio_button_group.active = 0
+            disable_adaptivemaxcog = False
+            disable_adaptivedynamic = True
+
+        elif implementation == "adaptivedynamic":
+            mode_radio_button_group.active = 1
+            disable_adaptivemaxcog = True
+            disable_adaptivedynamic = False
+        else:
+            raise ValueError("Implementation can be either 'adaptivemaxcog' or 'adaptivedynamic'")
+
+        threshold_spinner.disabled = disable_adaptivemaxcog
+        shell_spinner.disabled = disable_adaptivemaxcog
+        steepness_spinner.disabled = disable_adaptivemaxcog
+        duplicateDistance_spinner.disabled = disable_adaptivemaxcog
+        maxequal_spinner.disabled = disable_adaptivemaxcog
+        apd_window_spinner.disabled = disable_adaptivemaxcog
+
+        admi_window_spinner.disabled = disable_adaptivedynamic
+        border_spinner.disabled = disable_adaptivedynamic
+        minWindow_spinner.disabled = disable_adaptivedynamic
+        reflectionFile_spinner.disabled = disable_adaptivedynamic
+        targetMonitor_spinner.disabled = disable_adaptivedynamic
+        smoothSize_spinner.disabled = disable_adaptivedynamic
+        loop_spinner.disabled = disable_adaptivedynamic
+        minPeakCount_spinner.disabled = disable_adaptivedynamic
+        displacementCurve_spinner.disabled = disable_adaptivedynamic
 
     fileinput = TextInput(title="Path to XML configuration file:", width=600)
     fileinput.on_change("value", fileinput_callback)
@@ -132,10 +162,6 @@ def create():
         width=300,
     )
 
-    mode_radio_button_group = RadioButtonGroup(
-        labels=["Adaptive Peak Detection", "Adaptive Dynamic Mask Integration"], active=0
-    )
-
     # Adaptive Peak Detection (adaptivemaxcog)
     # ---- threshold
     threshold_spinner = Spinner(title="Threshold", value=None)
@@ -182,6 +208,18 @@ def create():
 
     # ---- displacementCurve
     displacementCurve_spinner = Spinner(title="Displacement Curve", value=None)
+
+    def mode_radio_button_group_callback(active):
+        if active == 0:
+            set_active_widgets("adaptivemaxcog")
+        else:
+            set_active_widgets("adaptivedynamic")
+
+    mode_radio_button_group = RadioButtonGroup(
+        labels=["Adaptive Peak Detection", "Adaptive Dynamic Mask Integration"], active=0
+    )
+    mode_radio_button_group.on_click(mode_radio_button_group_callback)
+    set_active_widgets("adaptivemaxcog")
 
     def process_button_callback():
         pyzebra.anatric(fileinput.value)
