@@ -15,6 +15,8 @@ REFLECTION_PRINTER_FORMATS = (
     "oksana",
 )
 
+ALGORITHMS = ("adaptivemaxcog", "adaptivedynamic")
+
 
 def anatric(config_file):
     subprocess.run(["anatric", config_file], check=True)
@@ -30,7 +32,6 @@ class AnatricConfig:
         self._tree = tree
 
         alg_elem = tree.find("Algorithm")
-        self.algorithm = alg_elem.attrib["implementation"]
         if self.algorithm == "adaptivemaxcog":
             self.threshold = float(alg_elem.find("threshold").attrib["value"])
             self.shell = float(alg_elem.find("shell").attrib["value"])
@@ -211,6 +212,17 @@ class AnatricConfig:
             raise ValueError("Unknown ReflectionPrinter format.")
 
         self._tree.find("ReflectionPrinter").attrib["format"] = value
+
+    @property
+    def algorithm(self):
+        return self._tree.find("Algorithm").attrib["implementation"]
+
+    @algorithm.setter
+    def algorithm(self, value):
+        if value not in ALGORITHMS:
+            raise ValueError("Unknown algorithm.")
+
+        self._tree.find("Algorithm").attrib["implementation"] = value
 
     def save_as(self, filename):
         self._tree.write(filename)
