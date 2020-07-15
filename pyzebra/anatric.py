@@ -15,9 +15,6 @@ class AnatricConfig:
         tree = ET.parse(filename)
         self._tree = tree
 
-        dataFactory_elem = tree.find("DataFactory")
-        self.dist1 = dataFactory_elem.find("dist1").attrib["value"]
-
         reflectionPrinter_elem = tree.find("ReflectionPrinter")
         self.reflectionPrinter_format = reflectionPrinter_elem.attrib["format"]
 
@@ -184,6 +181,14 @@ class AnatricConfig:
     @crystal_UB.setter
     def crystal_UB(self, value):
         self._tree.find("crystal").find("UB").text = value
+
+    @property
+    def dist1(self):
+        return self._tree.find("DataFactory").find("dist1").attrib["value"]
+
+    @dist1.setter
+    def dist1(self, value):
+        self._tree.find("DataFactory").find("dist1").attrib["value"] = value
 
     def save_as(self, filename):
         self._tree.write(filename)
