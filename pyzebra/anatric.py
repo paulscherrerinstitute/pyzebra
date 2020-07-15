@@ -2,6 +2,20 @@ import subprocess
 import xml.etree.ElementTree as ET
 
 
+REFLECTION_PRINTER_FORMATS = (
+    "rafin",
+    "rafinf",
+    "rafin2d",
+    "rafin2di",
+    "orient",
+    "shelx",
+    "jana2k",
+    "jana2kf",
+    "raw",
+    "oksana",
+)
+
+
 def anatric(config_file):
     subprocess.run(["anatric", config_file], check=True)
 
@@ -14,9 +28,6 @@ class AnatricConfig:
     def load_from_file(self, filename):
         tree = ET.parse(filename)
         self._tree = tree
-
-        reflectionPrinter_elem = tree.find("ReflectionPrinter")
-        self.reflectionPrinter_format = reflectionPrinter_elem.attrib["format"]
 
         alg_elem = tree.find("Algorithm")
         self.algorithm = alg_elem.attrib["implementation"]
@@ -189,6 +200,17 @@ class AnatricConfig:
     @dist1.setter
     def dist1(self, value):
         self._tree.find("DataFactory").find("dist1").attrib["value"] = value
+
+    @property
+    def reflectionPrinter_format(self):
+        return self._tree.find("ReflectionPrinter").attrib["format"]
+
+    @reflectionPrinter_format.setter
+    def reflectionPrinter_format(self, value):
+        if value not in REFLECTION_PRINTER_FORMATS:
+            raise ValueError("Unknown ReflectionPrinter format.")
+
+        self._tree.find("ReflectionPrinter").attrib["format"] = value
 
     def save_as(self, filename):
         self._tree.write(filename)
