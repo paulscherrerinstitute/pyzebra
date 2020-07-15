@@ -15,18 +15,6 @@ class AnatricConfig:
         tree = ET.parse(filename)
         self._tree = tree
 
-        filelist_elem = tree.find("FileList")
-        if filelist_elem is None:
-            filelist_elem = tree.find("SinqFileList")
-            self.filelist_type = "SINQ"
-        else:
-            self.filelist_type = "TRICS"
-
-        self.filelist_format = filelist_elem.attrib["format"]
-        self.filelist_datapath = filelist_elem.find("datapath").attrib["value"]
-        range_vals = filelist_elem.find("range").attrib
-        self.filelist_ranges = (int(range_vals["start"]), int(range_vals["end"]))
-
         crystal_elem = tree.find("crystal")
         self.crystal_sample = crystal_elem.find("Sample").attrib["name"]
 
@@ -100,6 +88,68 @@ class AnatricConfig:
     @logfile_verbosity.setter
     def logfile_verbosity(self, value):
         self._tree.find("logfile").attrib["verbosity"] = value
+
+    @property
+    def filelist_type(self):
+        if self._tree.find("FileList") is not None:
+            return "TRICS"
+        return "SINQ"
+
+    @filelist_type.setter
+    def filelist_type(self, value):
+        if value == "TRICS":
+            tag = "FileList"
+        elif value == "SINQ":
+            tag = "SinqFileList"
+        else:
+            raise ValueError("FileList value can only by 'TRICS' or 'SINQ'")
+
+        self._tree.find("FileList").tag = tag
+
+    @property
+    def filelist_format(self):
+        if self.filelist_type == "TRICS":
+            return self._tree.find("FileList").attrib["format"]
+        return self._tree.find("SinqFileList").attrib["format"]
+
+    @filelist_format.setter
+    def filelist_format(self, value):
+        if self.filelist_type == "TRICS":
+            self._tree.find("FileList").attrib["format"] = value
+        else:  # SINQ
+            self._tree.find("SinqFileList").attrib["format"] = value
+
+    @property
+    def filelist_datapath(self):
+        if self.filelist_type == "TRICS":
+            return self._tree.find("FileList").find("datapath").attrib["value"]
+        return self._tree.find("SinqFileList").find("datapath").attrib["value"]
+
+    @filelist_datapath.setter
+    def filelist_datapath(self, value):
+        if self.filelist_type == "TRICS":
+            self._tree.find("FileList").find("datapath").attrib["value"] = value
+        else:  # SINQ
+            self._tree.find("SinqFileList").find("datapath").attrib["value"] = value
+
+    @property
+    def filelist_ranges(self):
+        if self.filelist_type == "TRICS":
+            range_vals = self._tree.find("FileList").find("range").attrib
+        else:  # SINQ
+            range_vals = self._tree.find("SinqFileList").find("range").attrib
+
+        return (int(range_vals["start"]), int(range_vals["end"]))
+
+    @filelist_ranges.setter
+    def filelist_ranges(self, value):
+        if self.filelist_type == "TRICS":
+            range_vals = self._tree.find("FileList").find("range").attrib
+        else:  # SINQ
+            range_vals = self._tree.find("SinqFileList").find("range").attrib
+
+        range_vals["start"] = str(value[0])
+        range_vals["end"] = str(value[1])
 
     def save_as(self, filename):
         self._tree.write(filename)
