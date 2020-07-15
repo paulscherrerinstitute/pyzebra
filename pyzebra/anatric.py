@@ -87,47 +87,38 @@ class AnatricConfig:
         self._tree.find("FileList").tag = tag
 
     @property
-    def filelist_format(self):
+    def _filelist_elem(self):
         if self.filelist_type == "TRICS":
-            return self._tree.find("FileList").attrib["format"]
-        return self._tree.find("SinqFileList").attrib["format"]
+            filelist_elem = self._tree.find("FileList")
+        else:  # SINQ
+            filelist_elem = self._tree.find("SinqFileList")
+
+        return filelist_elem
+
+    @property
+    def filelist_format(self):
+        return self._filelist_elem.attrib["format"]
 
     @filelist_format.setter
     def filelist_format(self, value):
-        if self.filelist_type == "TRICS":
-            self._tree.find("FileList").attrib["format"] = value
-        else:  # SINQ
-            self._tree.find("SinqFileList").attrib["format"] = value
+        self._filelist_elem.attrib["format"] = value
 
     @property
     def filelist_datapath(self):
-        if self.filelist_type == "TRICS":
-            return self._tree.find("FileList").find("datapath").attrib["value"]
-        return self._tree.find("SinqFileList").find("datapath").attrib["value"]
+        return self._filelist_elem.find("datapath").attrib["value"]
 
     @filelist_datapath.setter
     def filelist_datapath(self, value):
-        if self.filelist_type == "TRICS":
-            self._tree.find("FileList").find("datapath").attrib["value"] = value
-        else:  # SINQ
-            self._tree.find("SinqFileList").find("datapath").attrib["value"] = value
+        self._filelist_elem.find("datapath").attrib["value"] = value
 
     @property
     def filelist_ranges(self):
-        if self.filelist_type == "TRICS":
-            range_vals = self._tree.find("FileList").find("range").attrib
-        else:  # SINQ
-            range_vals = self._tree.find("SinqFileList").find("range").attrib
-
+        range_vals = self._filelist_elem.find("range").attrib
         return (int(range_vals["start"]), int(range_vals["end"]))
 
     @filelist_ranges.setter
     def filelist_ranges(self, value):
-        if self.filelist_type == "TRICS":
-            range_vals = self._tree.find("FileList").find("range").attrib
-        else:  # SINQ
-            range_vals = self._tree.find("SinqFileList").find("range").attrib
-
+        range_vals = self._filelist_elem.find("range").attrib
         range_vals["start"] = str(value[0])
         range_vals["end"] = str(value[1])
 
