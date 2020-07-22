@@ -209,6 +209,14 @@ class AnatricConfig:
             return None
         return param_elem.attrib[attr]
 
+    def _set_alg_attr(self, alg, tag, attr, value):
+        alg_elem = self._alg_elems[alg]
+        param_elem = alg_elem.find(tag)
+        if param_elem is None:
+            alg_elem.append(ET.Element(tag, attrib={attr: value}))
+        else:
+            param_elem.attrib[attr] = value
+
     # --- adaptivemaxcog
     @property
     def threshold(self):
@@ -216,12 +224,7 @@ class AnatricConfig:
 
     @threshold.setter
     def threshold(self, value):
-        alg_elem = self._alg_elems["adaptivemaxcog"]
-        param_elem = alg_elem.find("threshold")
-        if param_elem is None:
-            alg_elem.append(ET.Element("threshold", attrib={"value": value}))
-        else:
-            param_elem.attrib["value"] = value
+        self._set_alg_attr("adaptivemaxcog", "threshold", "value", value)
 
     @property
     def shell(self):
@@ -229,12 +232,7 @@ class AnatricConfig:
 
     @shell.setter
     def shell(self, value):
-        alg_elem = self._alg_elems["adaptivemaxcog"]
-        param_elem = alg_elem.find("shell")
-        if param_elem is None:
-            alg_elem.append(ET.Element("shell", attrib={"value": value}))
-        else:
-            param_elem.attrib["value"] = value
+        self._set_alg_attr("adaptivemaxcog", "shell", "value", value)
 
     @property
     def steepness(self):
@@ -242,12 +240,7 @@ class AnatricConfig:
 
     @steepness.setter
     def steepness(self, value):
-        alg_elem = self._alg_elems["adaptivemaxcog"]
-        param_elem = alg_elem.find("steepness")
-        if param_elem is None:
-            alg_elem.append(ET.Element("steepness", attrib={"value": value}))
-        else:
-            param_elem.attrib["value"] = value
+        self._set_alg_attr("adaptivemaxcog", "steepness", "value", value)
 
     @property
     def duplicateDistance(self):
@@ -255,12 +248,7 @@ class AnatricConfig:
 
     @duplicateDistance.setter
     def duplicateDistance(self, value):
-        alg_elem = self._alg_elems["adaptivemaxcog"]
-        param_elem = alg_elem.find("duplicateDistance")
-        if param_elem is None:
-            alg_elem.append(ET.Element("duplicateDistance", attrib={"value": value}))
-        else:
-            param_elem.attrib["value"] = value
+        self._set_alg_attr("adaptivemaxcog", "duplicateDistance", "value", value)
 
     @property
     def maxequal(self):
@@ -268,12 +256,7 @@ class AnatricConfig:
 
     @maxequal.setter
     def maxequal(self, value):
-        alg_elem = self._alg_elems["adaptivemaxcog"]
-        param_elem = alg_elem.find("maxequal")
-        if param_elem is None:
-            alg_elem.append(ET.Element("maxequal", attrib={"value": value}))
-        else:
-            param_elem.attrib["value"] = value
+        self._set_alg_attr("adaptivemaxcog", "maxequal", "value", value)
 
     @property
     def aps_window(self):
@@ -284,12 +267,8 @@ class AnatricConfig:
 
     @aps_window.setter
     def aps_window(self, value):
-        alg_elem = self._alg_elems["adaptivemaxcog"]
-        param_elem = alg_elem.find("window")
-        if param_elem is None:
-            alg_elem.append(ET.Element("window", attrib={"value": value}))
-        else:
-            param_elem.attrib["value"] = value
+        for i, coord in enumerate(("x", "y", "z")):
+            self._set_alg_attr("adaptivemaxcog", "window", coord, value[i])
 
     # --- adaptivedynamic
     @property
@@ -301,12 +280,8 @@ class AnatricConfig:
 
     @adm_window.setter
     def adm_window(self, value):
-        alg_elem = self._alg_elems["adaptivedynamic"]
-        param_elem = alg_elem.find("window")
-        if param_elem is None:
-            alg_elem.append(ET.Element("window", attrib={"value": value}))
-        else:
-            param_elem.attrib["value"] = value
+        for i, coord in enumerate(("x", "y", "z")):
+            self._set_alg_attr("adaptivedynamic", "window", coord, value[i])
 
     @property
     def border(self):
@@ -317,12 +292,8 @@ class AnatricConfig:
 
     @border.setter
     def border(self, value):
-        alg_elem = self._alg_elems["adaptivedynamic"]
-        param_elem = alg_elem.find("border")
-        if param_elem is None:
-            alg_elem.append(ET.Element("border", attrib={"value": value}))
-        else:
-            param_elem.attrib["value"] = value
+        for i, coord in enumerate(("x", "y", "z")):
+            self._set_alg_attr("adaptivedynamic", "border", coord, value[i])
 
     @property
     def minWindow(self):
@@ -333,12 +304,8 @@ class AnatricConfig:
 
     @minWindow.setter
     def minWindow(self, value):
-        alg_elem = self._alg_elems["adaptivedynamic"]
-        param_elem = alg_elem.find("minWindow")
-        if param_elem is None:
-            alg_elem.append(ET.Element("minWindow", attrib={"value": value}))
-        else:
-            param_elem.attrib["value"] = value
+        for i, coord in enumerate(("x", "y", "z")):
+            self._set_alg_attr("adaptivedynamic", "minWindow", coord, value[i])
 
     @property
     def reflectionFile(self):
@@ -346,12 +313,7 @@ class AnatricConfig:
 
     @reflectionFile.setter
     def reflectionFile(self, value):
-        alg_elem = self._alg_elems["adaptivedynamic"]
-        param_elem = alg_elem.find("reflectionFile")
-        if param_elem is None:
-            alg_elem.append(ET.Element("reflectionFile", attrib={"value": value}))
-        else:
-            param_elem.attrib["value"] = value
+        self._set_alg_attr("adaptivedynamic", "reflectionFile", "filename", value)
 
     @property
     def targetMonitor(self):
@@ -359,12 +321,7 @@ class AnatricConfig:
 
     @targetMonitor.setter
     def targetMonitor(self, value):
-        alg_elem = self._alg_elems["adaptivedynamic"]
-        param_elem = alg_elem.find("targetMonitor")
-        if param_elem is None:
-            alg_elem.append(ET.Element("targetMonitor", attrib={"value": value}))
-        else:
-            param_elem.attrib["value"] = value
+        self._set_alg_attr("adaptivedynamic", "targetMonitor", "filename", value)
 
     @property
     def smoothSize(self):
@@ -372,12 +329,7 @@ class AnatricConfig:
 
     @smoothSize.setter
     def smoothSize(self, value):
-        alg_elem = self._alg_elems["adaptivedynamic"]
-        param_elem = alg_elem.find("smoothSize")
-        if param_elem is None:
-            alg_elem.append(ET.Element("smoothSize", attrib={"value": value}))
-        else:
-            param_elem.attrib["value"] = value
+        self._set_alg_attr("adaptivedynamic", "smoothSize", "filename", value)
 
     @property
     def loop(self):
@@ -385,12 +337,7 @@ class AnatricConfig:
 
     @loop.setter
     def loop(self, value):
-        alg_elem = self._alg_elems["adaptivedynamic"]
-        param_elem = alg_elem.find("loop")
-        if param_elem is None:
-            alg_elem.append(ET.Element("loop", attrib={"value": value}))
-        else:
-            param_elem.attrib["value"] = value
+        self._set_alg_attr("adaptivedynamic", "loop", "filename", value)
 
     @property
     def minPeakCount(self):
@@ -398,12 +345,7 @@ class AnatricConfig:
 
     @minPeakCount.setter
     def minPeakCount(self, value):
-        alg_elem = self._alg_elems["adaptivedynamic"]
-        param_elem = alg_elem.find("minPeakCount")
-        if param_elem is None:
-            alg_elem.append(ET.Element("minPeakCount", attrib={"value": value}))
-        else:
-            param_elem.attrib["value"] = value
+        self._set_alg_attr("adaptivedynamic", "minPeakCount", "filename", value)
 
     @property
     def displacementCurve(self):
