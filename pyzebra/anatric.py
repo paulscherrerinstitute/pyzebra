@@ -206,121 +206,241 @@ class AnatricConfig:
     # --- adaptivemaxcog
     @property
     def threshold(self):
-        return self._alg_elems["adaptivemaxcog"].find("threshold").attrib["value"]
+        param_elem = self._alg_elems["adaptivemaxcog"].find("threshold")
+        if param_elem is None:
+            return None
+        return param_elem.attrib["value"]
 
     @threshold.setter
     def threshold(self, value):
-        self._alg_elems["adaptivemaxcog"].find("threshold").attrib["value"] = value
+        alg_elem = self._alg_elems["adaptivemaxcog"]
+        param_elem = alg_elem.find("threshold")
+        if param_elem is None:
+            alg_elem.append(ET.Element("threshold", attrib={"value": value}))
+        else:
+            param_elem.attrib["value"] = value
 
     @property
     def shell(self):
-        return self._alg_elems["adaptivemaxcog"].find("shell").attrib["value"]
+        param_elem = self._alg_elems["adaptivemaxcog"].find("shell")
+        if param_elem is None:
+            return None
+        return param_elem.attrib["value"]
 
     @shell.setter
     def shell(self, value):
-        self._alg_elems["adaptivemaxcog"].find("shell").attrib["value"] = value
+        alg_elem = self._alg_elems["adaptivemaxcog"]
+        param_elem = alg_elem.find("shell")
+        if param_elem is None:
+            alg_elem.append(ET.Element("shell", attrib={"value": value}))
+        else:
+            param_elem.attrib["value"] = value
 
     @property
     def steepness(self):
-        return self._alg_elems["adaptivemaxcog"].find("steepness").attrib["value"]
+        param_elem = self._alg_elems["adaptivemaxcog"].find("steepness")
+        if param_elem is None:
+            return None
+        return param_elem.attrib["value"]
 
     @steepness.setter
     def steepness(self, value):
-        self._alg_elems["adaptivemaxcog"].find("steepness").attrib["value"] = value
+        alg_elem = self._alg_elems["adaptivemaxcog"]
+        param_elem = alg_elem.find("steepness")
+        if param_elem is None:
+            alg_elem.append(ET.Element("steepness", attrib={"value": value}))
+        else:
+            param_elem.attrib["value"] = value
 
     @property
     def duplicateDistance(self):
-        return self._alg_elems["adaptivemaxcog"].find("duplicateDistance").attrib["value"]
+        param_elem = self._alg_elems["adaptivemaxcog"].find("duplicateDistance")
+        if param_elem is None:
+            return None
+        return param_elem.attrib["value"]
 
     @duplicateDistance.setter
     def duplicateDistance(self, value):
-        self._alg_elems["adaptivemaxcog"].find("duplicateDistance").attrib["value"] = value
+        alg_elem = self._alg_elems["adaptivemaxcog"]
+        param_elem = alg_elem.find("duplicateDistance")
+        if param_elem is None:
+            alg_elem.append(ET.Element("duplicateDistance", attrib={"value": value}))
+        else:
+            param_elem.attrib["value"] = value
 
     @property
     def maxequal(self):
-        return self._alg_elems["adaptivemaxcog"].find("maxequal").attrib["value"]
+        param_elem = self._alg_elems["adaptivemaxcog"].find("maxequal")
+        if param_elem is None:
+            return None
+        return param_elem.attrib["value"]
 
     @maxequal.setter
     def maxequal(self, value):
-        self._alg_elems["adaptivemaxcog"].find("maxequal").attrib["value"] = value
+        alg_elem = self._alg_elems["adaptivemaxcog"]
+        param_elem = alg_elem.find("maxequal")
+        if param_elem is None:
+            alg_elem.append(ET.Element("maxequal", attrib={"value": value}))
+        else:
+            param_elem.attrib["value"] = value
 
     @property
     def aps_window(self):
-        return self._alg_elems["adaptivemaxcog"].find("window").attrib["value"]
+        param_elem = self._alg_elems["adaptivemaxcog"].find("window")
+        if param_elem is None:
+            return None
+        return param_elem.attrib["value"]
 
     @aps_window.setter
     def aps_window(self, value):
-        self._alg_elems["adaptivemaxcog"].find("window").attrib["value"] = value
+        alg_elem = self._alg_elems["adaptivemaxcog"]
+        param_elem = alg_elem.find("window")
+        if param_elem is None:
+            alg_elem.append(ET.Element("window", attrib={"value": value}))
+        else:
+            param_elem.attrib["value"] = value
 
     # --- adaptivedynamic
     @property
     def adm_window(self):
-        return self._alg_elems["adaptivedynamic"].find("window").attrib["value"]
+        param_elem = self._alg_elems["adaptivedynamic"].find("window")
+        if param_elem is None:
+            return None
+        return param_elem.attrib["value"]
 
     @adm_window.setter
     def adm_window(self, value):
-        self._alg_elems["adaptivedynamic"].find("window").attrib["value"] = value
+        alg_elem = self._alg_elems["adaptivedynamic"]
+        param_elem = alg_elem.find("window")
+        if param_elem is None:
+            alg_elem.append(ET.Element("window", attrib={"value": value}))
+        else:
+            param_elem.attrib["value"] = value
 
     @property
     def border(self):
-        return self._alg_elems["adaptivedynamic"].find("border").attrib["value"]
+        param_elem = self._alg_elems["adaptivedynamic"].find("border")
+        if param_elem is None:
+            return None
+        return param_elem.attrib["value"]
 
     @border.setter
     def border(self, value):
-        self._alg_elems["adaptivedynamic"].find("border").attrib["value"] = value
+        alg_elem = self._alg_elems["adaptivedynamic"]
+        param_elem = alg_elem.find("border")
+        if param_elem is None:
+            alg_elem.append(ET.Element("border", attrib={"value": value}))
+        else:
+            param_elem.attrib["value"] = value
 
     @property
     def minWindow(self):
-        return self._alg_elems["adaptivedynamic"].find("minWindow").attrib["value"]
+        param_elem = self._alg_elems["adaptivedynamic"].find("minWindow")
+        if param_elem is None:
+            return None
+        return param_elem.attrib["value"]
 
     @minWindow.setter
     def minWindow(self, value):
-        self._alg_elems["adaptivedynamic"].find("minWindow").attrib["value"] = value
+        alg_elem = self._alg_elems["adaptivedynamic"]
+        param_elem = alg_elem.find("minWindow")
+        if param_elem is None:
+            alg_elem.append(ET.Element("minWindow", attrib={"value": value}))
+        else:
+            param_elem.attrib["value"] = value
 
     @property
     def reflectionFile(self):
-        return self._alg_elems["adaptivedynamic"].find("reflectionFile").attrib["value"]
+        param_elem = self._alg_elems["adaptivedynamic"].find("reflectionFile")
+        if param_elem is None:
+            return None
+        return param_elem.attrib["value"]
 
     @reflectionFile.setter
     def reflectionFile(self, value):
-        self._alg_elems["adaptivedynamic"].find("reflectionFile").attrib["value"] = value
+        alg_elem = self._alg_elems["adaptivedynamic"]
+        param_elem = alg_elem.find("reflectionFile")
+        if param_elem is None:
+            alg_elem.append(ET.Element("reflectionFile", attrib={"value": value}))
+        else:
+            param_elem.attrib["value"] = value
 
     @property
     def targetMonitor(self):
-        return self._alg_elems["adaptivedynamic"].find("targetMonitor").attrib["value"]
+        param_elem = self._alg_elems["adaptivedynamic"].find("targetMonitor")
+        if param_elem is None:
+            return None
+        return param_elem.attrib["value"]
 
     @targetMonitor.setter
     def targetMonitor(self, value):
-        self._alg_elems["adaptivedynamic"].find("targetMonitor").attrib["value"] = value
+        alg_elem = self._alg_elems["adaptivedynamic"]
+        param_elem = alg_elem.find("targetMonitor")
+        if param_elem is None:
+            alg_elem.append(ET.Element("targetMonitor", attrib={"value": value}))
+        else:
+            param_elem.attrib["value"] = value
 
     @property
     def smoothSize(self):
-        return self._alg_elems["adaptivedynamic"].find("smoothSize").attrib["value"]
+        param_elem = self._alg_elems["adaptivedynamic"].find("smoothSize")
+        if param_elem is None:
+            return None
+        return param_elem.attrib["value"]
 
     @smoothSize.setter
     def smoothSize(self, value):
-        self._alg_elems["adaptivedynamic"].find("smoothSize").attrib["value"] = value
+        alg_elem = self._alg_elems["adaptivedynamic"]
+        param_elem = alg_elem.find("smoothSize")
+        if param_elem is None:
+            alg_elem.append(ET.Element("smoothSize", attrib={"value": value}))
+        else:
+            param_elem.attrib["value"] = value
 
     @property
     def loop(self):
-        return self._alg_elems["adaptivedynamic"].find("loop").attrib["value"]
+        param_elem = self._alg_elems["adaptivedynamic"].find("loop")
+        if param_elem is None:
+            return None
+        return param_elem.attrib["value"]
 
     @loop.setter
     def loop(self, value):
-        self._alg_elems["adaptivedynamic"].find("loop").attrib["value"] = value
+        alg_elem = self._alg_elems["adaptivedynamic"]
+        param_elem = alg_elem.find("loop")
+        if param_elem is None:
+            alg_elem.append(ET.Element("loop", attrib={"value": value}))
+        else:
+            param_elem.attrib["value"] = value
 
     @property
     def minPeakCount(self):
-        return self._alg_elems["adaptivedynamic"].find("minPeakCount").attrib["value"]
+        param_elem = self._alg_elems["adaptivedynamic"].find("minPeakCount")
+        if param_elem is None:
+            return None
+        return param_elem.attrib["value"]
 
     @minPeakCount.setter
     def minPeakCount(self, value):
-        self._alg_elems["adaptivedynamic"].find("minPeakCount").attrib["value"] = value
+        alg_elem = self._alg_elems["adaptivedynamic"]
+        param_elem = alg_elem.find("minPeakCount")
+        if param_elem is None:
+            alg_elem.append(ET.Element("minPeakCount", attrib={"value": value}))
+        else:
+            param_elem.attrib["value"] = value
 
     @property
     def displacementCurve(self):
-        return self._alg_elems["adaptivedynamic"].find("displacementCurve").attrib["value"]
+        param_elem = self._alg_elems["adaptivedynamic"].find("displacementCurve")
+        if param_elem is None:
+            return None
+        return param_elem.attrib["value"]
 
     @displacementCurve.setter
     def displacementCurve(self, value):
-        self._alg_elems["adaptivedynamic"].find("displacementCurve").attrib["value"] = value
+        alg_elem = self._alg_elems["adaptivedynamic"]
+        param_elem = alg_elem.find("displacementCurve")
+        if param_elem is None:
+            alg_elem.append(ET.Element("displacementCurve", attrib={"value": value}))
+        else:
+            param_elem.attrib["value"] = value
