@@ -37,27 +37,8 @@ class AnatricConfig:
 
         self._alg_elems[self.algorithm] = self._tree.find("Algorithm")
 
-        alg_elem = self._tree.find("Algorithm")
-        if self.algorithm == "adaptivemaxcog":
-            self.threshold = float(alg_elem.find("threshold").attrib["value"])
-            self.shell = float(alg_elem.find("shell").attrib["value"])
-            self.steepness = float(alg_elem.find("steepness").attrib["value"])
-            self.duplicateDistance = float(alg_elem.find("duplicateDistance").attrib["value"])
-            self.maxequal = float(alg_elem.find("maxequal").attrib["value"])
-            # self.apd_window = float(alg_elem.find("window").attrib["value"])
-
-        elif self.algorithm == "adaptivedynamic":
-            # self.admi_window = float(alg_elem.find("window").attrib["value"])
-            # self.border = float(alg_elem.find("border").attrib["value"])
-            # self.minWindow = float(alg_elem.find("minWindow").attrib["value"])
-            # self.reflectionFile = float(alg_elem.find("reflectionFile").attrib["value"])
-            self.targetMonitor = float(alg_elem.find("targetMonitor").attrib["value"])
-            self.smoothSize = float(alg_elem.find("smoothSize").attrib["value"])
-            self.loop = float(alg_elem.find("loop").attrib["value"])
-            self.minPeakCount = float(alg_elem.find("minPeakCount").attrib["value"])
-            # self.displacementCurve = float(alg_elem.find("threshold").attrib["value"])
-        else:
-            raise ValueError("Unknown processing mode.")
+    def save_as(self, filename):
+        self._tree.write(filename)
 
     @property
     def logfile(self):
@@ -222,5 +203,124 @@ class AnatricConfig:
         self._root.remove(self._tree.find("Algorithm"))
         self._root.append(self._alg_elems[value])
 
-    def save_as(self, filename):
-        self._tree.write(filename)
+    # --- adaptivemaxcog
+    @property
+    def threshold(self):
+        return self._alg_elems["adaptivemaxcog"].find("threshold").attrib["value"]
+
+    @threshold.setter
+    def threshold(self, value):
+        self._alg_elems["adaptivemaxcog"].find("threshold").attrib["value"] = value
+
+    @property
+    def shell(self):
+        return self._alg_elems["adaptivemaxcog"].find("shell").attrib["value"]
+
+    @shell.setter
+    def shell(self, value):
+        self._alg_elems["adaptivemaxcog"].find("shell").attrib["value"] = value
+
+    @property
+    def steepness(self):
+        return self._alg_elems["adaptivemaxcog"].find("steepness").attrib["value"]
+
+    @steepness.setter
+    def steepness(self, value):
+        self._alg_elems["adaptivemaxcog"].find("steepness").attrib["value"] = value
+
+    @property
+    def duplicateDistance(self):
+        return self._alg_elems["adaptivemaxcog"].find("duplicateDistance").attrib["value"]
+
+    @duplicateDistance.setter
+    def duplicateDistance(self, value):
+        self._alg_elems["adaptivemaxcog"].find("duplicateDistance").attrib["value"] = value
+
+    @property
+    def maxequal(self):
+        return self._alg_elems["adaptivemaxcog"].find("maxequal").attrib["value"]
+
+    @maxequal.setter
+    def maxequal(self, value):
+        self._alg_elems["adaptivemaxcog"].find("maxequal").attrib["value"] = value
+
+    @property
+    def aps_window(self):
+        return self._alg_elems["adaptivemaxcog"].find("window").attrib["value"]
+
+    @aps_window.setter
+    def aps_window(self, value):
+        self._alg_elems["adaptivemaxcog"].find("window").attrib["value"] = value
+
+    # --- adaptivedynamic
+    @property
+    def adm_window(self):
+        return self._alg_elems["adaptivedynamic"].find("window").attrib["value"]
+
+    @adm_window.setter
+    def adm_window(self, value):
+        self._alg_elems["adaptivedynamic"].find("window").attrib["value"] = value
+
+    @property
+    def border(self):
+        return self._alg_elems["adaptivedynamic"].find("border").attrib["value"]
+
+    @border.setter
+    def border(self, value):
+        self._alg_elems["adaptivedynamic"].find("border").attrib["value"] = value
+
+    @property
+    def minWindow(self):
+        return self._alg_elems["adaptivedynamic"].find("minWindow").attrib["value"]
+
+    @minWindow.setter
+    def minWindow(self, value):
+        self._alg_elems["adaptivedynamic"].find("minWindow").attrib["value"] = value
+
+    @property
+    def reflectionFile(self):
+        return self._alg_elems["adaptivedynamic"].find("reflectionFile").attrib["value"]
+
+    @reflectionFile.setter
+    def reflectionFile(self, value):
+        self._alg_elems["adaptivedynamic"].find("reflectionFile").attrib["value"] = value
+
+    @property
+    def targetMonitor(self):
+        return self._alg_elems["adaptivedynamic"].find("targetMonitor").attrib["value"]
+
+    @targetMonitor.setter
+    def targetMonitor(self, value):
+        self._alg_elems["adaptivedynamic"].find("targetMonitor").attrib["value"] = value
+
+    @property
+    def smoothSize(self):
+        return self._alg_elems["adaptivedynamic"].find("smoothSize").attrib["value"]
+
+    @smoothSize.setter
+    def smoothSize(self, value):
+        self._alg_elems["adaptivedynamic"].find("smoothSize").attrib["value"] = value
+
+    @property
+    def loop(self):
+        return self._alg_elems["adaptivedynamic"].find("loop").attrib["value"]
+
+    @loop.setter
+    def loop(self, value):
+        self._alg_elems["adaptivedynamic"].find("loop").attrib["value"] = value
+
+    @property
+    def minPeakCount(self):
+        return self._alg_elems["adaptivedynamic"].find("minPeakCount").attrib["value"]
+
+    @minPeakCount.setter
+    def minPeakCount(self, value):
+        self._alg_elems["adaptivedynamic"].find("minPeakCount").attrib["value"] = value
+
+    @property
+    def displacementCurve(self):
+        return self._alg_elems["adaptivedynamic"].find("displacementCurve").attrib["value"]
+
+    @displacementCurve.setter
+    def displacementCurve(self, value):
+        self._alg_elems["adaptivedynamic"].find("displacementCurve").attrib["value"] = value
