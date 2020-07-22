@@ -34,6 +34,8 @@ class AnatricConfig:
         self._alg_elems = dict()
         for alg in ALGORITHMS:
             self._alg_elems[alg] = ET.Element("Algorithm", attrib={"implementation": alg})
+            self._alg_elems[alg].text = "\n "
+            self._alg_elems[alg].tail = "\n\n"
 
         self._alg_elems[self.algorithm] = self._tree.find("Algorithm")
 
@@ -213,7 +215,9 @@ class AnatricConfig:
         alg_elem = self._alg_elems[alg]
         param_elem = alg_elem.find(tag)
         if param_elem is None:
-            alg_elem.append(ET.Element(tag, attrib={attr: value}))
+            new_elem = ET.Element(tag, attrib={attr: value})
+            new_elem.tail = "\n"
+            alg_elem.append(new_elem)
         else:
             param_elem.attrib[attr] = value
 
@@ -359,6 +363,8 @@ class AnatricConfig:
         alg_elem = self._alg_elems["adaptivedynamic"]
         param_elem = alg_elem.find("displacementCurve")
         if param_elem is None:
-            alg_elem.append(ET.Element("displacementCurve", attrib={"value": value}))
+            new_elem = ET.Element("displacementCurve", attrib={"value": value})
+            new_elem.tail = "\n"
+            alg_elem.append(new_elem)
         else:
             param_elem.attrib["value"] = value
