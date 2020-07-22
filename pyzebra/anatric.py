@@ -203,13 +203,16 @@ class AnatricConfig:
         self._root.remove(self._tree.find("Algorithm"))
         self._root.append(self._alg_elems[value])
 
+    def _get_alg_attr(self, alg, tag, attr):
+        param_elem = self._alg_elems[alg].find(tag)
+        if param_elem is None:
+            return None
+        return param_elem.attrib[attr]
+
     # --- adaptivemaxcog
     @property
     def threshold(self):
-        param_elem = self._alg_elems["adaptivemaxcog"].find("threshold")
-        if param_elem is None:
-            return None
-        return param_elem.attrib["value"]
+        return self._get_alg_attr("adaptivemaxcog", "threshold", "value")
 
     @threshold.setter
     def threshold(self, value):
@@ -222,10 +225,7 @@ class AnatricConfig:
 
     @property
     def shell(self):
-        param_elem = self._alg_elems["adaptivemaxcog"].find("shell")
-        if param_elem is None:
-            return None
-        return param_elem.attrib["value"]
+        return self._get_alg_attr("adaptivemaxcog", "shell", "value")
 
     @shell.setter
     def shell(self, value):
@@ -238,10 +238,7 @@ class AnatricConfig:
 
     @property
     def steepness(self):
-        param_elem = self._alg_elems["adaptivemaxcog"].find("steepness")
-        if param_elem is None:
-            return None
-        return param_elem.attrib["value"]
+        return self._get_alg_attr("adaptivemaxcog", "steepness", "value")
 
     @steepness.setter
     def steepness(self, value):
@@ -254,10 +251,7 @@ class AnatricConfig:
 
     @property
     def duplicateDistance(self):
-        param_elem = self._alg_elems["adaptivemaxcog"].find("duplicateDistance")
-        if param_elem is None:
-            return None
-        return param_elem.attrib["value"]
+        return self._get_alg_attr("adaptivemaxcog", "duplicateDistance", "value")
 
     @duplicateDistance.setter
     def duplicateDistance(self, value):
@@ -270,10 +264,7 @@ class AnatricConfig:
 
     @property
     def maxequal(self):
-        param_elem = self._alg_elems["adaptivemaxcog"].find("maxequal")
-        if param_elem is None:
-            return None
-        return param_elem.attrib["value"]
+        return self._get_alg_attr("adaptivemaxcog", "maxequal", "value")
 
     @maxequal.setter
     def maxequal(self, value):
@@ -286,10 +277,10 @@ class AnatricConfig:
 
     @property
     def aps_window(self):
-        param_elem = self._alg_elems["adaptivemaxcog"].find("window")
-        if param_elem is None:
-            return None
-        return param_elem.attrib["value"]
+        res = dict()
+        for coord in ("x", "y", "z"):
+            res[coord] = self._get_alg_attr("adaptivemaxcog", "window", coord)
+        return res
 
     @aps_window.setter
     def aps_window(self, value):
@@ -303,10 +294,10 @@ class AnatricConfig:
     # --- adaptivedynamic
     @property
     def adm_window(self):
-        param_elem = self._alg_elems["adaptivedynamic"].find("window")
-        if param_elem is None:
-            return None
-        return param_elem.attrib["value"]
+        res = dict()
+        for coord in ("x", "y", "z"):
+            res[coord] = self._get_alg_attr("adaptivedynamic", "window", coord)
+        return res
 
     @adm_window.setter
     def adm_window(self, value):
@@ -319,10 +310,10 @@ class AnatricConfig:
 
     @property
     def border(self):
-        param_elem = self._alg_elems["adaptivedynamic"].find("border")
-        if param_elem is None:
-            return None
-        return param_elem.attrib["value"]
+        res = dict()
+        for coord in ("x", "y", "z"):
+            res[coord] = self._get_alg_attr("adaptivedynamic", "border", coord)
+        return res
 
     @border.setter
     def border(self, value):
@@ -335,10 +326,10 @@ class AnatricConfig:
 
     @property
     def minWindow(self):
-        param_elem = self._alg_elems["adaptivedynamic"].find("minWindow")
-        if param_elem is None:
-            return None
-        return param_elem.attrib["value"]
+        res = dict()
+        for coord in ("x", "y", "z"):
+            res[coord] = self._get_alg_attr("adaptivedynamic", "minWindow", coord)
+        return res
 
     @minWindow.setter
     def minWindow(self, value):
@@ -351,10 +342,7 @@ class AnatricConfig:
 
     @property
     def reflectionFile(self):
-        param_elem = self._alg_elems["adaptivedynamic"].find("reflectionFile")
-        if param_elem is None:
-            return None
-        return param_elem.attrib["value"]
+        return self._get_alg_attr("adaptivedynamic", "reflectionFile", "filename")
 
     @reflectionFile.setter
     def reflectionFile(self, value):
@@ -367,10 +355,7 @@ class AnatricConfig:
 
     @property
     def targetMonitor(self):
-        param_elem = self._alg_elems["adaptivedynamic"].find("targetMonitor")
-        if param_elem is None:
-            return None
-        return param_elem.attrib["value"]
+        return self._get_alg_attr("adaptivedynamic", "targetMonitor", "value")
 
     @targetMonitor.setter
     def targetMonitor(self, value):
@@ -383,10 +368,7 @@ class AnatricConfig:
 
     @property
     def smoothSize(self):
-        param_elem = self._alg_elems["adaptivedynamic"].find("smoothSize")
-        if param_elem is None:
-            return None
-        return param_elem.attrib["value"]
+        return self._get_alg_attr("adaptivedynamic", "smoothSize", "value")
 
     @smoothSize.setter
     def smoothSize(self, value):
@@ -399,10 +381,7 @@ class AnatricConfig:
 
     @property
     def loop(self):
-        param_elem = self._alg_elems["adaptivedynamic"].find("loop")
-        if param_elem is None:
-            return None
-        return param_elem.attrib["value"]
+        return self._get_alg_attr("adaptivedynamic", "loop", "value")
 
     @loop.setter
     def loop(self, value):
@@ -415,10 +394,7 @@ class AnatricConfig:
 
     @property
     def minPeakCount(self):
-        param_elem = self._alg_elems["adaptivedynamic"].find("minPeakCount")
-        if param_elem is None:
-            return None
-        return param_elem.attrib["value"]
+        return self._get_alg_attr("adaptivedynamic", "minPeakCount", "value")
 
     @minPeakCount.setter
     def minPeakCount(self, value):
