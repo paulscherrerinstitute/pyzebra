@@ -1,5 +1,5 @@
 from bokeh.layouts import column, row
-from bokeh.models import Button, Panel, RadioButtonGroup, Select, Spinner, TextAreaInput, TextInput
+from bokeh.models import Button, Panel, RadioButtonGroup, Select, TextAreaInput, TextInput
 
 import pyzebra
 
@@ -28,23 +28,23 @@ def create():
 
         set_active_widgets(config.algorithm)
         if config.algorithm == "adaptivemaxcog":
-            threshold_spinner.value = float(config.threshold)
-            shell_spinner.value = float(config.shell)
-            steepness_spinner.value = float(config.steepness)
-            duplicateDistance_spinner.value = float(config.duplicateDistance)
-            maxequal_spinner.value = float(config.maxequal)
-            # apd_window_spinner.value = float(config.apd_window)
+            threshold_textinput.value = config.threshold
+            shell_textinput.value = config.shell
+            steepness_textinput.value = config.steepness
+            duplicateDistance_textinput.value = config.duplicateDistance
+            maxequal_textinput.value = config.maxequal
+            # aps_window_textinput.value = config.aps_window
 
         elif config.algorithm == "adaptivedynamic":
-            # admi_window_spinner.value = float(config.admi_window)
-            # border_spinner.value = float(config.border)
-            # minWindow_spinner.value = float(config.minWindow)
-            # reflectionFile_spinner.value = float(config.reflectionFile)
-            targetMonitor_spinner.value = float(config.targetMonitor)
-            smoothSize_spinner.value = float(config.smoothSize)
-            loop_spinner.value = float(config.loop)
-            minPeakCount_spinner.value = float(config.minPeakCount)
-            # displacementCurve_spinner.value = float(config.displacementCurve)
+            # adm_window_textinput.value = config.adm_window
+            # border_textinput.value = config.border
+            # minWindow_textinput.value = config.minWindow
+            reflectionFile_textinput.value = config.reflectionFile
+            targetMonitor_textinput.value = config.targetMonitor
+            smoothSize_textinput.value = config.smoothSize
+            loop_textinput.value = config.loop
+            minPeakCount_textinput.value = config.minPeakCount
+            # displacementCurve_textinput.value = config.displacementCurve
         else:
             raise ValueError("Unknown processing mode.")
 
@@ -61,22 +61,22 @@ def create():
         else:
             raise ValueError("Implementation can be either 'adaptivemaxcog' or 'adaptivedynamic'")
 
-        threshold_spinner.disabled = disable_adaptivemaxcog
-        shell_spinner.disabled = disable_adaptivemaxcog
-        steepness_spinner.disabled = disable_adaptivemaxcog
-        duplicateDistance_spinner.disabled = disable_adaptivemaxcog
-        maxequal_spinner.disabled = disable_adaptivemaxcog
-        apd_window_spinner.disabled = disable_adaptivemaxcog
+        threshold_textinput.disabled = disable_adaptivemaxcog
+        shell_textinput.disabled = disable_adaptivemaxcog
+        steepness_textinput.disabled = disable_adaptivemaxcog
+        duplicateDistance_textinput.disabled = disable_adaptivemaxcog
+        maxequal_textinput.disabled = disable_adaptivemaxcog
+        aps_window_textinput.disabled = disable_adaptivemaxcog
 
-        admi_window_spinner.disabled = disable_adaptivedynamic
-        border_spinner.disabled = disable_adaptivedynamic
-        minWindow_spinner.disabled = disable_adaptivedynamic
-        reflectionFile_spinner.disabled = disable_adaptivedynamic
-        targetMonitor_spinner.disabled = disable_adaptivedynamic
-        smoothSize_spinner.disabled = disable_adaptivedynamic
-        loop_spinner.disabled = disable_adaptivedynamic
-        minPeakCount_spinner.disabled = disable_adaptivedynamic
-        displacementCurve_spinner.disabled = disable_adaptivedynamic
+        adm_window_textinput.disabled = disable_adaptivedynamic
+        border_textinput.disabled = disable_adaptivedynamic
+        minWindow_textinput.disabled = disable_adaptivedynamic
+        reflectionFile_textinput.disabled = disable_adaptivedynamic
+        targetMonitor_textinput.disabled = disable_adaptivedynamic
+        smoothSize_textinput.disabled = disable_adaptivedynamic
+        loop_textinput.disabled = disable_adaptivedynamic
+        minPeakCount_textinput.disabled = disable_adaptivedynamic
+        displacementCurve_textinput.disabled = disable_adaptivedynamic
 
     fileinput = TextInput(title="Path to XML configuration file:", width=600)
     fileinput.on_change("value", fileinput_callback)
@@ -129,50 +129,50 @@ def create():
 
     # Adaptive Peak Detection (adaptivemaxcog)
     # ---- threshold
-    threshold_spinner = Spinner(title="Threshold", value=None)
+    threshold_textinput = TextInput(title="Threshold")
 
     # ---- shell
-    shell_spinner = Spinner(title="Shell", value=None, low=0)
+    shell_textinput = TextInput(title="Shell")
 
     # ---- steepness
-    steepness_spinner = Spinner(title="Steepness", value=None)
+    steepness_textinput = TextInput(title="Steepness")
 
     # ---- duplicateDistance
-    duplicateDistance_spinner = Spinner(title="Duplicate Distance", value=None)
+    duplicateDistance_textinput = TextInput(title="Duplicate Distance")
 
     # ---- maxequal
-    maxequal_spinner = Spinner(title="Max Equal", value=None)
+    maxequal_textinput = TextInput(title="Max Equal")
 
     # ---- window
-    apd_window_spinner = Spinner(title="Window", value=None)
+    aps_window_textinput = TextInput(title="Window")
 
     # Adaptive Dynamic Mask Integration (adaptivedynamic)
     # ---- window
-    admi_window_spinner = Spinner(title="Window", value=None)
+    adm_window_textinput = TextInput(title="Window")
 
     # ---- border
-    border_spinner = Spinner(title="Border", value=None)
+    border_textinput = TextInput(title="Border")
 
     # ---- minWindow
-    minWindow_spinner = Spinner(title="Min Window", value=None)
+    minWindow_textinput = TextInput(title="Min Window")
 
     # ---- reflectionFile
-    reflectionFile_spinner = Spinner(title="Reflection File", value=None)
+    reflectionFile_textinput = TextInput(title="Reflection File")
 
     # ---- targetMonitor
-    targetMonitor_spinner = Spinner(title="Target Monitor", value=None)
+    targetMonitor_textinput = TextInput(title="Target Monitor")
 
     # ---- smoothSize
-    smoothSize_spinner = Spinner(title="Smooth Size", value=None)
+    smoothSize_textinput = TextInput(title="Smooth Size")
 
     # ---- loop
-    loop_spinner = Spinner(title="Loop", value=None)
+    loop_textinput = TextInput(title="Loop")
 
     # ---- minPeakCount
-    minPeakCount_spinner = Spinner(title="Min Peak Count", value=None)
+    minPeakCount_textinput = TextInput(title="Min Peak Count")
 
     # ---- displacementCurve
-    displacementCurve_spinner = Spinner(title="Displacement Curve", value=None)
+    displacementCurve_textinput = TextInput(title="Displacement Curve")
 
     def mode_radio_button_group_callback(active):
         if active == 0:
@@ -209,23 +209,23 @@ def create():
             mode_radio_button_group,
             row(
                 column(
-                    threshold_spinner,
-                    shell_spinner,
-                    steepness_spinner,
-                    duplicateDistance_spinner,
-                    maxequal_spinner,
-                    apd_window_spinner,
+                    threshold_textinput,
+                    shell_textinput,
+                    steepness_textinput,
+                    duplicateDistance_textinput,
+                    maxequal_textinput,
+                    aps_window_textinput,
                 ),
                 column(
-                    admi_window_spinner,
-                    border_spinner,
-                    minWindow_spinner,
-                    reflectionFile_spinner,
-                    targetMonitor_spinner,
-                    smoothSize_spinner,
-                    loop_spinner,
-                    minPeakCount_spinner,
-                    displacementCurve_spinner,
+                    adm_window_textinput,
+                    border_textinput,
+                    minWindow_textinput,
+                    reflectionFile_textinput,
+                    targetMonitor_textinput,
+                    smoothSize_textinput,
+                    loop_textinput,
+                    minPeakCount_textinput,
+                    displacementCurve_textinput,
                 ),
             ),
         ),
