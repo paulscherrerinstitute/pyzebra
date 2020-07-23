@@ -5,8 +5,10 @@ import pyzebra
 
 
 def create():
+    config = pyzebra.AnatricConfig()
+
     def fileinput_callback(_attr, _old, new):
-        config = pyzebra.AnatricConfig(new)
+        config.load_from_file(new)
 
         logfile_textinput.value = config.logfile
         logfile_verbosity_select.value = config.logfile_verbosity
@@ -33,7 +35,7 @@ def create():
             steepness_textinput.value = config.steepness
             duplicateDistance_textinput.value = config.duplicateDistance
             maxequal_textinput.value = config.maxequal
-            # aps_window_textinput.value = config.aps_window
+            # aps_window_textinput.value = str(tuple(config.aps_window.values()))
 
         elif config.algorithm == "adaptivedynamic":
             # adm_window_textinput.value = config.adm_window
@@ -83,33 +85,97 @@ def create():
 
     # General parameters
     # ---- logfile
+    def logfile_textinput_callback(_attr, _old, new):
+        config.logfile = new
+
     logfile_textinput = TextInput(title="Logfile:", value="logfile.log", width=520)
+    logfile_textinput.on_change("value", logfile_textinput_callback)
+
+    def logfile_verbosity_select_callback(_attr, _old, new):
+        config.logfile_verbosity = new
+
     logfile_verbosity_select = Select(
         title="verbosity:", options=["0", "5", "10", "15", "30"], width=70
     )
+    logfile_verbosity_select.on_change("value", logfile_verbosity_select_callback)
 
     # ---- FileList
+    def filelist_type_callback(_attr, _old, new):
+        config.filelist_type = new
+
     filelist_type = Select(title="File List:", options=["TRICS", "SINQ"], width=100)
+    filelist_type.on_change("value", filelist_type_callback)
+
+    def filelist_format_textinput_callback(_attr, _old, new):
+        config.filelist_format = new
+
     filelist_format_textinput = TextInput(title="format:", width=490)
+    filelist_format_textinput.on_change("value", filelist_format_textinput_callback)
+
+    def filelist_datapath_textinput_callback(_attr, _old, new):
+        config.filelist_datapath = new
+
     filelist_datapath_textinput = TextInput(title="datapath:")
+    filelist_datapath_textinput.on_change("value", filelist_datapath_textinput_callback)
+
+    def filelist_ranges_textareainput_callback(_attr, _old, new):
+        config.ranges = new
+
     filelist_ranges_textareainput = TextAreaInput(title="ranges:", height=100)
+    filelist_ranges_textareainput.on_change("value", filelist_ranges_textareainput_callback)
 
     # ---- crystal
+    def crystal_sample_textinput_callback(_attr, _old, new):
+        config.crystal_sample = new
+
     crystal_sample_textinput = TextInput(title="Sample Name:")
+    crystal_sample_textinput.on_change("value", crystal_sample_textinput_callback)
+
+    def lambda_textinput_callback(_attr, _old, new):
+        config.crystal_lambda = new
+
     lambda_textinput = TextInput(title="lambda:", width=140)
+    lambda_textinput.on_change("value", lambda_textinput_callback)
+
+    def ub_textareainput_callback(_attr, _old, new):
+        config.crystal_UB = new
+
     ub_textareainput = TextAreaInput(title="UB matrix:", height=100)
+    ub_textareainput.on_change("value", ub_textareainput_callback)
+
+    def zeroOM_textinput_callback(_attr, _old, new):
+        config.crystal_zeroOM = new
+
     zeroOM_textinput = TextInput(title="zeroOM:", width=140)
+    zeroOM_textinput.on_change("value", zeroOM_textinput_callback)
+
+    def zeroSTT_textinput_callback(_attr, _old, new):
+        config.crystal_zeroSTT = new
+
     zeroSTT_textinput = TextInput(title="zeroSTT:", width=140)
+    zeroSTT_textinput.on_change("value", zeroSTT_textinput_callback)
+
+    def zeroCHI_textinput_callback(_attr, _old, new):
+        config.crystal_zeroCHI = new
+
     zeroCHI_textinput = TextInput(title="zeroCHI:", width=140)
+    zeroCHI_textinput.on_change("value", zeroCHI_textinput_callback)
 
     # ---- DataFactory
+    def dist1_textinput_callback(_attr, _old, new):
+        config.dist1 = new
+
     dist1_textinput = TextInput(title="Dist1:", width=290)
+    dist1_textinput.on_change("value", dist1_textinput_callback)
 
     # ---- BackgroundProcessor
 
     # ---- DetectorEfficency
 
     # ---- ReflectionPrinter
+    def reflectionPrinter_format_select_callback(_attr, _old, new):
+        config.reflectionPrinter_format = new
+
     reflectionPrinter_format_select = Select(
         title="ReflectionPrinter format:",
         options=[
@@ -126,6 +192,7 @@ def create():
         ],
         width=300,
     )
+    reflectionPrinter_format_select.on_change("value", reflectionPrinter_format_select_callback)
 
     # Adaptive Peak Detection (adaptivemaxcog)
     # ---- threshold
