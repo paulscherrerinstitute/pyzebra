@@ -42,6 +42,22 @@ class AnatricConfig:
     def save_as(self, filename):
         self._tree.write(filename)
 
+    def _get_attr(self, name, tag, attr):
+        elem = self._tree.find(name).find(tag)
+        if elem is None:
+            return None
+        return elem.attrib[attr]
+
+    def _set_attr(self, name, tag, attr, value):
+        tree_elem = self._tree.find(name)
+        elem = tree_elem.find(tag)
+        if elem is None:
+            new_elem = ET.Element(tag, attrib={attr: value})
+            new_elem.tail = "\n"
+            tree_elem.append(new_elem)
+        else:
+            elem.attrib[attr] = value
+
     @property
     def logfile(self):
         return self._tree.find("logfile").attrib["file"]
@@ -113,55 +129,43 @@ class AnatricConfig:
 
     @property
     def crystal_sample(self):
-        return self._tree.find("crystal").find("Sample").attrib["name"]
+        return self._get_attr("crystal", "Sample", "name")
 
     @crystal_sample.setter
     def crystal_sample(self, value):
-        self._tree.find("crystal").find("Sample").attrib["name"] = value
+        self._set_attr("crystal", "Sample", "name", value)
 
     @property
     def crystal_lambda(self):
-        elem = self._tree.find("crystal").find("lambda")
-        if elem is not None:
-            return elem.attrib["value"]
-        return None
+        return self._get_attr("crystal", "lambda", "value")
 
     @crystal_lambda.setter
     def crystal_lambda(self, value):
-        self._tree.find("crystal").find("lambda").attrib["value"] = value
+        self._set_attr("crystal", "lambda", "value", value)
 
     @property
     def crystal_zeroOM(self):
-        elem = self._tree.find("crystal").find("zeroOM")
-        if elem is not None:
-            return elem.attrib["value"]
-        return None
+        return self._get_attr("crystal", "zeroOM", "value")
 
     @crystal_zeroOM.setter
     def crystal_zeroOM(self, value):
-        self._tree.find("crystal").find("zeroOM").attrib["value"] = value
+        self._set_attr("crystal", "zeroOM", "value", value)
 
     @property
     def crystal_zeroSTT(self):
-        elem = self._tree.find("crystal").find("zeroSTT")
-        if elem is not None:
-            return elem.attrib["value"]
-        return None
+        return self._get_attr("crystal", "zeroSTT", "value")
 
     @crystal_zeroSTT.setter
     def crystal_zeroSTT(self, value):
-        self._tree.find("crystal").find("zeroSTT").attrib["value"] = value
+        self._set_attr("crystal", "zeroSTT", "value", value)
 
     @property
     def crystal_zeroCHI(self):
-        elem = self._tree.find("crystal").find("zeroCHI")
-        if elem is not None:
-            return elem.attrib["value"]
-        return None
+        return self._get_attr("crystal", "zeroCHI", "value")
 
     @crystal_zeroCHI.setter
     def crystal_zeroCHI(self, value):
-        self._tree.find("crystal").find("zeroCHI").attrib["value"] = value
+        self._set_attr("crystal", "zeroCHI", "value", value)
 
     @property
     def crystal_UB(self):
