@@ -49,6 +49,9 @@ class AnatricConfig:
         return elem.attrib[attr]
 
     def _set_attr(self, name, tag, attr, value):
+        if value is None:
+            return
+
         tree_elem = self._tree.find(name)
         elem = tree_elem.find(tag)
         if elem is None:
@@ -216,6 +219,9 @@ class AnatricConfig:
         return param_elem.attrib[attr]
 
     def _set_alg_attr(self, alg, tag, attr, value):
+        if value is None:
+            return
+
         alg_elem = self._alg_elems[alg]
         param_elem = alg_elem.find(tag)
         if param_elem is None:
