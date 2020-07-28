@@ -202,42 +202,42 @@ def create():
     def threshold_textinput_callback(_attr, _old, new):
         config.threshold = new
 
-    threshold_textinput = TextInput(title="Threshold")
+    threshold_textinput = TextInput(title="Threshold:")
     threshold_textinput.on_change("value", threshold_textinput_callback)
 
     # ---- shell
     def shell_textinput_callback(_attr, _old, new):
         config.shell = new
 
-    shell_textinput = TextInput(title="Shell")
+    shell_textinput = TextInput(title="Shell:")
     shell_textinput.on_change("value", shell_textinput_callback)
 
     # ---- steepness
     def steepness_textinput_callback(_attr, _old, new):
         config.steepness = new
 
-    steepness_textinput = TextInput(title="Steepness")
+    steepness_textinput = TextInput(title="Steepness:")
     steepness_textinput.on_change("value", steepness_textinput_callback)
 
     # ---- duplicateDistance
     def duplicateDistance_textinput_callback(_attr, _old, new):
         config.duplicateDistance = new
 
-    duplicateDistance_textinput = TextInput(title="Duplicate Distance")
+    duplicateDistance_textinput = TextInput(title="Duplicate Distance:")
     duplicateDistance_textinput.on_change("value", duplicateDistance_textinput_callback)
 
     # ---- maxequal
     def maxequal_textinput_callback(_attr, _old, new):
         config.maxequal = new
 
-    maxequal_textinput = TextInput(title="Max Equal")
+    maxequal_textinput = TextInput(title="Max Equal:")
     maxequal_textinput.on_change("value", maxequal_textinput_callback)
 
     # ---- window
     def aps_window_textinput_callback(_attr, _old, new):
         config.aps_window = dict(zip(("x", "y", "z"), re.findall(r"\b\d+\b", new)))
 
-    aps_window_textinput = TextInput(title="Window")
+    aps_window_textinput = TextInput(title="Window (x, y, z):")
     aps_window_textinput.on_change("value", aps_window_textinput_callback)
 
     # Adaptive Dynamic Mask Integration (adaptivedynamic)
@@ -245,63 +245,63 @@ def create():
     def adm_window_textinput_callback(_attr, _old, new):
         config.adm_window = dict(zip(("x", "y", "z"), re.findall(r"\b\d+\b", new)))
 
-    adm_window_textinput = TextInput(title="Window")
+    adm_window_textinput = TextInput(title="Window (x, y, z):")
     adm_window_textinput.on_change("value", adm_window_textinput_callback)
 
     # ---- border
     def border_textinput_callback(_attr, _old, new):
         config.border = dict(zip(("x", "y", "z"), re.findall(r"\b\d+\b", new)))
 
-    border_textinput = TextInput(title="Border")
+    border_textinput = TextInput(title="Border (x, y, z):")
     border_textinput.on_change("value", border_textinput_callback)
 
     # ---- minWindow
     def minWindow_textinput_callback(_attr, _old, new):
         config.minWindow = dict(zip(("x", "y", "z"), re.findall(r"\b\d+\b", new)))
 
-    minWindow_textinput = TextInput(title="Min Window")
+    minWindow_textinput = TextInput(title="Min Window (x, y, z):")
     minWindow_textinput.on_change("value", minWindow_textinput_callback)
 
     # ---- reflectionFile
     def reflectionFile_textinput_callback(_attr, _old, new):
         config.reflectionFile = new
 
-    reflectionFile_textinput = TextInput(title="Reflection File")
+    reflectionFile_textinput = TextInput(title="Reflection File:")
     reflectionFile_textinput.on_change("value", reflectionFile_textinput_callback)
 
     # ---- targetMonitor
     def targetMonitor_textinput_callback(_attr, _old, new):
         config.targetMonitor = new
 
-    targetMonitor_textinput = TextInput(title="Target Monitor")
+    targetMonitor_textinput = TextInput(title="Target Monitor:")
     targetMonitor_textinput.on_change("value", targetMonitor_textinput_callback)
 
     # ---- smoothSize
     def smoothSize_textinput_callback(_attr, _old, new):
         config.smoothSize = new
 
-    smoothSize_textinput = TextInput(title="Smooth Size")
+    smoothSize_textinput = TextInput(title="Smooth Size:")
     smoothSize_textinput.on_change("value", smoothSize_textinput_callback)
 
     # ---- loop
     def loop_textinput_callback(_attr, _old, new):
         config.loop = new
 
-    loop_textinput = TextInput(title="Loop")
+    loop_textinput = TextInput(title="Loop:")
     loop_textinput.on_change("value", loop_textinput_callback)
 
     # ---- minPeakCount
     def minPeakCount_textinput_callback(_attr, _old, new):
         config.minPeakCount = new
 
-    minPeakCount_textinput = TextInput(title="Min Peak Count")
+    minPeakCount_textinput = TextInput(title="Min Peak Count:")
     minPeakCount_textinput.on_change("value", minPeakCount_textinput_callback)
 
     # ---- displacementCurve
     def displacementCurve_textinput_callback(_attr, _old, new):
         config.displacementCurve = new
 
-    displacementCurve_textinput = TextInput(title="Displacement Curve")
+    displacementCurve_textinput = TextInput(title="Displacement Curve:")
     displacementCurve_textinput.on_change("value", displacementCurve_textinput_callback)
 
     def mode_radio_button_group_callback(active):
@@ -311,7 +311,7 @@ def create():
             set_active_widgets("adaptivedynamic")
 
     mode_radio_button_group = RadioButtonGroup(
-        labels=["Adaptive Peak Detection", "Adaptive Dynamic Mask Integration"], active=0
+        labels=["Adaptive Peak Detection", "Adaptive Dynamic Integration"], active=0
     )
     mode_radio_button_group.on_click(mode_radio_button_group_callback)
     set_active_widgets("adaptivemaxcog")
@@ -328,7 +328,7 @@ def create():
     process_button = Button(label="Process", button_type="primary")
     process_button.on_click(process_button_callback)
 
-    output_log = TextAreaInput(height=700, disabled=True)
+    output_log = TextAreaInput(title="Logfile output:", height=700, disabled=True)
 
     tab_layout = row(
         column(
