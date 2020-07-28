@@ -322,8 +322,13 @@ def create():
             config.save_as(temp_file)
             pyzebra.anatric(temp_file)
 
+            with open(config.logfile) as f_log:
+                output_log.value = f_log.read()
+
     process_button = Button(label="Process", button_type="primary")
     process_button.on_click(process_button_callback)
+
+    output_log = TextAreaInput(height=700, disabled=True)
 
     tab_layout = row(
         column(
@@ -362,6 +367,7 @@ def create():
                 ),
             ),
         ),
+        output_log,
     )
 
     return Panel(child=tab_layout, title="Anatric")
