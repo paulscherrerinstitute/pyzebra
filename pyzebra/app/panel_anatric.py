@@ -1,4 +1,5 @@
 import re
+import tempfile
 
 from bokeh.layouts import column, row
 from bokeh.models import Button, Panel, RadioButtonGroup, Select, TextAreaInput, TextInput
@@ -316,7 +317,10 @@ def create():
     set_active_widgets("adaptivemaxcog")
 
     def process_button_callback():
-        pyzebra.anatric(fileinput.value)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_file = temp_dir + "/temp.xml"
+            config.save_as(temp_file)
+            pyzebra.anatric(temp_file)
 
     process_button = Button(label="Process", button_type="primary")
     process_button.on_click(process_button_callback)
