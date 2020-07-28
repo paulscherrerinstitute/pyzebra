@@ -1,3 +1,5 @@
+import re
+
 from bokeh.layouts import column, row
 from bokeh.models import Button, Panel, RadioButtonGroup, Select, TextAreaInput, TextInput
 
@@ -35,12 +37,12 @@ def create():
             steepness_textinput.value = config.steepness
             duplicateDistance_textinput.value = config.duplicateDistance
             maxequal_textinput.value = config.maxequal
-            aps_window_textinput.value = str(tuple(config.aps_window.values()))
+            aps_window_textinput.value = str(tuple(map(int, config.aps_window.values())))
 
         elif config.algorithm == "adaptivedynamic":
-            adm_window_textinput.value = str(tuple(config.adm_window))
-            border_textinput.value = str(tuple(config.border))
-            minWindow_textinput.value = str(tuple(config.minWindow))
+            adm_window_textinput.value = str(tuple(map(int, config.adm_window.values())))
+            border_textinput.value = str(tuple(map(int, config.border.values())))
+            minWindow_textinput.value = str(tuple(map(int, config.minWindow.values())))
             reflectionFile_textinput.value = config.reflectionFile
             targetMonitor_textinput.value = config.targetMonitor
             smoothSize_textinput.value = config.smoothSize
@@ -232,7 +234,7 @@ def create():
 
     # ---- window
     def aps_window_textinput_callback(_attr, _old, new):
-        config.aps_window = new
+        config.aps_window = dict(zip(("x", "y", "z"), re.findall(r"\b\d+\b", new)))
 
     aps_window_textinput = TextInput(title="Window")
     aps_window_textinput.on_change("value", aps_window_textinput_callback)
@@ -240,21 +242,21 @@ def create():
     # Adaptive Dynamic Mask Integration (adaptivedynamic)
     # ---- window
     def adm_window_textinput_callback(_attr, _old, new):
-        config.adm_window = new
+        config.adm_window = dict(zip(("x", "y", "z"), re.findall(r"\b\d+\b", new)))
 
     adm_window_textinput = TextInput(title="Window")
     adm_window_textinput.on_change("value", adm_window_textinput_callback)
 
     # ---- border
     def border_textinput_callback(_attr, _old, new):
-        config.border = new
+        config.border = dict(zip(("x", "y", "z"), re.findall(r"\b\d+\b", new)))
 
     border_textinput = TextInput(title="Border")
     border_textinput.on_change("value", border_textinput_callback)
 
     # ---- minWindow
     def minWindow_textinput_callback(_attr, _old, new):
-        config.minWindow = new
+        config.minWindow = dict(zip(("x", "y", "z"), re.findall(r"\b\d+\b", new)))
 
     minWindow_textinput = TextInput(title="Min Window")
     minWindow_textinput.on_change("value", minWindow_textinput_callback)

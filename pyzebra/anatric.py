@@ -281,8 +281,8 @@ class AnatricConfig:
 
     @aps_window.setter
     def aps_window(self, value):
-        for i, coord in enumerate(("x", "y", "z")):
-            self._set_alg_attr("adaptivemaxcog", "window", coord, value[i])
+        for coord in ("x", "y", "z"):
+            self._set_alg_attr("adaptivemaxcog", "window", coord, value[coord])
 
     # --- adaptivedynamic
     @property
@@ -294,8 +294,8 @@ class AnatricConfig:
 
     @adm_window.setter
     def adm_window(self, value):
-        for i, coord in enumerate(("x", "y", "z")):
-            self._set_alg_attr("adaptivedynamic", "window", coord, value[i])
+        for coord in ("x", "y", "z"):
+            self._set_alg_attr("adaptivedynamic", "window", coord, value[coord])
 
     @property
     def border(self):
@@ -306,8 +306,8 @@ class AnatricConfig:
 
     @border.setter
     def border(self, value):
-        for i, coord in enumerate(("x", "y", "z")):
-            self._set_alg_attr("adaptivedynamic", "border", coord, value[i])
+        for coord in ("x", "y", "z"):
+            self._set_alg_attr("adaptivedynamic", "border", coord, value[coord])
 
     @property
     def minWindow(self):
@@ -318,8 +318,8 @@ class AnatricConfig:
 
     @minWindow.setter
     def minWindow(self, value):
-        for i, coord in enumerate(("x", "y", "z")):
-            self._set_alg_attr("adaptivedynamic", "minWindow", coord, value[i])
+        for coord in ("x", "y", "z"):
+            self._set_alg_attr("adaptivedynamic", "minWindow", coord, value[coord])
 
     @property
     def reflectionFile(self):
