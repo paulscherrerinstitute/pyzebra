@@ -2,6 +2,7 @@ import subprocess
 import xml.etree.ElementTree as ET
 
 
+ANATRIC_PATH = "/afs/psi.ch/project/sinq/rhel7/bin/anatric"
 REFLECTION_PRINTER_FORMATS = (
     "rafin",
     "rafinf",
@@ -19,7 +20,7 @@ ALGORITHMS = ("adaptivemaxcog", "adaptivedynamic")
 
 
 def anatric(config_file):
-    subprocess.run(["anatric", config_file], check=True)
+    subprocess.run([ANATRIC_PATH, config_file], check=True)
 
 
 class AnatricConfig:
