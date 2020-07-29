@@ -134,14 +134,39 @@ class AnatricConfig:
 
     @property
     def filelist_ranges(self):
-        range_vals = self._filelist_elem.find("range").attrib
-        return (int(range_vals["start"]), int(range_vals["end"]))
+        ranges = []
+        for range_elem in self._filelist_elem.findall("range"):
+            ranges.append((int(range_elem.attrib["start"]), int(range_elem.attrib["end"])))
+
+        for range_elem in self._filelist_elem.findall("file"):
+            ranges.append(int(range_elem.attrib["value"]))
+
+        return ranges
 
     @filelist_ranges.setter
     def filelist_ranges(self, value):
-        range_vals = self._filelist_elem.find("range").attrib
-        range_vals["start"] = str(value[0])
-        range_vals["end"] = str(value[1])
+        # clear old range elements
+        filelist_elem = self._filelist_elem
+        for range_elem in filelist_elem.findall("range"):
+            filelist_elem.remove(range_elem)
+
+        for range_elem in filelist_elem.findall("file"):
+            filelist_elem.remove(range_elem)
+
+        # add new range elements
+        for range_vals in value:
+            if len(range_vals) == 1:
+                # single file
+                tag = "file"
+                attrib = {"value": range_vals[0]}
+            else:
+                # range of files
+                tag = "range"
+                attrib = {"start": range_vals[0], "end": range_vals[1]}
+
+            range_elem = ET.Element(tag, attrib=attrib)
+            range_elem.tail = "\n"
+            filelist_elem.append(range_elem)
 
     @property
     def crystal_sample(self):

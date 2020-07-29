@@ -20,7 +20,7 @@ def create():
         filelist_type.value = config.filelist_type
         filelist_format_textinput.value = config.filelist_format
         filelist_datapath_textinput.value = config.filelist_datapath
-        filelist_ranges_textareainput.value = str(config.filelist_ranges)
+        filelist_ranges_textareainput.value = "\n".join(map(str, config.filelist_ranges))
 
         crystal_sample_textinput.value = config.crystal_sample
         lambda_textinput.value = config.crystal_lambda
@@ -123,7 +123,10 @@ def create():
     filelist_datapath_textinput.on_change("value", filelist_datapath_textinput_callback)
 
     def filelist_ranges_textareainput_callback(_attr, _old, new):
-        config.ranges = new
+        ranges = []
+        for line in new.splitlines():
+            ranges.append(re.findall(r"\b\d+\b", line))
+        config.filelist_ranges = ranges
 
     filelist_ranges_textareainput = TextAreaInput(title="ranges:", height=100)
     filelist_ranges_textareainput.on_change("value", filelist_ranges_textareainput_callback)
