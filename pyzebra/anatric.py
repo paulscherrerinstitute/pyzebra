@@ -356,7 +356,7 @@ class AnatricConfig:
 
     @targetMonitor.setter
     def targetMonitor(self, value):
-        self._set_alg_attr("adaptivedynamic", "targetMonitor", "filename", value)
+        self._set_alg_attr("adaptivedynamic", "targetMonitor", "value", value)
 
     @property
     def smoothSize(self):
@@ -364,7 +364,7 @@ class AnatricConfig:
 
     @smoothSize.setter
     def smoothSize(self, value):
-        self._set_alg_attr("adaptivedynamic", "smoothSize", "filename", value)
+        self._set_alg_attr("adaptivedynamic", "smoothSize", "value", value)
 
     @property
     def loop(self):
@@ -372,7 +372,7 @@ class AnatricConfig:
 
     @loop.setter
     def loop(self, value):
-        self._set_alg_attr("adaptivedynamic", "loop", "filename", value)
+        self._set_alg_attr("adaptivedynamic", "loop", "value", value)
 
     @property
     def minPeakCount(self):
@@ -380,7 +380,7 @@ class AnatricConfig:
 
     @minPeakCount.setter
     def minPeakCount(self, value):
-        self._set_alg_attr("adaptivedynamic", "minPeakCount", "filename", value)
+        self._set_alg_attr("adaptivedynamic", "minPeakCount", "value", value)
 
     @property
     def displacementCurve(self):
