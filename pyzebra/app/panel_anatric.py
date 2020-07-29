@@ -1,9 +1,19 @@
+import base64
+import io
 import re
 import tempfile
 
 from bokeh.io import curdoc
 from bokeh.layouts import column, row
-from bokeh.models import Button, Panel, RadioButtonGroup, Select, TextAreaInput, TextInput
+from bokeh.models import (
+    Button,
+    FileInput,
+    Panel,
+    RadioButtonGroup,
+    Select,
+    TextAreaInput,
+    TextInput,
+)
 
 import pyzebra
 
@@ -86,6 +96,13 @@ def create():
 
     fileinput = TextInput(title="Path to XML configuration file:", width=600)
     fileinput.on_change("value", fileinput_callback)
+
+    def upload_button_callback(_attr, _old, new):
+        with io.BytesIO(base64.b64decode(new)) as file:
+            fileinput_callback(None, None, file)
+
+    upload_button = FileInput(accept=".xml")
+    upload_button.on_change("value", upload_button_callback)
 
     # General parameters
     # ---- logfile
@@ -340,6 +357,7 @@ def create():
     tab_layout = row(
         column(
             fileinput,
+            upload_button,
             row(logfile_textinput, logfile_verbosity_select),
             row(filelist_type, filelist_format_textinput),
             filelist_datapath_textinput,
