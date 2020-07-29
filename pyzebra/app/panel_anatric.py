@@ -335,7 +335,7 @@ def create():
     process_button.on_click(process_button_callback)
 
     output_log = TextAreaInput(title="Logfile output:", height=700, disabled=True)
-    output_config = TextAreaInput(title="Current config:", height=700, width=400)
+    output_config = TextAreaInput(title="Current config:", height=700, width=400, disabled=True)
 
     tab_layout = row(
         column(
