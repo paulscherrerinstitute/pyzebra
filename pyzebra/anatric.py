@@ -104,7 +104,8 @@ class AnatricConfig:
         else:
             raise ValueError("FileList value can only by 'TRICS' or 'SINQ'")
 
-        self._tree.find("FileList").tag = tag
+        filelist_elem = self._tree.find("FileList") or self._tree.find("SinqFileList")
+        filelist_elem.tag = tag
 
     @property
     def _filelist_elem(self):
