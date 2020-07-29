@@ -1,6 +1,7 @@
 import re
 import tempfile
 
+from bokeh.io import curdoc
 from bokeh.layouts import column, row
 from bokeh.models import Button, Panel, RadioButtonGroup, Select, TextAreaInput, TextInput
 
@@ -329,6 +330,7 @@ def create():
     process_button.on_click(process_button_callback)
 
     output_log = TextAreaInput(title="Logfile output:", height=700, disabled=True)
+    output_config = TextAreaInput(title="Current config:", height=700, width=400)
 
     tab_layout = row(
         column(
@@ -367,7 +369,15 @@ def create():
                 ),
             ),
         ),
+        output_config,
         output_log,
     )
+
+    async def update_config():
+        config.save_as("debug.xml")
+        with open("debug.xml") as f_config:
+            output_config.value = f_config.read()
+
+    curdoc().add_periodic_callback(update_config, 1000)
 
     return Panel(child=tab_layout, title="Anatric")
