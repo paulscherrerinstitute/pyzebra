@@ -35,7 +35,7 @@ class AnatricConfig:
         self._alg_elems = dict()
         for alg in ALGORITHMS:
             self._alg_elems[alg] = ET.Element("Algorithm", attrib={"implementation": alg})
-            self._alg_elems[alg].text = "\n "
+            self._alg_elems[alg].text = "\n"
             self._alg_elems[alg].tail = "\n\n"
 
         self._alg_elems[self.algorithm] = self._tree.find("Algorithm")
@@ -50,7 +50,8 @@ class AnatricConfig:
         return elem.attrib[attr]
 
     def _set_attr(self, name, tag, attr, value):
-        if value is None:
+        if value == "" or value is None:
+            self._del_attr(name, tag)
             return
 
         tree_elem = self._tree.find(name)
@@ -61,6 +62,12 @@ class AnatricConfig:
             tree_elem.append(new_elem)
         else:
             elem.attrib[attr] = value
+
+    def _del_attr(self, name, tag):
+        tree_elem = self._tree.find(name)
+        param_elem = tree_elem.find(tag)
+        if param_elem is not None:
+            tree_elem.remove(param_elem)
 
     @property
     def logfile(self):
@@ -220,7 +227,8 @@ class AnatricConfig:
         return param_elem.attrib[attr]
 
     def _set_alg_attr(self, alg, tag, attr, value):
-        if value is None:
+        if value == "" or value is None:
+            self._del_alg_attr(alg, tag)
             return
 
         alg_elem = self._alg_elems[alg]
@@ -231,6 +239,12 @@ class AnatricConfig:
             alg_elem.append(new_elem)
         else:
             param_elem.attrib[attr] = value
+
+    def _del_alg_attr(self, alg, tag):
+        alg_elem = self._alg_elems[alg]
+        param_elem = alg_elem.find(tag)
+        if param_elem is not None:
+            alg_elem.remove(param_elem)
 
     # --- adaptivemaxcog
     @property
