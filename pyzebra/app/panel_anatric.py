@@ -307,8 +307,10 @@ def create():
 
     def mode_radio_button_group_callback(active):
         if active == 0:
+            config.algorithm = "adaptivemaxcog"
             set_active_widgets("adaptivemaxcog")
         else:
+            config.algorithm = "adaptivedynamic"
             set_active_widgets("adaptivedynamic")
 
     mode_radio_button_group = RadioButtonGroup(
