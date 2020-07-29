@@ -25,19 +25,23 @@ def anatric(config_file):
 
 class AnatricConfig:
     def __init__(self, filename=None):
-        if filename:
-            self.load_from_file(filename)
-
-    def load_from_file(self, filename):
-        self._tree = ET.parse(filename)
-        self._root = self._tree.getroot()
-
         self._alg_elems = dict()
         for alg in ALGORITHMS:
             self._alg_elems[alg] = ET.Element("Algorithm", attrib={"implementation": alg})
             self._alg_elems[alg].text = "\n"
             self._alg_elems[alg].tail = "\n\n"
 
+        root_elem = ET.Element("anatric")
+        root_elem.text = "\n"
+        root_elem.append(self._alg_elems[ALGORITHMS[0]])
+
+        self._tree = ET.ElementTree(element=root_elem)
+
+        if filename:
+            self.load_from_file(filename)
+
+    def load_from_file(self, filename):
+        self._tree.parse(filename)
         self._alg_elems[self.algorithm] = self._tree.find("Algorithm")
 
     def save_as(self, filename):
@@ -217,8 +221,9 @@ class AnatricConfig:
         if value not in ALGORITHMS:
             raise ValueError("Unknown algorithm.")
 
-        self._root.remove(self._tree.find("Algorithm"))
-        self._root.append(self._alg_elems[value])
+        root = self._tree.getroot()
+        root.remove(self._tree.find("Algorithm"))
+        root.append(self._alg_elems[value])
 
     def _get_alg_attr(self, alg, tag, attr):
         param_elem = self._alg_elems[alg].find(tag)
