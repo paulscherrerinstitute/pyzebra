@@ -60,7 +60,7 @@ def create():
             smoothSize_textinput.value = config.smoothSize
             loop_textinput.value = config.loop
             minPeakCount_textinput.value = config.minPeakCount
-            # displacementCurve_textinput.value = config.displacementCurve
+            displacementCurve_textinput.value = "\n".join(map(str, config.displacementCurve))
         else:
             raise ValueError("Unknown processing mode.")
 
@@ -320,9 +320,14 @@ def create():
 
     # ---- displacementCurve
     def displacementCurve_textinput_callback(_attr, _old, new):
-        config.displacementCurve = new
+        maps = []
+        for line in new.splitlines():
+            maps.append(re.findall(r"\d+(?:\.\d+)?", line))
+        config.displacementCurve = maps
 
-    displacementCurve_textinput = TextInput(title="Displacement Curve:")
+    displacementCurve_textinput = TextAreaInput(
+        title="Displacement Curve (twotheta, x, y):", height=100
+    )
     displacementCurve_textinput.on_change("value", displacementCurve_textinput_callback)
 
     def mode_radio_button_group_callback(active):

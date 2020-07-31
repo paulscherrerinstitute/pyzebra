@@ -409,18 +409,30 @@ class AnatricConfig:
 
     @property
     def displacementCurve(self):
-        param_elem = self._alg_elems["adaptivedynamic"].find("displacementCurve")
-        if param_elem is None:
-            return None
-        return param_elem.attrib["value"]
+        maps = []
+        displacementCurve_elem = self._alg_elems["adaptivedynamic"].find("displacementCurve")
+        if displacementCurve_elem is not None:
+            for map_elem in displacementCurve_elem.findall("map"):
+                maps.append(
+                    (
+                        float(map_elem.attrib["twotheta"]),
+                        float(map_elem.attrib["x"]),
+                        float(map_elem.attrib["y"]),
+                    )
+                )
+
+        return maps
 
     @displacementCurve.setter
     def displacementCurve(self, value):
-        alg_elem = self._alg_elems["adaptivedynamic"]
-        param_elem = alg_elem.find("displacementCurve")
-        if param_elem is None:
-            new_elem = ET.Element("displacementCurve", attrib={"value": value})
-            new_elem.tail = "\n"
-            alg_elem.append(new_elem)
-        else:
-            param_elem.attrib["value"] = value
+        # clear old map elements
+        displacementCurve_elem = self._alg_elems["adaptivedynamic"].find("displacementCurve")
+        for map_elem in displacementCurve_elem.findall("map"):
+            displacementCurve_elem.remove(map_elem)
+
+        # add new map elements
+        for map_vals in value:
+            attrib = {"twotheta": map_vals[0], "x": map_vals[1], "y": map_vals[2]}
+            map_elem = ET.Element("map", attrib=attrib)
+            map_elem.tail = "\n"
+            displacementCurve_elem.append(map_elem)
