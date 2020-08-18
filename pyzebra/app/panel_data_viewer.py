@@ -1,5 +1,4 @@
 import numpy as np
-from bokeh.io import curdoc
 from bokeh.layouts import column, gridplot, row
 from bokeh.models import (
     BasicTicker,
@@ -38,8 +37,6 @@ IMAGE_H = 128
 
 
 def create(init_meta):
-    doc = curdoc()
-
     curent_h5_data = np.array([])
     current_index = None
     det_data = {}
@@ -339,21 +336,6 @@ def create(init_meta):
     next_button = Button(label="Next")
     next_button.on_click(next_button_callback)
 
-    def animate():
-        next_button_callback()
-
-    cb = None
-
-    def animate_toggle_callback(active):
-        nonlocal cb
-        if active:
-            cb = doc.add_periodic_callback(animate, 300)
-        else:
-            doc.remove_periodic_callback(cb)
-
-    animate_toggle = Toggle(label="Animate")
-    animate_toggle.on_click(animate_toggle_callback)
-
     cmap_dict = {
         "gray": Greys256,
         "gray_reversed": Greys256[::-1],
@@ -451,7 +433,7 @@ def create(init_meta):
     # Final layout
     layout_image = gridplot([[proj_v, None], [plot, proj_h]], merge_tools=False)
 
-    animate_layout = column(index_spinner, next_button, prev_button, animate_toggle)
+    animate_layout = column(index_spinner, next_button, prev_button)
     colormap_layout = column(colormap, auto_toggle, display_max_spinner, display_min_spinner)
     hkl_layout = column(radio_button_group, hkl_button)
 
