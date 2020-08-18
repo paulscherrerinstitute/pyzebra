@@ -7,6 +7,7 @@ from bokeh.io import curdoc
 from bokeh.layouts import column, row
 from bokeh.models import (
     Button,
+    Div,
     FileInput,
     Panel,
     RadioButtonGroup,
@@ -21,8 +22,8 @@ import pyzebra
 def create():
     config = pyzebra.AnatricConfig()
 
-    def fileinput_callback(_attr, _old, new):
-        config.load_from_file(new)
+    def _load_config_file(file):
+        config.load_from_file(file)
 
         logfile_textinput.value = config.logfile
         logfile_verbosity_select.value = config.logfile_verbosity
@@ -94,12 +95,11 @@ def create():
         minPeakCount_textinput.disabled = disable_adaptivedynamic
         displacementCurve_textinput.disabled = disable_adaptivedynamic
 
-    fileinput = TextInput(title="Path to XML configuration file:", width=600)
-    fileinput.on_change("value", fileinput_callback)
+    upload_div = Div(text="Open XML configuration file:")
 
     def upload_button_callback(_attr, _old, new):
         with io.BytesIO(base64.b64decode(new)) as file:
-            fileinput_callback(None, None, file)
+            _load_config_file(file)
 
     upload_button = FileInput(accept=".xml")
     upload_button.on_change("value", upload_button_callback)
@@ -361,7 +361,7 @@ def create():
 
     tab_layout = row(
         column(
-            fileinput,
+            upload_div,
             upload_button,
             row(logfile_textinput, logfile_verbosity_select),
             row(filelist_type, filelist_format_textinput),
