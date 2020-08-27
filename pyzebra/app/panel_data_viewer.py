@@ -80,11 +80,27 @@ def create(init_meta):
         overview_y = np.mean(data, axis=2)
 
         overview_plot_x_image_source.data.update(
-            image=[overview_x], dh=[overview_x.shape[0]], dw=[overview_x.shape[1]]
+            image=[overview_x], dw=[overview_x.shape[1]]
         )
         overview_plot_y_image_source.data.update(
-            image=[overview_y], dh=[overview_y.shape[0]], dw=[overview_y.shape[1]]
+            image=[overview_y], dw=[overview_y.shape[1]]
         )
+
+        if frame_button_group.active == 0:  # Frame
+            overview_plot_x_image_source.data.update(
+                y=[1], dh=[overview_x.shape[0]],
+            )
+            overview_plot_y_image_source.data.update(
+                y=[1], dh=[overview_y.shape[0]],
+            )
+        elif frame_button_group.active == 1:  # Omega
+            om = det_data["rot_angle"]
+            overview_plot_x_image_source.data.update(
+                y=[om[0]], dh=[om[-1] - om[0]],
+            )
+            overview_plot_y_image_source.data.update(
+                y=[om[0]], dh=[om[-1] - om[0]],
+            )
 
     filelist = Select()
     filelist.on_change("value", filelist_callback)
@@ -296,6 +312,33 @@ def create(init_meta):
         overview_plot_y_image_source, overview_plot_y_image_glyph, name="image_glyph"
     )
 
+    def frame_button_group_callback(active):
+        if active == 0:  # Frame
+            data = det_data["data"]
+            overview_x = np.mean(data, axis=1)
+            overview_y = np.mean(data, axis=2)
+            overview_plot_x_image_source.data.update(
+                y=[1], dh=[overview_x.shape[0]],
+            )
+            overview_plot_y_image_source.data.update(
+                y=[1], dh=[overview_y.shape[0]],
+            )
+            overview_plot_x.axis[1].axis_label = "Frame"
+            overview_plot_y.axis[1].axis_label = "Frame"
+        elif active == 1:  # Omega
+            om = det_data["rot_angle"]
+            overview_plot_x_image_source.data.update(
+                y=[om[0]], dh=[om[-1] - om[0]],
+            )
+            overview_plot_y_image_source.data.update(
+                y=[om[0]], dh=[om[-1] - om[0]],
+            )
+            overview_plot_x.axis[1].axis_label = "Omega"
+            overview_plot_y.axis[1].axis_label = "Omega"
+
+    frame_button_group = RadioButtonGroup(labels=["Frames", "Omega"], active=0)
+    frame_button_group.on_click(frame_button_group_callback)
+
     roi_avg_plot = Plot(
         x_range=DataRange1d(),
         y_range=DataRange1d(),
@@ -437,8 +480,11 @@ def create(init_meta):
     colormap_layout = column(colormap, auto_toggle, display_max_spinner, display_min_spinner)
     hkl_layout = column(radio_button_group, hkl_button)
 
-    layout_overview = gridplot(
-        [[overview_plot_x, overview_plot_y]], toolbar_options=dict(logo=None), merge_tools=True,
+    layout_overview = column(
+        gridplot(
+            [[overview_plot_x, overview_plot_y]], toolbar_options=dict(logo=None), merge_tools=True,
+        ),
+        frame_button_group,
     )
 
     tab_layout = row(
