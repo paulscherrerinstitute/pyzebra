@@ -3,12 +3,12 @@ import xml.etree.ElementTree as ET
 
 
 ANATRIC_PATH = "/afs/psi.ch/project/sinq/rhel7/bin/anatric"
-DATA_FACTORY_IMPLEMENTATION = (
+DATA_FACTORY_IMPLEMENTATION = [
     "trics",
     "morph",
     "d10",
-)
-REFLECTION_PRINTER_FORMATS = (
+]
+REFLECTION_PRINTER_FORMATS = [
     "rafin",
     "rafinf",
     "rafin2d",
@@ -19,9 +19,9 @@ REFLECTION_PRINTER_FORMATS = (
     "jana2kf",
     "raw",
     "oksana",
-)
+]
 
-ALGORITHMS = ("adaptivemaxcog", "adaptivedynamic")
+ALGORITHMS = ["adaptivemaxcog", "adaptivedynamic"]
 
 
 def anatric(config_file):

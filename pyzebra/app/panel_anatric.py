@@ -17,6 +17,7 @@ from bokeh.models import (
 )
 
 import pyzebra
+from pyzebra.anatric import DATA_FACTORY_IMPLEMENTATION, REFLECTION_PRINTER_FORMATS
 
 
 def create():
@@ -191,7 +192,7 @@ def create():
         config.dataFactory_implementation = new
 
     dataFactory_implementation_select = Select(
-        title="DataFactory implementation:", options=["trics", "morph", "d10",], width=300,
+        title="DataFactory implementation:", options=DATA_FACTORY_IMPLEMENTATION, width=300,
     )
     dataFactory_implementation_select.on_change("value", dataFactory_implementation_select_callback)
 
@@ -210,20 +211,7 @@ def create():
         config.reflectionPrinter_format = new
 
     reflectionPrinter_format_select = Select(
-        title="ReflectionPrinter format:",
-        options=[
-            "rafin",
-            "rafinf",
-            "rafin2d",
-            "rafin2di",
-            "orient",
-            "shelx",
-            "jana2k",
-            "jana2kf",
-            "raw",
-            "oksana",
-        ],
-        width=300,
+        title="ReflectionPrinter format:", options=REFLECTION_PRINTER_FORMATS, width=300,
     )
     reflectionPrinter_format_select.on_change("value", reflectionPrinter_format_select_callback)
 
