@@ -3,6 +3,11 @@ import xml.etree.ElementTree as ET
 
 
 ANATRIC_PATH = "/afs/psi.ch/project/sinq/rhel7/bin/anatric"
+DATA_FACTORY_IMPLEMENTATION = (
+    "trics",
+    "morph",
+    "d10",
+)
 REFLECTION_PRINTER_FORMATS = (
     "rafin",
     "rafinf",
@@ -220,11 +225,22 @@ class AnatricConfig:
         self._tree.find("crystal").find("UB").text = value
 
     @property
-    def dist1(self):
+    def dataFactory_implementation(self):
+        return self._tree.find("DataFactory").attrib["implementation"]
+
+    @dataFactory_implementation.setter
+    def dataFactory_implementation(self, value):
+        if value not in DATA_FACTORY_IMPLEMENTATION:
+            raise ValueError("Unknown DataFactory implementation.")
+
+        self._tree.find("DataFactory").attrib["implementation"] = value
+
+    @property
+    def dataFactory_dist1(self):
         return self._tree.find("DataFactory").find("dist1").attrib["value"]
 
-    @dist1.setter
-    def dist1(self, value):
+    @dataFactory_dist1.setter
+    def dataFactory_dist1(self, value):
         self._tree.find("DataFactory").find("dist1").attrib["value"] = value
 
     @property

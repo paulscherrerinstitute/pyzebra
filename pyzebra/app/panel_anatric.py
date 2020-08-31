@@ -40,7 +40,8 @@ def create():
         zeroCHI_textinput.value = config.crystal_zeroCHI
         ub_textareainput.value = config.crystal_UB
 
-        dist1_textinput.value = config.dist1
+        dataFactory_implementation_select.value = config.dataFactory_implementation
+        dataFactory_dist1_textinput.value = config.dataFactory_dist1
         reflectionPrinter_format_select.value = config.reflectionPrinter_format
 
         set_active_widgets(config.algorithm)
@@ -186,11 +187,19 @@ def create():
     zeroCHI_textinput.on_change("value", zeroCHI_textinput_callback)
 
     # ---- DataFactory
-    def dist1_textinput_callback(_attr, _old, new):
-        config.dist1 = new
+    def dataFactory_implementation_select_callback(_attr, _old, new):
+        config.dataFactory_implementation = new
 
-    dist1_textinput = TextInput(title="Dist1:", width=290)
-    dist1_textinput.on_change("value", dist1_textinput_callback)
+    dataFactory_implementation_select = Select(
+        title="DataFactory implementation:", options=["trics", "morph", "d10",], width=300,
+    )
+    dataFactory_implementation_select.on_change("value", dataFactory_implementation_select_callback)
+
+    def dataFactory_dist1_textinput_callback(_attr, _old, new):
+        config.dataFactory_dist1 = new
+
+    dataFactory_dist1_textinput = TextInput(title="dist1:", width=290)
+    dataFactory_dist1_textinput.on_change("value", dataFactory_dist1_textinput_callback)
 
     # ---- BackgroundProcessor
 
@@ -370,7 +379,8 @@ def create():
             crystal_sample_textinput,
             row(lambda_textinput, zeroOM_textinput, zeroSTT_textinput, zeroCHI_textinput),
             ub_textareainput,
-            row(dist1_textinput, reflectionPrinter_format_select),
+            row(dataFactory_implementation_select, dataFactory_dist1_textinput),
+            reflectionPrinter_format_select,
             process_button,
         ),
         column(
