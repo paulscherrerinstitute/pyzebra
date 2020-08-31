@@ -11,20 +11,19 @@ def read_h5meta(filepath):
         dict: A dictionary with section names and their content.
     """
     h5meta_content = dict()
-    with open(filepath, "r") as h5meta_file:
-        line = h5meta_file.readline()
-        while line:
-            if line.startswith("#begin"):
-                # read section
-                section = line[7:-1]  # len("#begin ") = 7
+    with open(filepath) as h5meta_file:
+        section = None
+        for line in h5meta_file:
+            line = line.strip()
+            if line.startswith("#begin "):
+                section = line[len("#begin "):]
                 h5meta_content[section] = []
-                line = h5meta_file.readline()
-                while not line.startswith("#end"):
-                    h5meta_content[section].append(line[:-1])
-                    line = h5meta_file.readline()
 
-            # read next line after section's end
-            line = h5meta_file.readline()
+            elif line.startswith("#end"):
+                section = None
+
+            elif section:
+                h5meta_content[section].append(line)
 
     return h5meta_content
 
