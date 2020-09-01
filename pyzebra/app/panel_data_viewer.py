@@ -42,7 +42,6 @@ IMAGE_H = 128
 
 def create():
     curent_h5_data = np.array([])
-    current_index = None
     det_data = {}
     roi_selection = {}
 
@@ -58,8 +57,11 @@ def create():
     upload_button = FileInput(accept=".cami")
     upload_button.on_change("value", upload_button_callback)
 
-    def update_image():
-        current_image = curent_h5_data[current_index]
+    def update_image(index=None):
+        if index is None:
+            index = index_spinner.value
+
+        current_image = curent_h5_data[index]
         proj_v_line_source.data.update(
             x=np.arange(0, IMAGE_W) + 0.5, y=np.mean(current_image, axis=0)
         )
@@ -71,7 +73,6 @@ def create():
             h=[np.zeros((1, 1))], k=[np.zeros((1, 1))], l=[np.zeros((1, 1))],
         )
         image_source.data.update(image=[current_image])
-        index_spinner.value = current_index
 
         if auto_toggle.active:
             im_max = int(np.max(current_image))
@@ -84,12 +85,14 @@ def create():
             image_glyph.color_mapper.high = im_max
 
     def filelist_callback(_attr, _old, new):
-        nonlocal curent_h5_data, current_index, det_data
+        nonlocal curent_h5_data, det_data
         det_data = pyzebra.read_detector_data(new)
         data = det_data["data"]
         curent_h5_data = data
-        current_index = 0
-        update_image()
+
+        index_spinner.value = 0
+        index_spinner.high = data.shape[0] - 1
+        update_image(0)
 
         # update overview plots
         overview_x = np.mean(data, axis=1)
@@ -117,15 +120,10 @@ def create():
     filelist = Select()
     filelist.on_change("value", filelist_callback)
 
-    def index_spinner_callback(_attr, old, new):
-        nonlocal current_index
-        if 0 <= new < curent_h5_data.shape[0]:
-            current_index = new
-            update_image()
-        else:
-            index_spinner.value = old
+    def index_spinner_callback(_attr, _old, new):
+        update_image(new)
 
-    index_spinner = Spinner(title="Image index:", value=0)
+    index_spinner = Spinner(title="Image index:", value=0, low=0)
     index_spinner.on_change("value", index_spinner_callback)
 
     plot = Plot(
@@ -429,8 +427,9 @@ def create():
     display_min_spinner.on_change("value", display_min_spinner_callback)
 
     def hkl_button_callback():
+        index = index_spinner.value
         setup_type = "nb_bi" if radio_button_group.active else "nb"
-        h, k, l = calculate_hkl(det_data, current_index, setup_type)
+        h, k, l = calculate_hkl(det_data, index, setup_type)
         image_source.data.update(h=[h], k=[k], l=[l])
 
     hkl_button = Button(label="Calculate hkl (slow)")
