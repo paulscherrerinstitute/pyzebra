@@ -1,3 +1,6 @@
+import base64
+import io
+
 import numpy as np
 from bokeh.layouts import column, gridplot, row
 from bokeh.models import (
@@ -7,6 +10,8 @@ from bokeh.models import (
     Button,
     ColumnDataSource,
     DataRange1d,
+    Div,
+    FileInput,
     Grid,
     HoverTool,
     Image,
@@ -23,7 +28,6 @@ from bokeh.models import (
     Select,
     Spinner,
     TextAreaInput,
-    TextInput,
     Title,
     Toggle,
     WheelZoomTool,
@@ -36,11 +40,23 @@ IMAGE_W = 256
 IMAGE_H = 128
 
 
-def create(init_meta):
+def create():
     curent_h5_data = np.array([])
     current_index = None
     det_data = {}
     roi_selection = {}
+
+    upload_div = Div(text="Open .cami file:")
+
+    def upload_button_callback(_attr, _old, new):
+        with io.StringIO(base64.b64decode(new).decode()) as file:
+            h5meta_list = pyzebra.parse_h5meta(file)
+            file_list = h5meta_list["filelist"]
+            filelist.options = file_list
+            filelist.value = file_list[0]
+
+    upload_button = FileInput(accept=".cami")
+    upload_button.on_change("value", upload_button_callback)
 
     def update_image():
         current_image = curent_h5_data[current_index]
@@ -79,12 +95,8 @@ def create(init_meta):
         overview_x = np.mean(data, axis=1)
         overview_y = np.mean(data, axis=2)
 
-        overview_plot_x_image_source.data.update(
-            image=[overview_x], dw=[overview_x.shape[1]]
-        )
-        overview_plot_y_image_source.data.update(
-            image=[overview_y], dw=[overview_y.shape[1]]
-        )
+        overview_plot_x_image_source.data.update(image=[overview_x], dw=[overview_x.shape[1]])
+        overview_plot_y_image_source.data.update(image=[overview_y], dw=[overview_y.shape[1]])
 
         if frame_button_group.active == 0:  # Frame
             overview_plot_x_image_source.data.update(
@@ -104,15 +116,6 @@ def create(init_meta):
 
     filelist = Select()
     filelist.on_change("value", filelist_callback)
-
-    def fileinput_callback(_attr, _old, new):
-        h5meta_list = pyzebra.read_h5meta(new)
-        file_list = h5meta_list["filelist"]
-        filelist.options = file_list
-        filelist.value = file_list[0]
-
-    fileinput = TextInput()
-    fileinput.on_change("value", fileinput_callback)
 
     def index_spinner_callback(_attr, _old, new):
         nonlocal current_index
@@ -488,13 +491,15 @@ def create(init_meta):
     )
 
     tab_layout = row(
-        column(fileinput, filelist, layout_image, row(colormap_layout, animate_layout, hkl_layout)),
+        column(
+            upload_div,
+            upload_button,
+            filelist,
+            layout_image,
+            row(colormap_layout, animate_layout, hkl_layout),
+        ),
         column(roi_avg_plot, layout_overview, row(selection_button, selection_list),),
     )
-
-    # initiate fileinput
-    if init_meta:
-        fileinput.value = init_meta
 
     return Panel(child=tab_layout, title="Data Viewer")
 

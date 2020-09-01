@@ -2,7 +2,7 @@ import h5py
 
 
 def read_h5meta(filepath):
-    """Read and parse content of a h5meta file.
+    """Open and parse content of a h5meta file.
 
     Args:
         filepath (str): File path of a h5meta file.
@@ -10,22 +10,28 @@ def read_h5meta(filepath):
     Returns:
         dict: A dictionary with section names and their content.
     """
-    h5meta_content = dict()
-    with open(filepath) as h5meta_file:
-        section = None
-        for line in h5meta_file:
-            line = line.strip()
-            if line.startswith("#begin "):
-                section = line[len("#begin "):]
-                h5meta_content[section] = []
+    with open(filepath) as file:
+        content = parse_h5meta(file)
 
-            elif line.startswith("#end"):
-                section = None
+    return content
 
-            elif section:
-                h5meta_content[section].append(line)
 
-    return h5meta_content
+def parse_h5meta(file):
+    content = dict()
+    section = None
+    for line in file:
+        line = line.strip()
+        if line.startswith("#begin "):
+            section = line[len("#begin "):]
+            content[section] = []
+
+        elif line.startswith("#end"):
+            section = None
+
+        elif section:
+            content[section].append(line)
+
+    return content
 
 
 def read_detector_data(filepath):
