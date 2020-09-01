@@ -117,13 +117,15 @@ def create():
     filelist = Select()
     filelist.on_change("value", filelist_callback)
 
-    def index_spinner_callback(_attr, _old, new):
+    def index_spinner_callback(_attr, old, new):
         nonlocal current_index
         if 0 <= new < curent_h5_data.shape[0]:
             current_index = new
             update_image()
+        else:
+            index_spinner.value = old
 
-    index_spinner = Spinner(value=0)
+    index_spinner = Spinner(title="Image index:", value=0)
     index_spinner.on_change("value", index_spinner_callback)
 
     plot = Plot(
@@ -364,24 +366,6 @@ def create():
     roi_avg_plot_line_source = ColumnDataSource(dict(x=[], y=[]))
     roi_avg_plot.add_glyph(roi_avg_plot_line_source, Line(x="x", y="y", line_color="steelblue"))
 
-    def prev_button_callback():
-        nonlocal current_index
-        if current_index > 0:
-            current_index -= 1
-        update_image()
-
-    prev_button = Button(label="Previous")
-    prev_button.on_click(prev_button_callback)
-
-    def next_button_callback():
-        nonlocal current_index
-        if current_index < curent_h5_data.shape[0] - 1:
-            current_index += 1
-        update_image()
-
-    next_button = Button(label="Next")
-    next_button.on_click(next_button_callback)
-
     cmap_dict = {
         "gray": Greys256,
         "gray_reversed": Greys256[::-1],
@@ -477,9 +461,9 @@ def create():
     selection_button.on_click(selection_button_callback)
 
     # Final layout
-    layout_image = gridplot([[proj_v, None], [plot, proj_h]], merge_tools=False)
-
-    animate_layout = column(index_spinner, next_button, prev_button)
+    layout_image = column(
+        gridplot([[proj_v, None], [plot, proj_h]], merge_tools=False), row(index_spinner)
+    )
     colormap_layout = column(colormap, auto_toggle, display_max_spinner, display_min_spinner)
     hkl_layout = column(radio_button_group, hkl_button)
 
@@ -492,11 +476,7 @@ def create():
 
     tab_layout = row(
         column(
-            upload_div,
-            upload_button,
-            filelist,
-            layout_image,
-            row(colormap_layout, animate_layout, hkl_layout),
+            upload_div, upload_button, filelist, layout_image, row(colormap_layout, hkl_layout),
         ),
         column(roi_avg_plot, layout_overview, row(selection_button, selection_list),),
     )
