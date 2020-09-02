@@ -41,7 +41,6 @@ IMAGE_H = 128
 
 
 def create():
-    curent_h5_data = np.array([])
     det_data = {}
     roi_selection = {}
 
@@ -61,7 +60,7 @@ def create():
         if index is None:
             index = index_spinner.value
 
-        current_image = curent_h5_data[index]
+        current_image = det_data["data"][index]
         proj_v_line_source.data.update(
             x=np.arange(0, IMAGE_W) + 0.5, y=np.mean(current_image, axis=0)
         )
@@ -85,9 +84,10 @@ def create():
             image_glyph.color_mapper.high = im_max
 
     def update_overview_plot():
-        n_im, n_y, n_x = curent_h5_data.shape
-        overview_x = np.mean(curent_h5_data, axis=1)
-        overview_y = np.mean(curent_h5_data, axis=2)
+        h5_data = det_data["data"]
+        n_im, n_y, n_x = h5_data.shape
+        overview_x = np.mean(h5_data, axis=1)
+        overview_y = np.mean(h5_data, axis=2)
 
         overview_plot_x_image_source.data.update(image=[overview_x], dw=[n_x])
         overview_plot_y_image_source.data.update(image=[overview_y], dw=[n_y])
@@ -110,13 +110,11 @@ def create():
             overview_plot_y_image_source.data.update(y=[om_start], dh=[om_end])
 
     def filelist_callback(_attr, _old, new):
-        nonlocal curent_h5_data, det_data
+        nonlocal det_data
         det_data = pyzebra.read_detector_data(new)
-        data = det_data["data"]
-        curent_h5_data = data
 
         index_spinner.value = 0
-        index_spinner.high = curent_h5_data.shape[0] - 1
+        index_spinner.high = det_data["data"].shape[0] - 1
         update_image(0)
         update_overview_plot()
 
@@ -220,12 +218,13 @@ def create():
 
     def box_edit_callback(_attr, _old, new):
         if new["x"]:
-            x_val = np.arange(curent_h5_data.shape[0])
+            h5_data = det_data["data"]
+            x_val = np.arange(h5_data.shape[0])
             left = int(np.floor(new["x"][0]))
             right = int(np.ceil(new["x"][0] + new["width"][0]))
             bottom = int(np.floor(new["y"][0]))
             top = int(np.ceil(new["y"][0] + new["height"][0]))
-            y_val = np.sum(curent_h5_data[:, bottom:top, left:right], axis=(1, 2))
+            y_val = np.sum(h5_data[:, bottom:top, left:right], axis=(1, 2))
         else:
             x_val = []
             y_val = []
