@@ -84,6 +84,28 @@ def create():
             image_glyph.color_mapper.low = im_min
             image_glyph.color_mapper.high = im_max
 
+    def update_overview_plot():
+        overview_x = np.mean(curent_h5_data, axis=1)
+        overview_y = np.mean(curent_h5_data, axis=2)
+
+        overview_plot_x_image_source.data.update(image=[overview_x], dw=[overview_x.shape[1]])
+        overview_plot_y_image_source.data.update(image=[overview_y], dw=[overview_y.shape[1]])
+
+        if frame_button_group.active == 0:  # Frame
+            overview_plot_x.axis[1].axis_label = "Frame"
+            overview_plot_y.axis[1].axis_label = "Frame"
+
+            overview_plot_x_image_source.data.update(y=[1], dh=[overview_x.shape[0]])
+            overview_plot_y_image_source.data.update(y=[1], dh=[overview_y.shape[0]])
+
+        elif frame_button_group.active == 1:  # Omega
+            overview_plot_x.axis[1].axis_label = "Omega"
+            overview_plot_y.axis[1].axis_label = "Omega"
+
+            om = det_data["rot_angle"]
+            overview_plot_x_image_source.data.update(y=[om[0]], dh=[om[-1] - om[0]])
+            overview_plot_y_image_source.data.update(y=[om[0]], dh=[om[-1] - om[0]])
+
     def filelist_callback(_attr, _old, new):
         nonlocal curent_h5_data, det_data
         det_data = pyzebra.read_detector_data(new)
@@ -91,31 +113,9 @@ def create():
         curent_h5_data = data
 
         index_spinner.value = 0
-        index_spinner.high = data.shape[0] - 1
+        index_spinner.high = curent_h5_data.shape[0] - 1
         update_image(0)
-
-        # update overview plots
-        overview_x = np.mean(data, axis=1)
-        overview_y = np.mean(data, axis=2)
-
-        overview_plot_x_image_source.data.update(image=[overview_x], dw=[overview_x.shape[1]])
-        overview_plot_y_image_source.data.update(image=[overview_y], dw=[overview_y.shape[1]])
-
-        if frame_button_group.active == 0:  # Frame
-            overview_plot_x_image_source.data.update(
-                y=[1], dh=[overview_x.shape[0]],
-            )
-            overview_plot_y_image_source.data.update(
-                y=[1], dh=[overview_y.shape[0]],
-            )
-        elif frame_button_group.active == 1:  # Omega
-            om = det_data["rot_angle"]
-            overview_plot_x_image_source.data.update(
-                y=[om[0]], dh=[om[-1] - om[0]],
-            )
-            overview_plot_y_image_source.data.update(
-                y=[om[0]], dh=[om[-1] - om[0]],
-            )
+        update_overview_plot()
 
     filelist = Select()
     filelist.on_change("value", filelist_callback)
@@ -315,29 +315,8 @@ def create():
         overview_plot_y_image_source, overview_plot_y_image_glyph, name="image_glyph"
     )
 
-    def frame_button_group_callback(active):
-        if active == 0:  # Frame
-            data = det_data["data"]
-            overview_x = np.mean(data, axis=1)
-            overview_y = np.mean(data, axis=2)
-            overview_plot_x_image_source.data.update(
-                y=[1], dh=[overview_x.shape[0]],
-            )
-            overview_plot_y_image_source.data.update(
-                y=[1], dh=[overview_y.shape[0]],
-            )
-            overview_plot_x.axis[1].axis_label = "Frame"
-            overview_plot_y.axis[1].axis_label = "Frame"
-        elif active == 1:  # Omega
-            om = det_data["rot_angle"]
-            overview_plot_x_image_source.data.update(
-                y=[om[0]], dh=[om[-1] - om[0]],
-            )
-            overview_plot_y_image_source.data.update(
-                y=[om[0]], dh=[om[-1] - om[0]],
-            )
-            overview_plot_x.axis[1].axis_label = "Omega"
-            overview_plot_y.axis[1].axis_label = "Omega"
+    def frame_button_group_callback(_active):
+        update_overview_plot()
 
     frame_button_group = RadioButtonGroup(labels=["Frames", "Omega"], active=0)
     frame_button_group.on_click(frame_button_group_callback)
