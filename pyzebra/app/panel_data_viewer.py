@@ -85,26 +85,29 @@ def create():
             image_glyph.color_mapper.high = im_max
 
     def update_overview_plot():
+        n_im, n_y, n_x = curent_h5_data.shape
         overview_x = np.mean(curent_h5_data, axis=1)
         overview_y = np.mean(curent_h5_data, axis=2)
 
-        overview_plot_x_image_source.data.update(image=[overview_x], dw=[overview_x.shape[1]])
-        overview_plot_y_image_source.data.update(image=[overview_y], dw=[overview_y.shape[1]])
+        overview_plot_x_image_source.data.update(image=[overview_x], dw=[n_x])
+        overview_plot_y_image_source.data.update(image=[overview_y], dw=[n_y])
 
         if frame_button_group.active == 0:  # Frame
             overview_plot_x.axis[1].axis_label = "Frame"
             overview_plot_y.axis[1].axis_label = "Frame"
 
-            overview_plot_x_image_source.data.update(y=[1], dh=[overview_x.shape[0]])
-            overview_plot_y_image_source.data.update(y=[1], dh=[overview_y.shape[0]])
+            overview_plot_x_image_source.data.update(y=[0], dh=[n_im])
+            overview_plot_y_image_source.data.update(y=[0], dh=[n_im])
 
         elif frame_button_group.active == 1:  # Omega
             overview_plot_x.axis[1].axis_label = "Omega"
             overview_plot_y.axis[1].axis_label = "Omega"
 
             om = det_data["rot_angle"]
-            overview_plot_x_image_source.data.update(y=[om[0]], dh=[om[-1] - om[0]])
-            overview_plot_y_image_source.data.update(y=[om[0]], dh=[om[-1] - om[0]])
+            om_start = om[0]
+            om_end = (om[-1] - om[0]) * n_im / (n_im - 1)
+            overview_plot_x_image_source.data.update(y=[om_start], dh=[om_end])
+            overview_plot_y_image_source.data.update(y=[om_start], dh=[om_end])
 
     def filelist_callback(_attr, _old, new):
         nonlocal curent_h5_data, det_data
