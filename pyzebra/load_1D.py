@@ -1,6 +1,12 @@
 import re
 import numpy as np
 
+META_VARS_STR = ('instrument', 'title', 'sample', 'user', 'ProposalID', 'original_filename', 'date',
+                     'zebra_mode','proposal', 'proposal_user', 'proposal_title', 'proposal_email')
+META_VARS_FLOAT = ('mf', '2-theta', 'chi', 'phi', 'nu', 'temp', 'wavelenght', 'a', 'b', 'c', 'alpha', 'beta',
+                    'gamma', 'cex1', 'cex2', 'mexz', 'moml', 'mcvl', 'momu', 'mcvu', 'detectorDistance', 'snv',
+                    'snh', 'snvm', 'snhm', 's1vt', 's1vb', 's1hr', 's1hl', 's2vt', 's2vb', 's2hr', 's2hl')
+META_UB_MATRIX = ('ub1j', 'ub2j', 'ub3j')
 
 def load_1D(filepath):
     """
@@ -16,12 +22,6 @@ def load_1D(filepath):
     """
 
     det_variables = {"file_type": str(filepath)[-3:], "meta": {}}
-    meta_vars_str = ('instrument', 'title', 'sample', 'user', 'ProposalID', 'original_filename', 'date',
-                     'zebra_mode','proposal', 'proposal_user', 'proposal_title', 'proposal_email')
-    meta_vars_float = ('mf', '2-theta', 'chi', 'phi', 'nu', 'temp', 'wavelenght', 'a', 'b', 'c', 'alpha', 'beta',
-                       'gamma', 'cex1', 'cex2', 'mexz', 'moml', 'mcvl', 'momu', 'mcvu', 'detectorDistance', 'snv',
-                       'snh', 'snvm', 'snhm', 's1vt', 's1vb', 's1hr', 's1hl', 's2vt', 's2vb', 's2hr', 's2hl')
-    meta_ub_matrix = ('ub1j', 'ub2j', 'ub3j')
     with open(filepath, 'r') as infile:
         for line in infile:
             det_variables["Measurements"] = {}
@@ -29,11 +29,11 @@ def load_1D(filepath):
                 variable, value = line.split('=')
                 variable = variable.strip()
                 try:
-                    if variable in meta_vars_float:
+                    if variable in META_VARS_FLOAT:
                         det_variables["meta"][variable] = float(value)
-                    elif variable in meta_vars_str:
+                    elif variable in META_VARS_STR:
                         det_variables["meta"][variable] = str(value)[:-1].strip()
-                    elif variable in meta_ub_matrix:
+                    elif variable in META_UB_MATRIX:
                         det_variables["meta"][variable] = re.findall(r"[-+]?\d*\.\d+|\d+", str(value))
                 except ValueError as error:
                     print('Some values are not in expected format (str or float), error:', str(error))
