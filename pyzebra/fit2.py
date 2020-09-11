@@ -1,9 +1,8 @@
-from lmfit import minimize, Parameters, Model
-from lmfit.models import LinearModel, LorentzianModel, GaussianModel
-from scipy.integrate import simps
-import scipy as sc
-from scipy import integrate
 import numpy as np
+from lmfit import Model, Parameters
+from scipy import integrate
+from scipy.integrate import simps
+
 
 def fitccl(
     data, keys, guess, vary, constraints_min, constraints_max, numfit_min=None, numfit_max=None
