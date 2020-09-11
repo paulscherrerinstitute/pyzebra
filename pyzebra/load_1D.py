@@ -1,5 +1,6 @@
 import re
 import numpy as np
+from decimal import Decimal
 
 META_VARS_STR = (
     "instrument",
@@ -81,6 +82,7 @@ def load_1D(filepath):
 
             elif "#data" in line:
                 if det_variables["file_type"] == "ccl":
+                    decimal = list()
                     data = infile.readlines()
                     position = -1
                     for lines in data:
@@ -95,8 +97,11 @@ def load_1D(filepath):
                             measurement_number = int(lines.split()[0])
                             d = {}
                             d["h_index"] = float(lines.split()[1])
+                            decimal.append(bool(Decimal(d["h_index"]) % 1 == 0))
                             d["k_index"] = float(lines.split()[2])
+                            decimal.append(bool(Decimal(d["k_index"]) % 1 == 0))
                             d["l_index"] = float(lines.split()[3])
+                            decimal.append(bool(Decimal(d["l_index"]) % 1 == 0))
                             if det_variables["meta"]["zebra_mode"] == "bi":
                                 d["twotheta_angle"] = float(lines.split()[4])  # gamma
                                 d["omega_angle"] = float(lines.split()[5])  # omega
@@ -157,5 +162,9 @@ def load_1D(filepath):
                     det_variables["Measurements"]["time"] = time
                 else:
                     print("Unknown file extention")
+    if all(decimal):
+        det_variables["meta"]["indices"] = "hkl"
+    else:
+        det_variables["meta"]["indices"] = "real"
 
     return det_variables
