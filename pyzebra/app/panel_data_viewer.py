@@ -241,14 +241,13 @@ def create():
 
     # shared frame range
     frame_range = DataRange1d()
-    det_x_range = DataRange1d()
+    det_x_range = Range1d(0, IMAGE_W, bounds=(0, IMAGE_W))
     overview_plot_x = Plot(
         title=Title(text="Projections on X-axis"),
         x_range=det_x_range,
         y_range=frame_range,
-        plot_height=400,
-        plot_width=400,
-        toolbar_location="left",
+        plot_height=500,
+        plot_width=IMAGE_W * 3,
     )
 
     # ---- tools
@@ -271,7 +270,7 @@ def create():
 
     # ---- rgba image glyph
     overview_plot_x_image_source = ColumnDataSource(
-        dict(image=[np.zeros((1, 1), dtype="float32")], x=[0], y=[0], dw=[1], dh=[1])
+        dict(image=[np.zeros((1, 1), dtype="float32")], x=[0], y=[0], dw=[IMAGE_W], dh=[1])
     )
 
     overview_plot_x_image_glyph = Image(image="image", x="x", y="y", dw="dw", dh="dh")
@@ -279,14 +278,13 @@ def create():
         overview_plot_x_image_source, overview_plot_x_image_glyph, name="image_glyph"
     )
 
-    det_y_range = DataRange1d()
+    det_y_range = Range1d(0, IMAGE_H, bounds=(0, IMAGE_H))
     overview_plot_y = Plot(
         title=Title(text="Projections on Y-axis"),
         x_range=det_y_range,
         y_range=frame_range,
-        plot_height=400,
-        plot_width=400,
-        toolbar_location="left",
+        plot_height=500,
+        plot_width=IMAGE_H * 3,
     )
 
     # ---- tools
@@ -309,7 +307,7 @@ def create():
 
     # ---- rgba image glyph
     overview_plot_y_image_source = ColumnDataSource(
-        dict(image=[np.zeros((1, 1), dtype="float32")], x=[0], y=[0], dw=[1], dh=[1])
+        dict(image=[np.zeros((1, 1), dtype="float32")], x=[0], y=[0], dw=[IMAGE_H], dh=[1])
     )
 
     overview_plot_y_image_glyph = Image(image="image", x="x", y="y", dw="dw", dh="dh")
@@ -326,7 +324,7 @@ def create():
     roi_avg_plot = Plot(
         x_range=DataRange1d(),
         y_range=DataRange1d(),
-        plot_height=IMAGE_H * 3,
+        plot_height=200,
         plot_width=IMAGE_W * 3,
         toolbar_location="left",
     )
@@ -449,19 +447,21 @@ def create():
 
     layout_overview = column(
         gridplot(
-            [[overview_plot_x, overview_plot_y]], toolbar_options=dict(logo=None), merge_tools=True,
+            [[overview_plot_x, overview_plot_y]],
+            toolbar_options=dict(logo=None),
+            merge_tools=True,
+            toolbar_location="left",
         ),
-        row(frame_button_group),
     )
 
     upload_div = Div(text="Upload .cami file:")
     tab_layout = row(
         column(
             row(column(Spacer(height=5), upload_div), upload_button, filelist),
-            layout_image,
-            row(colormap_layout, hkl_layout),
+            layout_overview,
+            row(frame_button_group, selection_button, selection_list),
         ),
-        column(roi_avg_plot, layout_overview, row(selection_button, selection_list),),
+        column(roi_avg_plot, layout_image, row(colormap_layout, hkl_layout)),
     )
 
     return Panel(child=tab_layout, title="Data Viewer")
