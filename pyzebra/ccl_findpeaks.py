@@ -5,7 +5,7 @@ from scipy.signal import savgol_filter
 
 
 def ccl_findpeaks(
-    data, keys, int_threshold=None, prominence=None, smooth=True, window_size=None, poly_order=None
+    data, keys, int_threshold=0.8, prominence=50, smooth=False, window_size=7, poly_order=3
 ):
 
     """function iterates through the dictionary created by load_cclv2 and locates peaks for each measurement
@@ -32,12 +32,6 @@ def ccl_findpeaks(
 
     if type(data) is not dict and data["file_type"] != "ccl":
         print("Data is not a dictionary or was not made from ccl file")
-
-    int_threshold = 0.75 if int_threshold is None else int_threshold
-    prominence = 50 if prominence is None else prominence
-    smooth = False if smooth is None else smooth
-    window_size = 7 if window_size is None else window_size
-    poly_order = 3 if poly_order is None else poly_order
 
     if 0 <= int_threshold <= 1:
         pass
