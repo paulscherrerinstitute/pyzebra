@@ -1,5 +1,6 @@
 import base64
 import io
+import os
 
 import numpy as np
 from bokeh.layouts import column, gridplot, row
@@ -26,6 +27,7 @@ from bokeh.models import (
     Rect,
     ResetTool,
     Select,
+    Spacer,
     Spinner,
     TextAreaInput,
     Title,
@@ -44,13 +46,11 @@ def create():
     det_data = {}
     roi_selection = {}
 
-    upload_div = Div(text="Open .cami file:")
-
     def upload_button_callback(_attr, _old, new):
         with io.StringIO(base64.b64decode(new).decode()) as file:
             h5meta_list = pyzebra.parse_h5meta(file)
             file_list = h5meta_list["filelist"]
-            filelist.options = file_list
+            filelist.options = [(entry, os.path.basename(entry)) for entry in file_list]
             filelist.value = file_list[0]
 
     upload_button = FileInput(accept=".cami")
@@ -451,12 +451,15 @@ def create():
         gridplot(
             [[overview_plot_x, overview_plot_y]], toolbar_options=dict(logo=None), merge_tools=True,
         ),
-        frame_button_group,
+        row(frame_button_group),
     )
 
+    upload_div = Div(text="Upload .cami file:")
     tab_layout = row(
         column(
-            upload_div, upload_button, filelist, layout_image, row(colormap_layout, hkl_layout),
+            row(column(Spacer(height=5), upload_div), upload_button, filelist),
+            layout_image,
+            row(colormap_layout, hkl_layout),
         ),
         column(roi_avg_plot, layout_overview, row(selection_button, selection_list),),
     )
