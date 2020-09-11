@@ -1,6 +1,3 @@
-path = "C:\\Users\\Jakub\\Desktop\\"
-name = "test"
-
 
 def fill_string(string, total_lenght):
     """fills string to tatal_length with whitespaces
@@ -13,15 +10,15 @@ def fill_string(string, total_lenght):
     return return_string
 
 
-def export_comm(data, name):
+def export_comm(data, path):
     """exports data in the *.comm format
+    :param path: path to file + name
     :arg data - data to export, is dict after peak fitting
-    arg: name - name of the exported file
     """
 
     if data["meta"]["indices"] == "hkl":
         extension = ".comm"
-        with open(str(path + name + extension), "w") as out_file:
+        with open(str(path + extension), "w") as out_file:
             for keys in data["Measurements"]:
                 try:
                     meas_number_str = fill_string(keys[1:], 6)
@@ -80,7 +77,7 @@ def export_comm(data, name):
 
     elif data["meta"]["indices"] == "real":
         extension = ".incomm"
-        with open(str(path + name + extension), "w") as out_file:
+        with open(str(path + extension), "w") as out_file:
             for keys in data["Measurements"]:
                 try:
                     meas_number_str = fill_string(keys[1:], 4)
