@@ -1,12 +1,9 @@
 from lmfit import minimize, Parameters, Model
 from lmfit.models import LinearModel, LorentzianModel, GaussianModel
-import matplotlib.pyplot as plt
 from scipy.integrate import simps
 import scipy as sc
 from scipy import integrate
 import numpy as np
-from time import sleep
-
 
 def fitccl(data, keys, guess, vary, constraints_min, constraints_max, numfit_min=None, numfit_max=None):
     """Made for fitting of ccl date where 1 peak is expected. Allows for combination of gaussian, lorentzian and linear model combination
@@ -113,26 +110,6 @@ def fitccl(data, keys, guess, vary, constraints_min, constraints_max, numfit_min
         print(result.params['g_cen'].value)
         num_int_area = simps(y[numfit_min:numfit_max], x[numfit_min:numfit_max])
         num_int_bacground = integrate.quad(background, numfit_min, numfit_max, args=(result.params['slope'].value,result.params['intercept'].value))
-
-        plt.plot(x, y, 'b', label='Original data')
-        plt.plot(x, comps['gaussian'], 'r--', label='Gaussian component')
-        plt.fill_between(x, comps['gaussian'], facecolor="red", alpha=0.4)
-        plt.plot(x, comps['lorentzian'], 'b--', label='Lorentzian component')
-        plt.fill_between(x, comps['lorentzian'], facecolor="blue", alpha=0.4)
-        plt.plot(x, comps['background'], 'g--', label='Line component')
-        plt.fill_between(x, comps['background'], facecolor="green", alpha=0.4)
-        #plt.plot(x[numfit_min:numfit_max],y[numfit_min:numfit_max], 'vy', markersize=7)
-        plt.fill_between(x[numfit_min:numfit_max], y[numfit_min:numfit_max], facecolor="yellow", alpha=0.4, label='Integrated area')
-        #plt.plot(x, result.init_fit, 'k--', label='initial fit')
-        plt.plot(x, result.best_fit, 'k-', label='Best fit')
-        plt.title('%s \n Gaussian: centre = %9.4f, width = %9.4f, amp = %9.4f \n'
-                  'Lorentzian: centre, %9.4f, width = %9.4f, amp = %9.4f \n'
-                 'background: slope = %9.4f, intercept = %9.4f, int_area %9.4f' % (keys, result.params['g_cen'].value, result.params['g_width'].value,
-                  result.params['g_amp'].value, result.params['l_cen'].value, result.params['l_width'].value,
-                  result.params['l_amp'].value, result.params['slope'].value, result.params['intercept'].value, num_int_area))
-
-        plt.legend(loc='best')
-        plt.show()
         d = {}
         for pars in result.params:
             d[str(pars)] = (result.params[str(pars)].value, result.params[str(pars)].vary)
