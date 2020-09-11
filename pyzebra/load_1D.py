@@ -72,19 +72,12 @@ def load_1D(filepath):
             if "=" in line:
                 variable, value = line.split("=")
                 variable = variable.strip()
-                try:
-                    if variable in META_VARS_FLOAT:
-                        det_variables["meta"][variable] = float(value)
-                    elif variable in META_VARS_STR:
-                        det_variables["meta"][variable] = str(value)[:-1].strip()
-                    elif variable in META_UB_MATRIX:
-                        det_variables["meta"][variable] = re.findall(
-                            r"[-+]?\d*\.\d+|\d+", str(value)
-                        )
-                except ValueError as error:
-                    print(
-                        "Some values are not in expected format (str or float), error:", str(error)
-                    )
+                if variable in META_VARS_FLOAT:
+                    det_variables["meta"][variable] = float(value)
+                elif variable in META_VARS_STR:
+                    det_variables["meta"][variable] = str(value)[:-1].strip()
+                elif variable in META_UB_MATRIX:
+                    det_variables["meta"][variable] = re.findall(r"[-+]?\d*\.\d+|\d+", str(value))
 
             elif "#data" in line:
                 if det_variables["file_type"] == "ccl":
