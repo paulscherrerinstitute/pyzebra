@@ -4,6 +4,12 @@ from scipy import integrate
 from scipy.integrate import simps
 
 
+def find_nearest(array, value):
+    array = np.asarray(array)
+    idx = (np.abs(array - value)).argmin()
+    return idx
+
+
 def fitccl(
     data, keys, guess, vary, constraints_min, constraints_max, numfit_min=None, numfit_max=None
 ):
@@ -100,7 +106,17 @@ def fitccl(
     )
     numfit_min = gauss_3sigmamin if numfit_min is None else find_nearest(x, numfit_min)
     numfit_max = gauss_3sigmamax if numfit_max is None else find_nearest(x, numfit_max)
-    print(numfit_max, numfit_min)
+    it = -1
+
+    while numfit_max == numfit_min:
+        it = it + 1
+        numfit_min = find_nearest(
+            x, result.params["g_cen"].value - 3 * (1 + it / 10) * result.params["g_width"].value
+        )
+        numfit_max = find_nearest(
+            x, result.params["g_cen"].value + 3 * (1 + it / 10) * result.params["g_width"].value
+        )
+
     if x[numfit_min] < np.min(x):
         numfit_min = gauss_3sigmamin
         print("Minimal integration value outside of x range")
@@ -130,8 +146,8 @@ def fitccl(
     d = {}
     for pars in result.params:
         d[str(pars)] = (result.params[str(pars)].value, result.params[str(pars)].vary)
-        
-    d["export_fit"] = False  
+
+    d["export_fit"] = False
     d["int_area"] = num_int_area
     d["int_background"] = num_int_bacground
     d["full_report"] = result.fit_report()
