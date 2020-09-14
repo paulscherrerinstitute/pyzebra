@@ -122,15 +122,16 @@ def fitccl(
     num_int_area = simps(y[numfit_min:numfit_max], x[numfit_min:numfit_max])
     num_int_bacground = integrate.quad(
         background,
-        numfit_min,
-        numfit_max,
+        x[numfit_min],
+        x[numfit_max],
         args=(result.params["slope"].value, result.params["intercept"].value),
     )
 
     d = {}
     for pars in result.params:
         d[str(pars)] = (result.params[str(pars)].value, result.params[str(pars)].vary)
-
+        
+    d["export_fit"] = False  
     d["int_area"] = num_int_area
     d["int_background"] = num_int_bacground
     d["full_report"] = result.fit_report()
