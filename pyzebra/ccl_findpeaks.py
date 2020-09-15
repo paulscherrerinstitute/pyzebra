@@ -29,6 +29,7 @@ def ccl_findpeaks(
                                         'peak_heights': [90.],          # height of the peaks (if data vere smoothed
                                                                         its the heigh of the peaks in smoothed data)
     """
+    meas = data["Measurements"][keys]
 
     if type(data) is not dict and data["file_type"] != "ccl":
         print("Data is not a dictionary or was not made from ccl file")
@@ -44,7 +45,8 @@ def ccl_findpeaks(
         window_size = 7
         print(
             "Invalid value for window_size, select positive odd integer, new value set to!:",
-            window_size)
+            window_size,
+        )
 
     if isinstance(poly_order, int) is False or window_size < poly_order:
         poly_order = 3
@@ -57,9 +59,8 @@ def ccl_findpeaks(
         prominence = 50
         print("Invalid value for prominence, select positive number, new value set to:", prominence)
 
-
-    omega = data["Measurements"][str(keys)]["om"]
-    counts = np.array(data["Measurements"][str(keys)]["Counts"])
+    omega = meas["om"]
+    counts = np.array(meas["Counts"])
     if smooth is True:
         itp = interp1d(omega, counts, kind="linear")
         absintensity = [abs(number) for number in counts]
@@ -73,9 +74,9 @@ def ccl_findpeaks(
     indexes = sc.signal.find_peaks(
         smooth_peaks, height=int_threshold * max(smooth_peaks), prominence=prominence
     )
-    data["Measurements"][str(keys)]["num_of_peaks"] = len(indexes[0])
-    data["Measurements"][str(keys)]["peak_indexes"] = indexes[0]
-    data["Measurements"][str(keys)]["peak_heights"] = indexes[1]["peak_heights"]
-    data["Measurements"][str(keys)]["smooth_peaks"] = smooth_peaks  # smoothed curve
+    meas["num_of_peaks"] = len(indexes[0])
+    meas["peak_indexes"] = indexes[0]
+    meas["peak_heights"] = indexes[1]["peak_heights"]
+    meas["smooth_peaks"] = smooth_peaks  # smoothed curve
 
     return data

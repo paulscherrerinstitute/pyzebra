@@ -35,15 +35,16 @@ def fitccl(
     constraints_min = [23, None, 50, None, None, None, 0, 0]
     constraints_min = [80, None, 1000, None, None, None, 0, 100]
     """
+    meas = data["Measurements"][keys]
 
-    if len(data["Measurements"][str(keys)]["peak_indexes"]) != 1:
+    if len(meas["peak_indexes"]) != 1:
         print("NO PEAK or more than 1 peak")
         return
 
-    x = list(data["Measurements"][str(keys)]["om"])
-    y = list(data["Measurements"][str(keys)]["Counts"])
-    peak_index = data["Measurements"][str(keys)]["peak_indexes"]
-    peak_height = data["Measurements"][str(keys)]["peak_heights"]
+    x = list(meas["om"])
+    y = list(meas["Counts"])
+    peak_index = meas["peak_indexes"]
+    peak_height = meas["peak_heights"]
     print("before", constraints_min)
     guess[0] = x[int(peak_index)] if guess[0] is None else guess[0]
     guess[1] = 0.1 if guess[1] is None else guess[1]
@@ -151,6 +152,6 @@ def fitccl(
     d["int_area"] = num_int_area
     d["int_background"] = num_int_bacground
     d["full_report"] = result.fit_report()
-    data["Measurements"][str(keys)]["fit"] = d
+    meas["fit"] = d
 
     return data
