@@ -58,8 +58,8 @@ def ccl_findpeaks(
         print("Invalid value for prominence, select positive number, new value set to:", prominence)
 
 
-    omega = data["Measurements"][str(keys)]["omega"]
-    counts = np.array(data["Measurements"][str(keys)]["counts"])
+    omega = data["Measurements"][str(keys)]["om"]
+    counts = np.array(data["Measurements"][str(keys)]["Counts"])
     if smooth is True:
         itp = interp1d(omega, counts, kind="linear")
         absintensity = [abs(number) for number in counts]

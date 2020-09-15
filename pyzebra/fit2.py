@@ -40,8 +40,8 @@ def fitccl(
         print("NO PEAK or more than 1 peak")
         return
 
-    x = list(data["Measurements"][str(keys)]["omega"])
-    y = list(data["Measurements"][str(keys)]["counts"])
+    x = list(data["Measurements"][str(keys)]["om"])
+    y = list(data["Measurements"][str(keys)]["Counts"])
     peak_index = data["Measurements"][str(keys)]["peak_indexes"]
     peak_height = data["Measurements"][str(keys)]["peak_heights"]
     print("before", constraints_min)

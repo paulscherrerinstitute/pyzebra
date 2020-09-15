@@ -1,6 +1,8 @@
 import re
-import numpy as np
+from collections import defaultdict
 from decimal import Decimal
+
+import numpy as np
 
 META_VARS_STR = (
     "instrument",
@@ -133,14 +135,14 @@ def load_1D(filepath):
                         fileline = data[position + 2 + i].split()
                         numbers = [int(w) for w in fileline]
                         counts = counts + numbers
-                    d["omega"] = np.linspace(
+                    d["om"] = np.linspace(
                         float(lines.split()[5])
                         - (int(next_line.split()[0]) / 2) * float(next_line.split()[1]),
                         float(lines.split()[5])
                         + (int(next_line.split()[0]) / 2) * float(next_line.split()[1]),
                         int(next_line.split()[0]),
                     )
-                    d["counts"] = counts
+                    d["Counts"] = counts
                     det_variables["Measurements"][str("M" + str(measurement_number))] = d
 
                     if all(decimal):
@@ -149,27 +151,21 @@ def load_1D(filepath):
                         det_variables["meta"]["indices"] = "real"
 
         elif det_variables["file_type"] == "dat":
-            data = infile.readlines()
-            num_of_points = int(data[1].split()[0])
-            omega = []
-            counts = []
-            monitor1 = []
-            monitor2 = []
-            monitor3 = []
-            time = []
-            for position in range(num_of_points):
-                omega.append(float(data[position + 3].split()[1]))
-                counts.append(float(data[position + 3].split()[2]))
-                monitor1.append(float(data[position + 3].split()[3]))
-                monitor2.append(float(data[position + 3].split()[4]))
-                monitor3.append(float(data[position + 3].split()[5]))
-                time.append(float(data[position + 3].split()[6]))
-            det_variables["Measurements"]["omega"] = omega
-            det_variables["Measurements"]["counts"] = counts
-            det_variables["Measurements"]["Monitor1"] = monitor1
-            det_variables["Measurements"]["Monitor2"] = monitor2
-            det_variables["Measurements"]["Monitor3"] = monitor3
-            det_variables["Measurements"]["time"] = time
+            # skip the first 2 rows, the third row contans the column names
+            next(infile)
+            next(infile)
+            row_names = next(infile).split()
+
+            data_cols = defaultdict(list)
+            for line in infile:
+                if "END-OF-DATA" in line:
+                    # this is the end of data
+                    break
+
+                for name, val in zip(row_names, line.split()):
+                    data_cols[name].append(float(val))
+
+            det_variables["Measurements"] = dict(data_cols)
         else:
             print("Unknown file extention")
 
