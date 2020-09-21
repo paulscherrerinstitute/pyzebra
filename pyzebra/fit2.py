@@ -1,21 +1,37 @@
 import numpy as np
 from lmfit import Model, Parameters
-from scipy import integrate
 from scipy.integrate import simps
+
+import uncertainties as u
 
 
 def find_nearest(array, value):
+    # find nearest value and return index
     array = np.asarray(array)
     idx = (np.abs(array - value)).argmin()
     return idx
 
 
+def create_uncertanities(y, y_err):
+    # create array with uncertanities for error propagation
+    combined = np.array([])
+    for i in range(len(y)):
+        part = u.ufloat(y[i], y_err[i])
+        combined = np.append(combined, part)
+    return combined
+
+
 def fitccl(
-    data, keys, guess, vary, constraints_min, constraints_max, numfit_min=None, numfit_max=None
+    data,
+    keys,
+    guess,
+    vary,
+    constraints_min,
+    constraints_max,
+    numfit_min=None,
+    numfit_max=None,
 ):
-    """Made for fitting of ccl date where 1 peak is expected. Allows for combination of gaussian, lorentzian and linear model combination
-
-
+    """Made for fitting of ccl date where 1 peak is expected. Allows for combination of gaussian and linear model combination
     :param data: dictionary after peak fining
     :param keys: name of the measurement in the data dict (i.e. M123)
     :param guess: initial guess for the fitting, if none, some values are added automatically in order (see below)
@@ -24,133 +40,185 @@ def fitccl(
     :param numfit_max: maximal value on x axis for numerical integration - if none is centre of gaussian plus 3 sigma
     :param constraints_min: min constranits value for fit
     :param constraints_max: max constranits value for fit
-
     :return data dict with additional values
-
-    order for guess, vary, constraints_min, constraints_max
-    [Gaussian centre, Gaussian sigma, Gaussian amplitude, Lorentzian centre, Lorentzian sigma, Lorentzian amplitude, background slope, background intercept]
+    order for guess, vary, constraints_min, constraints_max:
+    [Gaussian centre, Gaussian sigma, Gaussian amplitude, background slope, background intercept]
     examples:
-    guess = [None, None, 100, None, None, None, 0, None]
-    vary = [True, True, True, True, False, True, True,  True]
-    constraints_min = [23, None, 50, None, None, None, 0, 0]
-    constraints_min = [80, None, 1000, None, None, None, 0, 100]
+    guess = [None, None, 100,  0, None]
+    vary = [True, True, True, True,  True]
+    constraints_min = [23, None, 50, 0, 0]
+    constraints_min = [80, None, 1000, 0, 100]
     """
     meas = data["Measurements"][keys]
 
-    if len(meas["peak_indexes"]) != 1:
-        print("NO PEAK or more than 1 peak")
+    if len(meas["peak_indexes"]) > 1:
+        # return in case of more than 1 peaks
+        print("More than 1 peak, measurement skipped")
         return
 
     x = list(meas["om"])
     y = list(meas["Counts"])
-    peak_index = meas["peak_indexes"]
-    peak_height = meas["peak_heights"]
-    print("before", constraints_min)
-    guess[0] = x[int(peak_index)] if guess[0] is None else guess[0]
-    guess[1] = 0.1 if guess[1] is None else guess[1]
-    guess[2] = float(peak_height / 10) if guess[2] is None else float(guess[2])
-    guess[3] = x[int(peak_index)] if guess[3] is None else guess[3]
-    guess[4] = 2 * guess[1] if guess[4] is None else guess[4]
-    guess[5] = float(peak_height / 10) if guess[5] is None else float(guess[5])
-    guess[6] = 0 if guess[6] is None else guess[6]
-    guess[7] = np.median(x) if guess[7] is None else guess[7]
-    constraints_min[0] = np.min(x) if constraints_min[0] is None else constraints_min[0]
-    constraints_min[3] = np.min(x) if constraints_min[3] is None else constraints_min[3]
-    constraints_max[0] = np.max(x) if constraints_max[0] is None else constraints_max[0]
-    constraints_max[3] = np.max(x) if constraints_max[3] is None else constraints_max[3]
-    print("key", keys)
+    # if the dictionaries were merged/substracted, takes the errors from them, if not, takes them as sqrt(y)
+    y_err = np.sqrt(y) if meas.get("sigma", None) is None else meas[keys].get("sigma")
 
-    print("after", constraints_min)
+    if len(meas["peak_indexes"]) == 0:
+        # Case for no peak, gaussian in centre, sigma as 20% of range
+        print("No peak")
+        peak_index = find_nearest(x, np.mean(x))
+        guess[0] = x[int(peak_index)]
+        guess[1] = (x[-1] - x[0]) / 5
+        guess[2] = 10
+        guess[3] = 0
+        guess[4] = np.mean(y)
+        constraints_min[2] = 0
 
-    def find_nearest(array, value):
-        array = np.asarray(array)
-        idx = (np.abs(array - value)).argmin()
-        return idx
+    elif len(meas["peak_indexes"]) == 1:
+        # case for one peak, takse into account users guesses
+        print("one peak")
+        peak_index, peak_height = meas["peak_indexes"], meas["peak_heights"]
+        guess[0] = x[int(peak_index)] if guess[0] is None else guess[0]
+        guess[1] = 0.1 if guess[1] is None else guess[1]
+        guess[2] = float(peak_height / 10) if guess[2] is None else float(guess[2])
+        guess[3] = 0 if guess[3] is None else guess[3]
+        guess[4] = np.median(x) if guess[4] is None else guess[4]
+        constraints_min[0] = np.min(x) if constraints_min[0] is None else constraints_min[0]
+        constraints_max[0] = np.max(x) if constraints_max[0] is None else constraints_max[0]
+
+    centre = x[int(peak_index)]
 
     def gaussian(x, g_cen, g_width, g_amp):
         """1-d gaussian: gaussian(x, amp, cen, wid)"""
-        return (g_amp / (np.sqrt(2.0 * np.pi) * g_width)) * np.exp(
+        return (g_amp / (np.sqrt(2 * np.pi) * g_width)) * np.exp(
             -((x - g_cen) ** 2) / (2 * g_width ** 2)
         )
 
-    def lorentzian(x, l_cen, l_width, l_amp):
-        """1d lorentzian"""
-        return (l_amp / (1 + ((1 * x - l_cen) / l_width) ** 2)) / (np.pi * l_width)
-
     def background(x, slope, intercept):
         """background"""
-        return slope * x + intercept
+        return slope * (x - centre) + intercept
 
-    mod = Model(gaussian) + Model(lorentzian) + Model(background)
+    mod = Model(gaussian) + Model(background)
     params = Parameters()
     params.add_many(
         ("g_cen", x[int(peak_index)], bool(vary[0]), np.min(x), np.max(x), None, None),
-        ("g_width", guess[1], bool(vary[1]), constraints_min[1], constraints_max[1], None, None),
-        ("g_amp", guess[2], bool(vary[2]), constraints_min[2], constraints_max[2], None, None),
-        ("l_cen", guess[3], bool(vary[3]), np.min(x), np.max(x), None, None),
-        ("l_width", guess[4], bool(vary[4]), constraints_min[4], constraints_max[4], None, None),
-        ("l_amp", guess[5], bool(vary[5]), constraints_min[5], constraints_max[5], None, None),
-        ("slope", guess[6], bool(vary[6]), constraints_min[6], constraints_max[6], None, None),
-        ("intercept", guess[7], bool(vary[7]), constraints_min[7], constraints_max[7], None, None),
+        (
+            "g_width",
+            guess[1],
+            bool(vary[1]),
+            constraints_min[1],
+            constraints_max[1],
+            None,
+            None,
+        ),
+        (
+            "g_amp",
+            guess[2],
+            bool(vary[2]),
+            constraints_min[2],
+            constraints_max[2],
+            None,
+            None,
+        ),
+        (
+            "slope",
+            guess[3],
+            bool(vary[3]),
+            constraints_min[3],
+            constraints_max[3],
+            None,
+            None,
+        ),
+        (
+            "intercept",
+            guess[4],
+            bool(vary[4]),
+            constraints_min[4],
+            constraints_max[4],
+            None,
+            None,
+        ),
     )
-
-    result = mod.fit(y, params, x=x)
-    print("Chi-sqr: ", result.chisqr)
-
+    # the weighted fit
+    result = mod.fit(y, params, weights=y_err, x=x, calc_covar=True)
+    # u.ufloat to work with uncertanities
+    fit_area = u.ufloat(result.params["g_amp"].value, result.params["g_amp"].stderr)
     comps = result.eval_components()
 
-    gauss_3sigmamin = find_nearest(
-        x, result.params["g_cen"].value - 3 * result.params["g_width"].value
-    )
-    gauss_3sigmamax = find_nearest(
-        x, result.params["g_cen"].value + 3 * result.params["g_width"].value
-    )
-    numfit_min = gauss_3sigmamin if numfit_min is None else find_nearest(x, numfit_min)
-    numfit_max = gauss_3sigmamax if numfit_max is None else find_nearest(x, numfit_max)
-    it = -1
+    if len(meas["peak_indexes"]) == 0:
+        # for case of no peak, there is no reason to integrate, therefore fit and int are equal
+        int_area = fit_area
 
-    while numfit_max == numfit_min:
-        it = it + 1
-        numfit_min = find_nearest(
-            x, result.params["g_cen"].value - 3 * (1 + it / 10) * result.params["g_width"].value
+    elif len(meas["peak_indexes"]) == 1:
+        gauss_3sigmamin = find_nearest(
+            x, result.params["g_cen"].value - 3 * result.params["g_width"].value
         )
-        numfit_max = find_nearest(
-            x, result.params["g_cen"].value + 3 * (1 + it / 10) * result.params["g_width"].value
+        gauss_3sigmamax = find_nearest(
+            x, result.params["g_cen"].value + 3 * result.params["g_width"].value
         )
+        numfit_min = gauss_3sigmamin if numfit_min is None else find_nearest(x, numfit_min)
+        numfit_max = gauss_3sigmamax if numfit_max is None else find_nearest(x, numfit_max)
 
-    if x[numfit_min] < np.min(x):
-        numfit_min = gauss_3sigmamin
-        print("Minimal integration value outside of x range")
-    elif x[numfit_min] >= x[numfit_max]:
-        numfit_min = gauss_3sigmamin
-        print("Minimal integration value higher than maximal")
-    else:
-        pass
-    if x[numfit_max] > np.max(x):
-        numfit_max = gauss_3sigmamax
-        print("Maximal integration value outside of x range")
-    elif x[numfit_max] <= x[numfit_min]:
-        numfit_max = gauss_3sigmamax
-        print("Maximal integration value lower than minimal")
-    else:
-        pass
-    print(result.params["g_width"].value)
-    print(result.params["g_cen"].value)
-    num_int_area = simps(y[numfit_min:numfit_max], x[numfit_min:numfit_max])
-    num_int_bacground = integrate.quad(
-        background,
-        x[numfit_min],
-        x[numfit_max],
-        args=(result.params["slope"].value, result.params["intercept"].value),
-    )
+        it = -1
+        while numfit_max == numfit_min:
+            # in the case the peak is very thin and numerical integration would be on zero omega difference, finds closes values
+            it = it + 1
+            numfit_min = find_nearest(
+                x,
+                result.params["g_cen"].value - 3 * (1 + it / 10) * result.params["g_width"].value,
+            )
+            numfit_max = find_nearest(
+                x,
+                result.params["g_cen"].value + 3 * (1 + it / 10) * result.params["g_width"].value,
+            )
+
+        if x[numfit_min] < np.min(x):
+            # makes sure that the values supplied by user lay in the omega range
+            # can be ommited for users who know what they're doing
+            numfit_min = gauss_3sigmamin
+            print("Minimal integration value outside of x range")
+        elif x[numfit_min] >= x[numfit_max]:
+            numfit_min = gauss_3sigmamin
+            print("Minimal integration value higher than maximal")
+        else:
+            pass
+        if x[numfit_max] > np.max(x):
+            numfit_max = gauss_3sigmamax
+            print("Maximal integration value outside of x range")
+        elif x[numfit_max] <= x[numfit_min]:
+            numfit_max = gauss_3sigmamax
+            print("Maximal integration value lower than minimal")
+        else:
+            pass
+
+        count_errors = create_uncertanities(y, y_err)
+        # create error vector for numerical integration propagation
+        num_int_area = simps(count_errors[numfit_min:numfit_max], x[numfit_min:numfit_max])
+        slope_err = u.ufloat(result.params["slope"].value, result.params["slope"].stderr)
+        # pulls the nominal and error values from fit (slope)
+        intercept_err = u.ufloat(
+            result.params["intercept"].value, result.params["intercept"].stderr
+        )
+        # pulls the nominal and error values from fit (intercept)
+
+        background_errors = np.array([])
+        for j in range(len(x[numfit_min:numfit_max])):
+            # creates nominal and error vector for numerical integration of background
+            bg = slope_err * (x[j] - centre) + intercept_err
+            background_errors = np.append(background_errors, bg)
+
+        num_int_background = simps(background_errors, x[numfit_min:numfit_max])
+        int_area = num_int_area - num_int_background
 
     d = {}
     for pars in result.params:
         d[str(pars)] = (result.params[str(pars)].value, result.params[str(pars)].vary)
+    print(result.fit_report())
 
+    print((result.params["g_amp"].value - int_area.n) / result.params["g_amp"].value)
     d["export_fit"] = False
-    d["int_area"] = num_int_area
-    d["int_background"] = num_int_bacground
+    # ["export_fit"] = False if user wants num. int. value in comm/incomm, otherwise true
+    d["ratio"] = (result.params["g_amp"].value - int_area.n) / result.params["g_amp"].value
+    d["int_area"] = int_area
+    d["fit_area"] = fit_area
     d["full_report"] = result.fit_report()
     meas["fit"] = d
 
