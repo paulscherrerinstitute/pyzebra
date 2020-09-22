@@ -59,7 +59,7 @@ def fitccl(
     x = list(meas["om"])
     y = list(meas["Counts"])
     # if the dictionaries were merged/substracted, takes the errors from them, if not, takes them as sqrt(y)
-    y_err = np.sqrt(y) if meas.get("sigma", None) is None else meas[keys].get("sigma")
+    y_err = np.sqrt(y) if meas.get("sigma", None) is None else meas.get("sigma")
 
     if len(meas["peak_indexes"]) == 0:
         # Case for no peak, gaussian in centre, sigma as 20% of range
