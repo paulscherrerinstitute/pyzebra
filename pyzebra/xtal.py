@@ -1,10 +1,15 @@
 import math
 
 import numpy as np
-from matplotlib import pyplot as plt
 from scipy.optimize import curve_fit
 
 import pyzebra
+
+try:
+    from matplotlib import pyplot as plt
+except ImportError:
+    print("matplotlib is not available")
+
 
 
 def z4frgn(wave, ga, nu):
