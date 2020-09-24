@@ -18,6 +18,7 @@ from bokeh.models import (
     Plot,
     Select,
     Spacer,
+    Toggle,
 )
 
 import pyzebra
@@ -49,8 +50,10 @@ def create():
         num_of_peaks = meas.get("num_of_peaks")
         if num_of_peaks is not None and num_of_peaks > 0:
             plot_circle_source.data.update(x=meas["peak_indexes"], y=meas["peak_heights"])
+            plot_smooth_source.data.update(x=x, y=meas["smooth_peaks"])
         else:
             plot_circle_source.data.update(x=[], y=[])
+            plot_smooth_source.data.update(x=[], y=[])
 
     # Main plot
     plot = Plot(
@@ -70,6 +73,9 @@ def create():
     plot_line_source = ColumnDataSource(dict(x=[0], y=[0]))
     plot.add_glyph(plot_line_source, Line(x="x", y="y", line_color="steelblue"))
 
+    plot_smooth_source = ColumnDataSource(dict(x=[0], y=[0]))
+    plot.add_glyph(plot_smooth_source, Line(x="x", y="y", line_color="red"))
+
     plot_circle_source = ColumnDataSource(dict(x=[], y=[]))
     plot.add_glyph(plot_circle_source, Circle(x="x", y="y"))
 
@@ -80,10 +86,12 @@ def create():
     meas_select = Select()
     meas_select.on_change("value", meas_select_callback)
 
+    smooth_toggle = Toggle(label="Smooth curve")
+
     def process_button_callback():
         nonlocal det_data
         for meas in det_data["Measurements"]:
-            det_data = pyzebra.ccl_findpeaks(det_data, meas)
+            det_data = pyzebra.ccl_findpeaks(det_data, meas, smooth=smooth_toggle.active)
 
         _update_plot(meas_select.value)
 
@@ -94,6 +102,7 @@ def create():
     tab_layout = column(
         row(column(Spacer(height=5), upload_div), upload_button, meas_select),
         plot,
+        row(smooth_toggle),
         row(process_button),
     )
 
