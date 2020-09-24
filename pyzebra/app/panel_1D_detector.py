@@ -5,6 +5,8 @@ import os
 from bokeh.layouts import column, row
 from bokeh.models import (
     BasicTicker,
+    Button,
+    Circle,
     ColumnDataSource,
     DataRange1d,
     Div,
@@ -37,6 +39,19 @@ def create():
     upload_button = FileInput(accept=".ccl")
     upload_button.on_change("value", upload_button_callback)
 
+    def _update_plot(ind):
+        meas = det_data["Measurements"][ind]
+        y = meas["Counts"]
+        x = list(range(len(y)))
+
+        plot_line_source.data.update(x=x, y=y)
+
+        num_of_peaks = meas.get("num_of_peaks")
+        if num_of_peaks is not None and num_of_peaks > 0:
+            plot_circle_source.data.update(x=meas["peak_indexes"], y=meas["peak_heights"])
+        else:
+            plot_circle_source.data.update(x=[], y=[])
+
     # Main plot
     plot = Plot(
         x_range=DataRange1d(),
@@ -55,17 +70,31 @@ def create():
     plot_line_source = ColumnDataSource(dict(x=[0], y=[0]))
     plot.add_glyph(plot_line_source, Line(x="x", y="y", line_color="steelblue"))
 
+    plot_circle_source = ColumnDataSource(dict(x=[], y=[]))
+    plot.add_glyph(plot_circle_source, Circle(x="x", y="y"))
+
     # Measurement select
     def meas_select_callback(_attr, _old, new):
-        y = det_data["Measurements"][new]["Counts"]
-        x = list(range(len(y)))
-
-        plot_line_source.data.update(x=x, y=y)
+        _update_plot(new)
 
     meas_select = Select()
     meas_select.on_change("value", meas_select_callback)
 
+    def process_button_callback():
+        nonlocal det_data
+        for meas in det_data["Measurements"]:
+            det_data = pyzebra.ccl_findpeaks(det_data, meas)
+
+        _update_plot(meas_select.value)
+
+    process_button = Button(label="Process All")
+    process_button.on_click(process_button_callback)
+
     upload_div = Div(text="Upload .ccl file:")
-    tab_layout = column(row(column(Spacer(height=5), upload_div), upload_button, meas_select), plot)
+    tab_layout = column(
+        row(column(Spacer(height=5), upload_div), upload_button, meas_select),
+        plot,
+        row(process_button),
+    )
 
     return Panel(child=tab_layout, title="1D Detector")
