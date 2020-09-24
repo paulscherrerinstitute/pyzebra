@@ -18,6 +18,7 @@ from bokeh.models import (
     Plot,
     Select,
     Spacer,
+    TextAreaInput,
     Toggle,
 )
 
@@ -55,6 +56,12 @@ def create():
             plot_circle_source.data.update(x=[], y=[])
             plot_smooth_source.data.update(x=[], y=[])
 
+        fit = meas.get("fit")
+        if fit is not None:
+            fit_output_textinput.value = str(fit["full_report"])
+        else:
+            fit_output_textinput.value = ""
+
     # Main plot
     plot = Plot(
         x_range=DataRange1d(),
@@ -88,20 +95,33 @@ def create():
 
     smooth_toggle = Toggle(label="Smooth curve")
 
+    fit_output_textinput = TextAreaInput(title="Fit results:", width=600, height=400)
+
     def process_button_callback():
         nonlocal det_data
         for meas in det_data["Measurements"]:
             det_data = pyzebra.ccl_findpeaks(det_data, meas, smooth=smooth_toggle.active)
 
+            num_of_peaks = det_data["Measurements"][meas].get("num_of_peaks")
+            if num_of_peaks is not None and num_of_peaks == 1:
+                det_data = pyzebra.fitccl(
+                    det_data,
+                    meas,
+                    guess=[None, None, None, None, None],
+                    vary=[True, True, True, True, True],
+                    constraints_min=[None, None, None, None, None],
+                    constraints_max=[None, None, None, None, None],
+                )
+
         _update_plot(meas_select.value)
 
-    process_button = Button(label="Process All")
+    process_button = Button(label="Process All", button_type="primary")
     process_button.on_click(process_button_callback)
 
     upload_div = Div(text="Upload .ccl file:")
     tab_layout = column(
         row(column(Spacer(height=5), upload_div), upload_button, meas_select),
-        plot,
+        row(plot, fit_output_textinput),
         row(smooth_toggle),
         row(process_button),
     )
