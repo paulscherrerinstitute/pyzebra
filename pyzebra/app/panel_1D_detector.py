@@ -1,6 +1,7 @@
 import base64
 import io
 import os
+import tempfile
 
 from bokeh.layouts import column, row
 from bokeh.models import (
@@ -67,7 +68,7 @@ def create():
         x_range=DataRange1d(),
         y_range=DataRange1d(),
         plot_height=400,
-        plot_width=600,
+        plot_width=700,
         toolbar_location=None,
     )
 
@@ -118,12 +119,33 @@ def create():
     process_button = Button(label="Process All", button_type="primary")
     process_button.on_click(process_button_callback)
 
+    output_textinput = TextAreaInput(
+        title="Content of comm/incomm file: (once fixed, Export button will save to user machine)",
+        width=600,
+        height=400,
+    )
+
+    def save_button_callback():
+        if det_data["meta"]["indices"] == "hkl":
+            ext = ".comm"
+        elif det_data["meta"]["indices"] == "real":
+            ext = ".incomm"
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_file = temp_dir + "/temp"
+            pyzebra.export_comm(det_data, temp_file)
+
+            with open(f"{temp_file}{ext}") as f:
+                output_textinput.value = f.read()
+
+    save_button = Button(label="Export to .comm/.incomm file:")
+    save_button.on_click(save_button_callback)
+
     upload_div = Div(text="Upload .ccl file:")
     tab_layout = column(
         row(column(Spacer(height=5), upload_div), upload_button, meas_select),
-        row(plot, fit_output_textinput),
-        row(smooth_toggle),
-        row(process_button),
+        row(plot, Spacer(width=30), fit_output_textinput, output_textinput),
+        row(column(smooth_toggle, process_button, save_button)),
     )
 
     return Panel(child=tab_layout, title="1D Detector")
