@@ -211,10 +211,8 @@ def substract_measurement(dict1, dict2, keys, auto=True, monitor=100000):
     )
     dict1_count_err = create_uncertanities(y1, y_err1)
     dict2_count_err = create_uncertanities(y2, y_err2)
-    if np.average(y1) > np.average(y2):
-        res = np.subtract(dict1_count_err, dict2_count_err)
-    else:
-        res = np.subtract(dict2_count_err, dict1_count_err)
+
+    res = np.subtract(dict1_count_err, dict2_count_err)
     res_nom = []
     res_err = []
     for k in range(len(res)):
