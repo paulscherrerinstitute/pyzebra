@@ -158,7 +158,7 @@ def fitccl(
         numfit_max = gauss_3sigmamax if numfit_max is None else find_nearest(x, numfit_max)
 
         it = -1
-        while numfit_max == numfit_min:
+        while abs(numfit_max - numfit_min) < 3:
             # in the case the peak is very thin and numerical integration would be on zero omega difference, finds closes values
             it = it + 1
             numfit_min = find_nearest(
