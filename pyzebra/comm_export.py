@@ -20,7 +20,7 @@ def export_comm(data, path, lorentz=False):
     :arg data - data to export, is dict after peak fitting
 
     """
-
+    zebra_mode = data["meta"]["zebra_mode"]
     align = ">"
     if data["meta"]["indices"] == "hkl":
         extension = ".comm"
@@ -30,31 +30,35 @@ def export_comm(data, path, lorentz=False):
         padding = [4, 6, 10, 8]
 
     with open(str(path + extension), "w") as out_file:
-        for keys in data["Measurements"]:
+        for keys, meas in data["Measurements"].items():
             try:
                 meas_number_str = f"{keys[1:]:{align}{padding[0]}}"
-                h_str = f'{int(data["Measurements"][str(keys)]["h_index"]):{padding[1]}}'
-                k_str = f'{int(data["Measurements"][str(keys)]["k_index"]):{padding[1]}}'
-                l_str = f'{int(data["Measurements"][str(keys)]["l_index"]):{padding[1]}}'
-                if data["Measurements"][str(keys)]["fit"]["export_fit"] is True:
-                    area = float(data["Measurements"][str(keys)]["fit"]["g_amp"].value)
-                    sigma_str = f'{"{:8.2f}".format(float(data["Measurements"][str(keys)]["fit"]["g_amp"].stderr)):{align}{padding[2]}}'
+                h_str = f'{int(meas["h_index"]):{padding[1]}}'
+                k_str = f'{int(meas["k_index"]):{padding[1]}}'
+                l_str = f'{int(meas["l_index"]):{padding[1]}}'
+                if meas["fit"]["export_fit"] is True:
+                    area = float(meas["fit"]["g_amp"].value)
+                    sigma_str = f'{"{:8.2f}".format(float(meas["fit"]["g_amp"].stderr)):{align}{padding[2]}}'
                 else:
-                    area = float(data["Measurements"][str(keys)]["fit"]["int_area"].n)
-                    sigma_str = f'{"{:8.2f}".format(float(data["Measurements"][str(keys)]["fit"]["int_area"].s)):{align}{padding[2]}}'
+                    area = float(meas["fit"]["int_area"].n)
+                    sigma_str = (
+                        f'{"{:8.2f}".format(float(meas["fit"]["int_area"].s)):{align}{padding[2]}}'
+                    )
 
-                if data["meta"]["zebra_mode"] == "bi":
-                    int_str = f'{"{:8.2f}".format(correction(area, lorentz, data["meta"]["zebra_mode"], data["Measurements"][str(keys)]["twotheta_angle"])):{align}{padding[2]}}'
-                    angle_str1 = f'{data["Measurements"][str(keys)]["twotheta_angle"]:{padding[3]}}'
-                    angle_str2 = f'{data["Measurements"][str(keys)]["omega_angle"]:{padding[3]}}'
-                    angle_str3 = f'{data["Measurements"][str(keys)]["chi_angle"]:{padding[3]}}'
-                    angle_str4 = f'{data["Measurements"][str(keys)]["phi_angle"]:{padding[3]}}'
-                elif data["meta"]["zebra_mode"] == "nb":
-                    int_str = f'{"{:8.2f}".format(correction(area, lorentz, data["meta"]["zebra_mode"], data["Measurements"][str(keys)]["gamma_angle"],data["Measurements"][str(keys)]["nu_angle"])):{align}{padding[2]}}'
-                    angle_str1 = f'{data["Measurements"][str(keys)]["gamma_angle"]:{padding[3]}}'
-                    angle_str2 = f'{data["Measurements"][str(keys)]["omega_angle"]:{padding[3]}}'
-                    angle_str3 = f'{data["Measurements"][str(keys)]["nu_angle"]:{padding[3]}}'
-                    angle_str4 = f'{data["Measurements"][str(keys)]["unkwn_angle"]:{padding[3]}}'
+                if zebra_mode == "bi":
+                    area = correction(area, lorentz, zebra_mode, meas["twotheta_angle"])
+                    int_str = f'{"{:8.2f}".format(area):{align}{padding[2]}}'
+                    angle_str1 = f'{meas["twotheta_angle"]:{padding[3]}}'
+                    angle_str2 = f'{meas["omega_angle"]:{padding[3]}}'
+                    angle_str3 = f'{meas["chi_angle"]:{padding[3]}}'
+                    angle_str4 = f'{meas["phi_angle"]:{padding[3]}}'
+                elif zebra_mode == "nb":
+                    area = correction(area, lorentz, zebra_mode, meas["gamma_angle"], meas["nu_angle"])
+                    int_str = f'{"{:8.2f}".format(area):{align}{padding[2]}}'
+                    angle_str1 = f'{meas["gamma_angle"]:{padding[3]}}'
+                    angle_str2 = f'{meas["omega_angle"]:{padding[3]}}'
+                    angle_str3 = f'{meas["nu_angle"]:{padding[3]}}'
+                    angle_str4 = f'{meas["unkwn_angle"]:{padding[3]}}'
 
                 line = (
                     meas_number_str
