@@ -70,15 +70,17 @@ def create():
         num_of_peaks = meas.get("num_of_peaks")
         if num_of_peaks is not None and num_of_peaks > 0:
             plot_circle_source.data.update(x=meas["peak_indexes"], y=meas["peak_heights"])
-            plot_smooth_source.data.update(x=x, y=meas["smooth_peaks"])
         else:
             plot_circle_source.data.update(x=[], y=[])
-            plot_smooth_source.data.update(x=[], y=[])
 
         fit = meas.get("fit")
         if fit is not None:
+            plot_gauss_source.data.update(x=x, y=meas["fit"]["comps"]["gaussian"])
+            plot_bkg_source.data.update(x=x, y=meas["fit"]["comps"]["background"])
             fit_output_textinput.value = str(fit["full_report"])
         else:
+            plot_gauss_source.data.update(x=[], y=[])
+            plot_bkg_source.data.update(x=[], y=[])
             fit_output_textinput.value = ""
 
     # Main plot
@@ -99,8 +101,11 @@ def create():
     plot_line_source = ColumnDataSource(dict(x=[0], y=[0]))
     plot.add_glyph(plot_line_source, Line(x="x", y="y", line_color="steelblue"))
 
-    plot_smooth_source = ColumnDataSource(dict(x=[0], y=[0]))
-    plot.add_glyph(plot_smooth_source, Line(x="x", y="y", line_color="red"))
+    plot_gauss_source = ColumnDataSource(dict(x=[0], y=[0]))
+    plot.add_glyph(plot_gauss_source, Line(x="x", y="y", line_color="red", line_dash="dashed"))
+
+    plot_bkg_source = ColumnDataSource(dict(x=[0], y=[0]))
+    plot.add_glyph(plot_bkg_source, Line(x="x", y="y", line_color="green", line_dash="dashed"))
 
     plot_circle_source = ColumnDataSource(dict(x=[], y=[]))
     plot.add_glyph(plot_circle_source, Circle(x="x", y="y"))

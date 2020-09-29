@@ -220,6 +220,8 @@ def fitccl(
     d["int_area"] = int_area
     d["fit_area"] = fit_area
     d["full_report"] = result.fit_report()
+    d["result"] = result
+    d["comps"] = comps
     meas["fit"] = d
 
     return data
