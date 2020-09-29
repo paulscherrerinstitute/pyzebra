@@ -21,6 +21,7 @@ from bokeh.models import (
     Select,
     Spacer,
     TextAreaInput,
+    TextInput,
     Toggle,
 )
 
@@ -42,10 +43,38 @@ setTimeout(function() {
 }, 500);
 """
 
+PROPOSAL_PATH = "/afs/psi.ch/project/sinqdata/2020/zebra/"
+
 
 def create():
     det_data = {}
     js_data = ColumnDataSource(data=dict(cont=[], ext=[]))
+
+    def proposal_textinput_callback(_attr, _old, new):
+        ccl_path = os.path.join(PROPOSAL_PATH, new)
+        ccl_file_list = []
+        for file in os.listdir(ccl_path):
+            if file.endswith(".ccl"):
+                ccl_file_list.append((os.path.join(ccl_path, file), file))
+        ccl_file_select.options = ccl_file_list
+        ccl_file_select.value = ccl_file_list[0][0]
+
+    proposal_textinput = TextInput(title="Enter proposal number:")
+    proposal_textinput.on_change("value", proposal_textinput_callback)
+
+    def ccl_file_select_callback(_attr, _old, new):
+        nonlocal det_data
+        with open(new) as file:
+            _, ext = os.path.splitext(new)
+            det_data = pyzebra.parse_1D(file, ext)
+
+        meas_list = list(det_data["Measurements"].keys())
+        meas_select.options = meas_list
+        meas_select.value = None
+        meas_select.value = meas_list[0]
+
+    ccl_file_select = Select(title="Available .ccl files")
+    ccl_file_select.on_change("value", ccl_file_select_callback)
 
     def upload_button_callback(_attr, _old, new):
         nonlocal det_data
@@ -55,6 +84,7 @@ def create():
 
         meas_list = list(det_data["Measurements"].keys())
         meas_select.options = meas_list
+        meas_select.value = None
         meas_select.value = meas_list[0]
 
     upload_button = FileInput(accept=".ccl")
@@ -112,7 +142,8 @@ def create():
 
     # Measurement select
     def meas_select_callback(_attr, _old, new):
-        _update_plot(new)
+        if new is not None:
+            _update_plot(new)
 
     meas_select = Select()
     meas_select.on_change("value", meas_select_callback)
@@ -165,8 +196,9 @@ def create():
     save_button.on_click(save_button_callback)
     save_button.js_on_click(CustomJS(args={"js_data": js_data}, code=javaScript))
 
-    upload_div = Div(text="Upload .ccl file:")
+    upload_div = Div(text="Or upload .ccl file:")
     tab_layout = column(
+        row(proposal_textinput, ccl_file_select),
         row(column(Spacer(height=5), upload_div), upload_button, meas_select),
         row(plot, Spacer(width=30), fit_output_textinput),
         row(column(smooth_toggle, process_button, save_button)),
