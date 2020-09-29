@@ -9,6 +9,7 @@ from bokeh.models import (
     Button,
     Circle,
     ColumnDataSource,
+    CustomJS,
     DataRange1d,
     Div,
     FileInput,
@@ -26,8 +27,25 @@ from bokeh.models import (
 import pyzebra
 
 
+javaScript = """
+setTimeout(function() {
+    const filename = 'output' + js_data.data['ext']
+    const blob = new Blob([js_data.data['cont']], {type: 'text/plain'})
+    const link = document.createElement('a');
+    document.body.appendChild(link);
+    const url = window.URL.createObjectURL(blob);
+    link.href = url;
+    link.download = filename;
+    link.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+}, 500);
+"""
+
+
 def create():
     det_data = {}
+    js_data = ColumnDataSource(data=dict(cont=[], ext=[]))
 
     def upload_button_callback(_attr, _old, new):
         nonlocal det_data
@@ -119,13 +137,7 @@ def create():
     process_button = Button(label="Process All", button_type="primary")
     process_button.on_click(process_button_callback)
 
-    output_textinput = TextAreaInput(
-        title="Content of comm/incomm file: (once fixed, Export button will save to user machine)",
-        width=600,
-        height=400,
-    )
-
-    def save_button_callback():
+    def export_results(det_data):
         if det_data["meta"]["indices"] == "hkl":
             ext = ".comm"
         elif det_data["meta"]["indices"] == "real":
@@ -136,15 +148,22 @@ def create():
             pyzebra.export_comm(det_data, temp_file)
 
             with open(f"{temp_file}{ext}") as f:
-                output_textinput.value = f.read()
+                output_content = f.read()
+
+        return output_content, ext
+
+    def save_button_callback():
+        cont, ext = export_results(det_data)
+        js_data.data.update(cont=[cont], ext=[ext])
 
     save_button = Button(label="Export to .comm/.incomm file:")
     save_button.on_click(save_button_callback)
+    save_button.js_on_click(CustomJS(args={"js_data": js_data}, code=javaScript))
 
     upload_div = Div(text="Upload .ccl file:")
     tab_layout = column(
         row(column(Spacer(height=5), upload_div), upload_button, meas_select),
-        row(plot, Spacer(width=30), fit_output_textinput, output_textinput),
+        row(plot, Spacer(width=30), fit_output_textinput),
         row(column(smooth_toggle, process_button, save_button)),
     )
 
