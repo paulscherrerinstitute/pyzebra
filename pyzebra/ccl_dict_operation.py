@@ -106,6 +106,21 @@ def create_tuples(x, y, y_err):
         t.append(tup)
     return t
 
+def normalize(dict, key, monitor):
+    """Normalizes the measurement to monitor, checks if sigma exists, otherwise creates it
+    :arg dict : dictionary to from which to tkae the scan
+    :arg key : which scan to normalize from dict1
+    :arg monitor : final monitor
+    :return counts - normalized counts
+    :return sigma - normalized sigma"""
+
+    counts = np.array(dict["Measurements"][key]["Counts"])
+    sigma = np.sqrt(counts) if "sigma" not in dict["Measurements"][key] else dict["Measurements"][key]['sigma']
+    monitor_ratio = monitor/dict["Measurements"][key]["monitor"]
+    scaled_counts = counts*monitor_ratio
+    scaled_sigma = np.array(sigma)*monitor_ratio
+
+    return scaled_counts, scaled_sigma
 
 def merge(dict1, dict2, keys, auto=True, monitor=100000):
     """merges the two tuples and sorts them, if om value is same, Counts value is average
@@ -123,25 +138,8 @@ def merge(dict1, dict2, keys, auto=True, monitor=100000):
 
     # load om and Counts
     x1, x2 = dict1["Measurements"][keys[0]]["om"], dict2["Measurements"][keys[1]]["om"]
-    y1, y2 = np.array(dict1["Measurements"][keys[0]]["Counts"]), np.array(
-        dict2["Measurements"][keys[1]]["Counts"]
-    )
-    # normalize y to monitors
-    cor_y1 = (y1 / dict1["Measurements"][keys[0]]["monitor"]) * monitor
-    cor_y2 = (y2 / dict2["Measurements"][keys[0]]["monitor"]) * monitor
-    # check if sigma errors for y exist, otherwise create them as sqrt(y)
-    y_err1 = (
-        np.sqrt(cor_y1)
-        if "sigma" not in dict1["Measurements"][keys[0]]
-        else np.array(dict1["Measurements"][keys[0]]["sigma"])
-        * np.sqrt(monitor / dict1["Measurements"][keys[0]]["monitor"])
-    )
-    y_err2 = (
-        np.sqrt(cor_y2)
-        if "sigma" not in dict2["Measurements"][keys[1]]
-        else np.array(dict2["Measurements"][keys[1]]["sigma"])
-        * np.sqrt(monitor / dict2["Measurements"][keys[1]]["monitor"])
-    )
+    cor_y1, y_err1 = normalize(dict1, keys[0], monitor=monitor)
+    cor_y2, y_err2 = normalize(dict2, keys[1], monitor=monitor)
     # creates touples (om, Counts, sigma) for sorting and further processing
     tuple_list = create_tuples(x1, cor_y1, y_err1) + create_tuples(x2, cor_y2, y_err2)
     # Sort the list on om and add 0 0 0 tuple to the last postion
@@ -174,6 +172,7 @@ def merge(dict1, dict2, keys, auto=True, monitor=100000):
     dict1["Measurements"][keys[0]]["om"] = om
     dict1["Measurements"][keys[0]]["Counts"] = Counts
     dict1["Measurements"][keys[0]]["sigma"] = sigma
+    dict1["Measurements"][keys[0]]["monitor"] = monitor
     return dict1
 
 
@@ -193,28 +192,14 @@ def substract_measurement(dict1, dict2, keys, auto=True, monitor=100000):
         if dict1["Measurements"][keys[0]]["monitor"] == dict2["Measurements"][keys[1]]["monitor"]:
             monitor = dict1["Measurements"][keys[0]]["monitor"]
 
-    monitor_ratio_prim = monitor / dict1["Measurements"][str(keys[0])]["monitor"]
-    monitor_ratio_sec = monitor / dict2["Measurements"][str(keys[1])]["monitor"]
-    y1 = np.array(dict1["Measurements"][str(keys[0])]["Counts"]) * monitor_ratio_prim
-    y2 = np.array(dict2["Measurements"][str(keys[1])]["Counts"]) * monitor_ratio_sec
-    y_err1 = (
-        np.sqrt(y1)
-        if "sigma" not in dict1["Measurements"][keys[0]]
-        else dict1["Measurements"][keys[0]]["sigma"]
-        * np.sqrt(monitor / dict1["Measurements"][keys[0]]["monitor"])
-    )
-    y_err2 = (
-        np.sqrt(y2)
-        if "sigma" not in dict2["Measurements"][keys[1]]
-        else dict2["Measurements"][keys[1]]["sigma"]
-        * np.sqrt(monitor / dict2["Measurements"][keys[1]]["monitor"])
-    )
-    dict1_count_err = create_uncertanities(y1, y_err1)
-    dict2_count_err = create_uncertanities(y2, y_err2)
-    if np.average(y1) > np.average(y2):
-        res = np.subtract(dict1_count_err, dict2_count_err)
-    else:
-        res = np.subtract(dict2_count_err, dict1_count_err)
+    cor_y1, y_err1 = normalize(dict1, keys[0], monitor=monitor)
+    cor_y2, y_err2 = normalize(dict2, keys[1], monitor=monitor)
+
+    dict1_count_err = create_uncertanities(cor_y1, y_err1)
+    dict2_count_err = create_uncertanities(cor_y2, y_err2)
+
+    res = np.subtract(dict1_count_err, dict2_count_err)
+
     res_nom = []
     res_err = []
     for k in range(len(res)):
@@ -222,7 +207,8 @@ def substract_measurement(dict1, dict2, keys, auto=True, monitor=100000):
         res_err = np.append(res_err, res[k].s)
     dict1["Measurements"][str(keys[0])]["Counts"] = res_nom
     dict1["Measurements"][str(keys[0])]["sigma"] = res_err
-
+    dict1["Measurements"][str(keys[0])]["monitor"] = monitor
+    return dict1
 
 def compare_dict(dict1, dict2):
     """takes two ccl dictionaries and compare different values for each key
