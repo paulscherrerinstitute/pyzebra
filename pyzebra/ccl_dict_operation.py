@@ -219,6 +219,10 @@ def substract_measurement(dict1, dict2, keys, auto=True, monitor=100000):
     for k in range(len(res)):
         res_nom = np.append(res_nom, res[k].n)
         res_err = np.append(res_err, res[k].s)
+        
+    if len([num for num in res_nom if num < 0]) >= 0.3*len(res_nom):
+        print(f'Warning! percentage of negative numbers in measurement subsracted {keys[0]} is '
+              f'{len([num for num in res_nom if num < 0])/len(res_nom)}')
     dict1["Measurements"][str(keys[0])]["Counts"] = res_nom
     dict1["Measurements"][str(keys[0])]["sigma"] = res_err
     dict1["Measurements"][str(keys[0])]["monitor"] = monitor
