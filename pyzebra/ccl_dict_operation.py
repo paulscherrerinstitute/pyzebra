@@ -38,12 +38,13 @@ def scan_dict(dict):
 
 
 def compare_hkl(dict1, dict2):
-    """Compares two dictionaries based on hkl indexes and return dictionary with str(h k l) as key and tuple with
-    keys to same measurement in dict1 and dict2
+    """Compares two dictionaries based on hkl indexes and return dictionary with str(h k l) as 
+    key and tuple with keys to same measurement in dict1 and dict2
     :arg dict1 : first dictionary
     :arg dict2 : second dictionary
     :return d : dict with matches
-    example of one key: '0.0 0.0 -1.0 : ('M1', 'M9')' meaning that 001 hkl measurement is M1 in first dict and M9 in second"""
+    example of one key: '0.0 0.0 -1.0 : ('M1', 'M9')' meaning that 001 hkl measurement is M1 in 
+    first dict and M9 in second"""
     d = {}
     dupl = 0
     for keys in dict1["Measurements"]:
@@ -106,6 +107,7 @@ def create_tuples(x, y, y_err):
         t.append(tup)
     return t
 
+
 def normalize(dict, key, monitor):
     """Normalizes the measurement to monitor, checks if sigma exists, otherwise creates it
     :arg dict : dictionary to from which to tkae the scan
@@ -115,12 +117,17 @@ def normalize(dict, key, monitor):
     :return sigma - normalized sigma"""
 
     counts = np.array(dict["Measurements"][key]["Counts"])
-    sigma = np.sqrt(counts) if "sigma" not in dict["Measurements"][key] else dict["Measurements"][key]['sigma']
-    monitor_ratio = monitor/dict["Measurements"][key]["monitor"]
-    scaled_counts = counts*monitor_ratio
-    scaled_sigma = np.array(sigma)*monitor_ratio
+    sigma = (
+        np.sqrt(counts)
+        if "sigma" not in dict["Measurements"][key]
+        else dict["Measurements"][key]["sigma"]
+    )
+    monitor_ratio = monitor / dict["Measurements"][key]["monitor"]
+    scaled_counts = counts * monitor_ratio
+    scaled_sigma = np.array(sigma) * monitor_ratio
 
     return scaled_counts, scaled_sigma
+
 
 def merge(dict1, dict2, keys, auto=True, monitor=100000):
     """merges the two tuples and sorts them, if om value is same, Counts value is average
@@ -169,6 +176,13 @@ def merge(dict1, dict2, keys, auto=True, monitor=100000):
     if dict1 == dict2:
         del dict1["Measurements"][keys[1]]
 
+    note = f'This measurement was merged with measurement {keys[1]} from ' \
+           f'file {dict2["meta"]["original_filename"]} \n'
+    if "notes" not in dict1["Measurements"][str(keys[0])]:
+        dict1["Measurements"][str(keys[0])]["notes"] = note
+    else:
+        dict1["Measurements"][str(keys[0])]["notes"] += note
+
     dict1["Measurements"][keys[0]]["om"] = om
     dict1["Measurements"][keys[0]]["Counts"] = Counts
     dict1["Measurements"][keys[0]]["sigma"] = sigma
@@ -208,7 +222,14 @@ def substract_measurement(dict1, dict2, keys, auto=True, monitor=100000):
     dict1["Measurements"][str(keys[0])]["Counts"] = res_nom
     dict1["Measurements"][str(keys[0])]["sigma"] = res_err
     dict1["Measurements"][str(keys[0])]["monitor"] = monitor
+    note = f'Measurement {keys[1]} from file {dict2["meta"]["original_filename"]} ' \
+           f'was substracted from this measurement \n'
+    if "notes" not in dict1["Measurements"][str(keys[0])]:
+        dict1["Measurements"][str(keys[0])]["notes"] = note
+    else:
+        dict1["Measurements"][str(keys[0])]["notes"] += note
     return dict1
+
 
 def compare_dict(dict1, dict2):
     """takes two ccl dictionaries and compare different values for each key
@@ -365,7 +386,8 @@ def compare_dict(dict1, dict2):
 
 
 def guess_next(dict1, dict2, comp):
-    """iterates thorough the scans and tries to decide if the scans should be substracted or merged"""
+    """iterates thorough the scans and tries to decide if the scans should be 
+    substracted or merged"""
     threshold = 0.05
     for keys in comp:
         if (
