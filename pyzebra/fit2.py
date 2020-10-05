@@ -218,7 +218,7 @@ def fitccl(
     # ["export_fit"] = False if user wants num. int. value in comm/incomm, otherwise true
     d["ratio"] = (result.params["g_amp"].value - int_area.n) / result.params["g_amp"].value
     d["int_area"] = int_area
-    d["fit_area"] = fit_area
+    d["fit_area"] = u.ufloat(result.params["g_amp"].value, result.params["g_amp"].stderr)
     d["full_report"] = result.fit_report()
     d["result"] = result
     d["comps"] = comps
