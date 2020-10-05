@@ -51,6 +51,7 @@ PROPOSAL_PATH = "/afs/psi.ch/project/sinqdata/2020/zebra/"
 
 def create():
     det_data = {}
+    peak_pos_textinput_lock = False
     js_data = ColumnDataSource(data=dict(cont=[], ext=[]))
 
     def proposal_textinput_callback(_attr, _old, new):
@@ -93,7 +94,14 @@ def create():
     upload_button = FileInput(accept=".ccl")
     upload_button.on_change("value", upload_button_callback)
 
+    def _update_table():
+        num_of_peaks = [meas["num_of_peaks"] for meas in det_data["Measurements"].values()]
+        meas_table_source.data.update(peaks=num_of_peaks)
+
     def _update_plot(ind):
+        nonlocal peak_pos_textinput_lock
+        peak_pos_textinput_lock = True
+
         meas = det_data["Measurements"][ind]
         y = meas["Counts"]
         x = list(range(len(y)))
@@ -102,9 +110,18 @@ def create():
 
         num_of_peaks = meas.get("num_of_peaks")
         if num_of_peaks is not None and num_of_peaks > 0:
-            plot_circle_source.data.update(x=meas["peak_indexes"], y=meas["peak_heights"])
+            peak_indexes = meas["peak_indexes"]
+            if len(peak_indexes) == 1:
+                peak_pos_textinput.value = str(peak_indexes[0])
+            else:
+                peak_pos_textinput.value = str(peak_indexes)
+
+            plot_circle_source.data.update(x=peak_indexes, y=meas["peak_heights"])
         else:
+            peak_pos_textinput.value = None
             plot_circle_source.data.update(x=[], y=[])
+
+        peak_pos_textinput_lock = False
 
         fit = meas.get("fit")
         if fit is not None:
@@ -161,6 +178,21 @@ def create():
 
     meas_table_source.selected.on_change("indices", meas_table_callback)
 
+    def peak_pos_textinput_callback(_attr, _old, new):
+        if new is not None and not peak_pos_textinput_lock:
+            sel_ind = meas_table_source.selected.indices[-1]
+            meas_name = meas_table_source.data["measurement"][sel_ind]
+            meas = det_data["Measurements"][meas_name]
+
+            meas["num_of_peaks"] = 1
+            meas["peak_indexes"] = [float(new)]
+            meas["peak_heights"] = [0]
+            _update_table()
+            _update_plot(meas_name)
+
+    peak_pos_textinput = TextInput(title="Peak position:")
+    peak_pos_textinput.on_change("value", peak_pos_textinput_callback)
+
     peak_int_ratio_spinner = Spinner(
         title="Peak intensity ratio:", value=0.8, step=0.01, low=0, high=1, default_size=145
     )
@@ -184,8 +216,7 @@ def create():
                 poly_order=poly_order_spinner.value,
             )
 
-        num_of_peaks = [meas["num_of_peaks"] for meas in det_data["Measurements"].values()]
-        meas_table_source.data.update(peaks=num_of_peaks)
+        _update_table()
 
         sel_ind = meas_table_source.selected.indices[-1]
         _update_plot(meas_table_source.data["measurement"][sel_ind])
@@ -237,6 +268,7 @@ def create():
     save_button.js_on_click(CustomJS(args={"js_data": js_data}, code=javaScript))
 
     findpeak_controls = column(
+        peak_pos_textinput,
         row(peak_int_ratio_spinner, peak_prominence_spinner),
         smooth_toggle,
         row(window_size_spinner, poly_order_spinner),
