@@ -168,7 +168,7 @@ def create():
 
     fit_output_textinput = TextAreaInput(title="Fit results:", width=600, height=400)
 
-    def process_button_callback():
+    def peakfind_all_button_callback():
         nonlocal det_data
         for meas in det_data["Measurements"]:
             det_data = pyzebra.ccl_findpeaks(
@@ -181,6 +181,15 @@ def create():
                 poly_order=poly_order_spinner.value,
             )
 
+        sel_ind = meas_table_source.selected.indices[-1]
+        _update_plot(meas_table_source.data["measurement"][sel_ind])
+
+    peakfind_all_button = Button(label="Peak Find All", button_type="primary")
+    peakfind_all_button.on_click(peakfind_all_button_callback)
+
+    def fit_all_button_callback():
+        nonlocal det_data
+        for meas in det_data["Measurements"]:
             num_of_peaks = det_data["Measurements"][meas].get("num_of_peaks")
             if num_of_peaks is not None and num_of_peaks == 1:
                 det_data = pyzebra.fitccl(
@@ -195,8 +204,8 @@ def create():
         sel_ind = meas_table_source.selected.indices[-1]
         _update_plot(meas_table_source.data["measurement"][sel_ind])
 
-    process_button = Button(label="Process All", button_type="primary")
-    process_button.on_click(process_button_callback)
+    fit_all_button = Button(label="Fit All", button_type="primary")
+    fit_all_button.on_click(fit_all_button_callback)
 
     def export_results(det_data):
         if det_data["meta"]["indices"] == "hkl":
@@ -225,6 +234,7 @@ def create():
         row(peak_int_ratio_spinner, peak_prominence_spinner),
         smooth_toggle,
         row(window_size_spinner, poly_order_spinner),
+        peakfind_all_button,
     )
 
     upload_div = Div(text="Or upload .ccl file:")
@@ -232,7 +242,7 @@ def create():
         row(proposal_textinput, ccl_file_select),
         row(column(Spacer(height=5), upload_div), upload_button),
         row(meas_table, plot, Spacer(width=30), fit_output_textinput),
-        row(column(findpeak_controls, process_button, save_button)),
+        row(findpeak_controls, column(fit_all_button), column(save_button)),
     )
 
     return Panel(child=tab_layout, title="ccl integrate")
