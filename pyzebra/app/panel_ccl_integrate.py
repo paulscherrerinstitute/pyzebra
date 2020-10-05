@@ -72,7 +72,7 @@ def create():
             det_data = pyzebra.parse_1D(file, ext)
 
         meas_list = list(det_data["Measurements"].keys())
-        meas_table_source.data.update(measurement=meas_list)
+        meas_table_source.data.update(measurement=meas_list, peaks=[0] * len(meas_list))
         meas_table_source.selected.indices = []
         meas_table_source.selected.indices = [0]
 
@@ -86,7 +86,7 @@ def create():
             det_data = pyzebra.parse_1D(file, ext)
 
         meas_list = list(det_data["Measurements"].keys())
-        meas_table_source.data.update(measurement=meas_list)
+        meas_table_source.data.update(measurement=meas_list, peaks=[0] * len(meas_list))
         meas_table_source.selected.indices = []
         meas_table_source.selected.indices = [0]
 
@@ -148,10 +148,13 @@ def create():
         if new:
             _update_plot(meas_table_source.data["measurement"][new[-1]])
 
-    meas_table_source = ColumnDataSource(dict(measurement=[]))
+    meas_table_source = ColumnDataSource(dict(measurement=[], peaks=[]))
     meas_table = DataTable(
         source=meas_table_source,
-        columns=[TableColumn(field="measurement", title="Measurement")],
+        columns=[
+            TableColumn(field="measurement", title="Meas"),
+            TableColumn(field="peaks", title="Peaks"),
+        ],
         width=100,
         index_position=None,
     )
@@ -180,6 +183,9 @@ def create():
                 window_size=window_size_spinner.value,
                 poly_order=poly_order_spinner.value,
             )
+
+        num_of_peaks = [meas["num_of_peaks"] for meas in det_data["Measurements"].values()]
+        meas_table_source.data.update(peaks=num_of_peaks)
 
         sel_ind = meas_table_source.selected.indices[-1]
         _update_plot(meas_table_source.data["measurement"][sel_ind])
