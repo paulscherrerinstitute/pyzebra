@@ -11,6 +11,7 @@ from bokeh.models import (
     ColumnDataSource,
     CustomJS,
     DataRange1d,
+    DataTable,
     Div,
     FileInput,
     Grid,
@@ -20,6 +21,7 @@ from bokeh.models import (
     Plot,
     Select,
     Spacer,
+    TableColumn,
     TextAreaInput,
     TextInput,
     Toggle,
@@ -69,9 +71,9 @@ def create():
             det_data = pyzebra.parse_1D(file, ext)
 
         meas_list = list(det_data["Measurements"].keys())
-        meas_select.options = meas_list
-        meas_select.value = None
-        meas_select.value = meas_list[0]
+        meas_table_source.data.update(measurement=meas_list)
+        meas_table_source.selected.indices = []
+        meas_table_source.selected.indices = [0]
 
     ccl_file_select = Select(title="Available .ccl files")
     ccl_file_select.on_change("value", ccl_file_select_callback)
@@ -83,9 +85,9 @@ def create():
             det_data = pyzebra.parse_1D(file, ext)
 
         meas_list = list(det_data["Measurements"].keys())
-        meas_select.options = meas_list
-        meas_select.value = None
-        meas_select.value = meas_list[0]
+        meas_table_source.data.update(measurement=meas_list)
+        meas_table_source.selected.indices = []
+        meas_table_source.selected.indices = [0]
 
     upload_button = FileInput(accept=".ccl")
     upload_button.on_change("value", upload_button_callback)
@@ -141,12 +143,19 @@ def create():
     plot.add_glyph(plot_circle_source, Circle(x="x", y="y"))
 
     # Measurement select
-    def meas_select_callback(_attr, _old, new):
-        if new is not None:
-            _update_plot(new)
+    def meas_table_callback(_attr, _old, new):
+        if new:
+            _update_plot(meas_table_source.data["measurement"][new[-1]])
 
-    meas_select = Select()
-    meas_select.on_change("value", meas_select_callback)
+    meas_table_source = ColumnDataSource(dict(measurement=[]))
+    meas_table = DataTable(
+        source=meas_table_source,
+        columns=[TableColumn(field="measurement", title="Measurement")],
+        width=100,
+        index_position=None,
+    )
+
+    meas_table_source.selected.on_change("indices", meas_table_callback)
 
     smooth_toggle = Toggle(label="Smooth curve")
 
@@ -168,7 +177,8 @@ def create():
                     constraints_max=[None, None, None, None, None],
                 )
 
-        _update_plot(meas_select.value)
+        sel_ind = meas_table_source.selected.indices[-1]
+        _update_plot(meas_table_source.data["measurement"][sel_ind])
 
     process_button = Button(label="Process All", button_type="primary")
     process_button.on_click(process_button_callback)
@@ -199,8 +209,8 @@ def create():
     upload_div = Div(text="Or upload .ccl file:")
     tab_layout = column(
         row(proposal_textinput, ccl_file_select),
-        row(column(Spacer(height=5), upload_div), upload_button, meas_select),
-        row(plot, Spacer(width=30), fit_output_textinput),
+        row(column(Spacer(height=5), upload_div), upload_button),
+        row(meas_table, plot, Spacer(width=30), fit_output_textinput),
         row(column(smooth_toggle, process_button, save_button)),
     )
 
