@@ -21,6 +21,7 @@ from bokeh.models import (
     Plot,
     Select,
     Spacer,
+    Spinner,
     TableColumn,
     TextAreaInput,
     TextInput,
@@ -157,14 +158,28 @@ def create():
 
     meas_table_source.selected.on_change("indices", meas_table_callback)
 
+    peak_int_ratio_spinner = Spinner(
+        title="Peak intensity ratio:", value=0.8, step=0.01, low=0, high=1, default_size=145
+    )
+    peak_prominence_spinner = Spinner(title="Peak prominence:", value=50, low=0, default_size=145)
     smooth_toggle = Toggle(label="Smooth curve")
+    window_size_spinner = Spinner(title="Window size:", value=7, step=2, low=1, default_size=145)
+    poly_order_spinner = Spinner(title="Poly order:", value=3, low=0, default_size=145)
 
     fit_output_textinput = TextAreaInput(title="Fit results:", width=600, height=400)
 
     def process_button_callback():
         nonlocal det_data
         for meas in det_data["Measurements"]:
-            det_data = pyzebra.ccl_findpeaks(det_data, meas, smooth=smooth_toggle.active)
+            det_data = pyzebra.ccl_findpeaks(
+                det_data,
+                meas,
+                int_threshold=peak_int_ratio_spinner.value,
+                prominence=peak_prominence_spinner.value,
+                smooth=smooth_toggle.active,
+                window_size=window_size_spinner.value,
+                poly_order=poly_order_spinner.value,
+            )
 
             num_of_peaks = det_data["Measurements"][meas].get("num_of_peaks")
             if num_of_peaks is not None and num_of_peaks == 1:
@@ -206,12 +221,18 @@ def create():
     save_button.on_click(save_button_callback)
     save_button.js_on_click(CustomJS(args={"js_data": js_data}, code=javaScript))
 
+    findpeak_controls = column(
+        row(peak_int_ratio_spinner, peak_prominence_spinner),
+        smooth_toggle,
+        row(window_size_spinner, poly_order_spinner),
+    )
+
     upload_div = Div(text="Or upload .ccl file:")
     tab_layout = column(
         row(proposal_textinput, ccl_file_select),
         row(column(Spacer(height=5), upload_div), upload_button),
         row(meas_table, plot, Spacer(width=30), fit_output_textinput),
-        row(column(smooth_toggle, process_button, save_button)),
+        row(column(findpeak_controls, process_button, save_button)),
     )
 
     return Panel(child=tab_layout, title="ccl integrate")
