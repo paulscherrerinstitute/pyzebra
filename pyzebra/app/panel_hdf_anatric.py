@@ -406,4 +406,4 @@ def create():
 
     curdoc().add_periodic_callback(update_config, 1000)
 
-    return Panel(child=tab_layout, title="Anatric")
+    return Panel(child=tab_layout, title="hdf anatric")

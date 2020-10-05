@@ -3,9 +3,9 @@ import argparse
 from bokeh.io import curdoc
 from bokeh.models import Tabs
 
-import panel_anatric
-import panel_data_viewer
-import panel_1D_detector
+import panel_hdf_anatric
+import panel_hdf_viewer
+import panel_ccl_integrate
 
 parser = argparse.ArgumentParser(
     prog="pyzebra", formatter_class=argparse.ArgumentDefaultsHelpFormatter
@@ -17,8 +17,8 @@ doc = curdoc()
 doc.title = "pyzebra"
 
 # Final layout
-tab_data_viewer = panel_data_viewer.create()
-tab_anatric = panel_anatric.create()
-tab_1D_detector = panel_1D_detector.create()
+tab_hdf_viewer = panel_hdf_viewer.create()
+tab_hdf_anatric = panel_hdf_anatric.create()
+tab_ccl_integrate = panel_ccl_integrate.create()
 
-doc.add_root(Tabs(tabs=[tab_data_viewer, tab_anatric, tab_1D_detector]))
+doc.add_root(Tabs(tabs=[tab_hdf_viewer, tab_hdf_anatric, tab_ccl_integrate]))

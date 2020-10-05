@@ -464,7 +464,7 @@ def create():
         column(roi_avg_plot, layout_image, row(colormap_layout, hkl_layout)),
     )
 
-    return Panel(child=tab_layout, title="Data Viewer")
+    return Panel(child=tab_layout, title="hdf viewer")
 
 
 def calculate_hkl(det_data, index, setup_type="nb_bi"):

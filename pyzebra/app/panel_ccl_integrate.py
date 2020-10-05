@@ -204,4 +204,4 @@ def create():
         row(column(smooth_toggle, process_button, save_button)),
     )
 
-    return Panel(child=tab_layout, title="1D Detector")
+    return Panel(child=tab_layout, title="ccl integrate")
