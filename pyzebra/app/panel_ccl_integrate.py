@@ -201,6 +201,27 @@ def create():
     window_size_spinner = Spinner(title="Window size:", value=7, step=2, low=1, default_size=145)
     poly_order_spinner = Spinner(title="Poly order:", value=3, low=0, default_size=145)
 
+    centre_guess = Spinner(default_size=100)
+    centre_vary = Toggle(default_size=100, active=True)
+    centre_min = Spinner(default_size=100)
+    centre_max = Spinner(default_size=100)
+    sigma_guess = Spinner(default_size=100)
+    sigma_vary = Toggle(default_size=100, active=True)
+    sigma_min = Spinner(default_size=100)
+    sigma_max = Spinner(default_size=100)
+    ampl_guess = Spinner(default_size=100)
+    ampl_vary = Toggle(default_size=100, active=True)
+    ampl_min = Spinner(default_size=100)
+    ampl_max = Spinner(default_size=100)
+    slope_guess = Spinner(default_size=100)
+    slope_vary = Toggle(default_size=100, active=True)
+    slope_min = Spinner(default_size=100)
+    slope_max = Spinner(default_size=100)
+    offset_guess = Spinner(default_size=100)
+    offset_vary = Toggle(default_size=100, active=True)
+    offset_min = Spinner(default_size=100)
+    offset_max = Spinner(default_size=100)
+
     fit_output_textinput = TextAreaInput(title="Fit results:", width=600, height=400)
 
     def peakfind_all_button_callback():
@@ -232,10 +253,34 @@ def create():
                 det_data = pyzebra.fitccl(
                     det_data,
                     meas,
-                    guess=[None, None, None, None, None],
-                    vary=[True, True, True, True, True],
-                    constraints_min=[None, None, None, None, None],
-                    constraints_max=[None, None, None, None, None],
+                    guess=[
+                        centre_guess.value,
+                        sigma_guess.value,
+                        ampl_guess.value,
+                        slope_guess.value,
+                        offset_guess.value,
+                    ],
+                    vary=[
+                        centre_vary.active,
+                        sigma_vary.active,
+                        ampl_vary.active,
+                        slope_vary.active,
+                        offset_vary.active,
+                    ],
+                    constraints_min=[
+                        centre_min.value,
+                        sigma_min.value,
+                        ampl_min.value,
+                        slope_min.value,
+                        offset_min.value,
+                    ],
+                    constraints_max=[
+                        centre_max.value,
+                        sigma_max.value,
+                        ampl_max.value,
+                        slope_max.value,
+                        offset_max.value,
+                    ],
                 )
 
         sel_ind = meas_table_source.selected.indices[-1]
@@ -275,12 +320,42 @@ def create():
         peakfind_all_button,
     )
 
+    div_1 = Div(text="Guess:")
+    div_2 = Div(text="Vary:")
+    div_3 = Div(text="Min:")
+    div_4 = Div(text="Max:")
+    div_5 = Div(text="Gauss Centre:")
+    div_6 = Div(text="Gauss Sigma:")
+    div_7 = Div(text="Gauss Ampl.:")
+    div_8 = Div(text="Slope:")
+    div_9 = Div(text="Offset:")
+    fitpeak_controls = column(
+        row(
+            column(
+                Spacer(height=36),
+                div_1,
+                Spacer(height=12),
+                div_2,
+                Spacer(height=12),
+                div_3,
+                Spacer(height=12),
+                div_4,
+            ),
+            column(div_5, centre_guess, centre_vary, centre_min, centre_max),
+            column(div_6, sigma_guess, sigma_vary, sigma_min, sigma_max),
+            column(div_7, ampl_guess, ampl_vary, ampl_min, ampl_max),
+            column(div_8, slope_guess, slope_vary, slope_min, slope_max),
+            column(div_9, offset_guess, offset_vary, offset_min, offset_max),
+        ),
+        row(fit_all_button),
+    )
+
     upload_div = Div(text="Or upload .ccl file:")
     tab_layout = column(
         row(proposal_textinput, ccl_file_select),
         row(column(Spacer(height=5), upload_div), upload_button),
         row(meas_table, plot, Spacer(width=30), fit_output_textinput),
-        row(findpeak_controls, column(fit_all_button), column(save_button)),
+        row(findpeak_controls, Spacer(width=30), fitpeak_controls, column(save_button)),
     )
 
     return Panel(child=tab_layout, title="ccl integrate")
