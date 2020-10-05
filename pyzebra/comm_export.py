@@ -34,15 +34,14 @@ def export_comm(data, path, lorentz=False):
             if "fit" not in meas:
                 print("Measurement skipped - no fit value for:", keys)
                 continue
-
             meas_number_str = f"{keys[1:]:{align}{padding[0]}}"
             h_str = f'{int(meas["h_index"]):{padding[1]}}'
             k_str = f'{int(meas["k_index"]):{padding[1]}}'
             l_str = f'{int(meas["l_index"]):{padding[1]}}'
             if meas["fit"]["export_fit"] is True:
-                area = float(meas["fit"]["g_amp"].value)
+                area = float(meas["fit"]["fit_area"].n)
                 sigma_str = (
-                    f'{"{:8.2f}".format(float(meas["fit"]["g_amp"].stderr)):{align}{padding[2]}}'
+                    f'{"{:8.2f}".format(float(meas["fit"]["fit_area"].s)):{align}{padding[2]}}'
                 )
             else:
                 area = float(meas["fit"]["int_area"].n)
