@@ -117,9 +117,11 @@ def create():
                 peak_pos_textinput.value = str(peak_indexes)
 
             plot_circle_source.data.update(x=peak_indexes, y=meas["peak_heights"])
+            plot_line_smooth_source.data.update(x=x, y=meas["smooth_peaks"])
         else:
             peak_pos_textinput.value = None
             plot_circle_source.data.update(x=[], y=[])
+            plot_line_smooth_source.data.update(x=[], y=[])
 
         peak_pos_textinput_lock = False
 
@@ -171,6 +173,11 @@ def create():
 
     plot_line_source = ColumnDataSource(dict(x=[0], y=[0]))
     plot.add_glyph(plot_line_source, Line(x="x", y="y", line_color="steelblue"))
+
+    plot_line_smooth_source = ColumnDataSource(dict(x=[0], y=[0]))
+    plot.add_glyph(
+        plot_line_smooth_source, Line(x="x", y="y", line_color="steelblue", line_dash="dashed")
+    )
 
     plot_gauss_source = ColumnDataSource(dict(x=[0], y=[0]))
     plot.add_glyph(plot_gauss_source, Line(x="x", y="y", line_color="red", line_dash="dashed"))
