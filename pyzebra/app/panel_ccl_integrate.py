@@ -127,7 +127,28 @@ def create():
         if fit is not None:
             plot_gauss_source.data.update(x=x, y=meas["fit"]["comps"]["gaussian"])
             plot_bkg_source.data.update(x=x, y=meas["fit"]["comps"]["background"])
-            fit_output_textinput.value = str(fit["full_report"])
+            params = fit["result"].params
+            fit_output_textinput.value = (
+                "%s \n"
+                "Gaussian: centre = %9.4f, sigma = %9.4f, area = %9.4f \n"
+                "background: slope = %9.4f, intercept = %9.4f \n"
+                "Int. area = %9.4f +/- %9.4f \n"
+                "fit area = %9.4f +/- %9.4f \n"
+                "ratio((fit-int)/fit) = %9.4f"
+                % (
+                    ind,
+                    params["g_cen"].value,
+                    params["g_width"].value,
+                    params["g_amp"].value,
+                    params["slope"].value,
+                    params["intercept"].value,
+                    fit["int_area"].n,
+                    fit["int_area"].s,
+                    params["g_amp"].value,
+                    params["g_amp"].stderr,
+                    (params["g_amp"].value - fit["int_area"].n) / params["g_amp"].value,
+                )
+            )
         else:
             plot_gauss_source.data.update(x=[], y=[])
             plot_bkg_source.data.update(x=[], y=[])
