@@ -243,6 +243,31 @@ def create():
     offset_min = Spinner(default_size=100)
     offset_max = Spinner(default_size=100)
 
+    def fitparam_reset_button_callback():
+        centre_guess.value = None
+        centre_vary.active = True
+        centre_min.value = None
+        centre_max.value = None
+        sigma_guess.value = None
+        sigma_vary.active = True
+        sigma_min.value = None
+        sigma_max.value = None
+        ampl_guess.value = None
+        ampl_vary.active = True
+        ampl_min.value = None
+        ampl_max.value = None
+        slope_guess.value = None
+        slope_vary.active = True
+        slope_min.value = None
+        slope_max.value = None
+        offset_guess.value = None
+        offset_vary.active = True
+        offset_min.value = None
+        offset_max.value = None
+
+    fitparam_reset_button = Button(label="Reset to defaults")
+    fitparam_reset_button.on_click(fitparam_reset_button_callback)
+
     fit_output_textinput = TextAreaInput(title="Fit results:", width=600, height=400)
 
     def peakfind_all_button_callback():
@@ -434,6 +459,7 @@ def create():
             column(div_8, slope_guess, slope_vary, slope_min, slope_max),
             column(div_9, offset_guess, offset_vary, offset_min, offset_max),
         ),
+        row(fitparam_reset_button),
         row(fit_button),
         row(fit_all_button),
     )
