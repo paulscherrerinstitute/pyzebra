@@ -1,6 +1,73 @@
 import numpy as np
 import uncertainties as u
 from fitvol2 import create_uncertanities
+import matplotlib.pyplot as plt
+
+
+def add_dict(dict1, dict2):
+    """adds two dictionaries, meta of the new is saved as meata+original_filename and
+    measurements are shifted to continue with numbering of first dict
+    :arg dict1 : dictionarry to add to
+    :arg dict2 : dictionarry from which to take the measurements
+    :return dict1 : combined dictionary
+    Note: dict1 must be made from ccl, otherwise we would have to change the structure of loaded
+    dat file"""
+    max_measurement_dict1 = max([int(str(keys)[1:]) for keys in dict1["Measurements"]])
+    if dict2['meta']['data_type'] == '.ccl':
+        new_filenames = ['M' + str(x + max_measurement_dict1) for x in
+                         [int(str(keys)[1:]) for keys in dict2["Measurements"]]]
+        new_meta_name = 'meta' + str(dict2["meta"]['original_filename'])
+        if new_meta_name not in dict1:
+            for keys, name in zip(dict2["Measurements"], new_filenames):
+                dict2["Measurements"][keys]['file_of_origin'] = str(dict2["meta"]['original_filename'])
+                dict1["Measurements"][name] = dict2["Measurements"][keys]
+
+            dict1[new_meta_name] = dict2["meta"]
+
+
+        else:
+            raise KeyError(str('The file %s has alredy been added to %s' % (dict2["meta"][
+                                                                                'original_filename'],
+                                                                            dict1["meta"][
+                                                                            'original_filename'])))
+    elif dict2['meta']['data_type'] == '.dat':
+        d = {}
+        new_name = 'M' + str(max_measurement_dict1+1)
+        hkl = dict2['meta']['title']
+        d['h_index'] = float(hkl.split()[-3])
+        d['k_index'] = float(hkl.split()[-2])
+        d['l_index'] = float(hkl.split()[-1])
+        d['number_of_measurements'] = len(dict2['Measurements']['NP'])
+        d['om'] = dict2['Measurements']['om']
+        d['Counts'] = dict2['Measurements']['Counts']
+        d['monitor'] = dict2['Measurements']['Monitor1'][0]
+        d['temperature'] = dict2['meta']['temp']
+        d['mag_field'] = dict2['meta']['mf']
+        d['omega_angle'] = dict2['meta']['omega']
+        dict1["Measurements"][new_name] = d
+        print(hkl.split())
+        for keys in d:
+            print(keys)
+
+
+
+        print('s')
+
+    return dict1
+
+def auto(dict):
+    """takes just unique tuples from all tuples in dictionary returend by scan_dict
+    intendet for automatic merge if you doesent want to specify what scans to merge together
+    args: dict - dictionary from scan_dict function
+    :return dict - dict without repetitions"""
+    for keys in dict:
+        tuple_list = dict[keys]
+        new = list()
+        for i in range(len(tuple_list)):
+            if tuple_list[0][0] == tuple_list[i][0]:
+                new.append(tuple_list[i])
+        dict[keys] = new
+    return dict
 
 
 def scan_dict(dict):
@@ -9,8 +76,8 @@ def scan_dict(dict):
     :return  dictionary with matching scans, if there are none, the dict is empty
     note: can be checked by "not d", true if empty
     """
+
     d = {}
-    dupl = 0
     for i in dict["Measurements"]:
         for j in dict["Measurements"]:
             if dict["Measurements"][str(i)] != dict["Measurements"][str(j)]:
@@ -27,48 +94,49 @@ def scan_dict(dict):
                 if itup != jtup:
                     pass
                 else:
+
                     if str(itup) not in d:
-                        d[str(itup)] = (i, j)
+                        d[str(itup)] = list()
+                        d[str(itup)].append((i, j))
                     else:
-                        dupl = dupl + 1
-                        d[str(itup) + "_" + str(dupl)] = (i, j)
+                        d[str(itup)].append((i, j))
             else:
                 continue
     return d
 
 
 def compare_hkl(dict1, dict2):
-    """Compares two dictionaries based on hkl indexes and return dictionary with str(h k l) as 
+    """Compares two dictionaries based on hkl indexes and return dictionary with str(h k l) as
     key and tuple with keys to same measurement in dict1 and dict2
     :arg dict1 : first dictionary
     :arg dict2 : second dictionary
     :return d : dict with matches
-    example of one key: '0.0 0.0 -1.0 : ('M1', 'M9')' meaning that 001 hkl measurement is M1 in 
+    example of one key: '0.0 0.0 -1.0 : ('M1', 'M9')' meaning that 001 hkl measurement is M1 in
     first dict and M9 in second"""
     d = {}
     dupl = 0
     for keys in dict1["Measurements"]:
         for key in dict2["Measurements"]:
             if (
-                dict1["Measurements"][str(keys)]["h_index"]
-                == dict2["Measurements"][str(key)]["h_index"]
-                and dict1["Measurements"][str(keys)]["k_index"]
-                == dict2["Measurements"][str(key)]["k_index"]
-                and dict1["Measurements"][str(keys)]["l_index"]
-                == dict2["Measurements"][str(key)]["l_index"]
+                    dict1["Measurements"][str(keys)]["h_index"]
+                    == dict2["Measurements"][str(key)]["h_index"]
+                    and dict1["Measurements"][str(keys)]["k_index"]
+                    == dict2["Measurements"][str(key)]["k_index"]
+                    and dict1["Measurements"][str(keys)]["l_index"]
+                    == dict2["Measurements"][str(key)]["l_index"]
             ):
 
                 if (
-                    str(
-                        (
-                            str(dict1["Measurements"][str(keys)]["h_index"])
-                            + " "
-                            + str(dict1["Measurements"][str(keys)]["k_index"])
-                            + " "
-                            + str(dict1["Measurements"][str(keys)]["l_index"])
+                        str(
+                            (
+                                    str(dict1["Measurements"][str(keys)]["h_index"])
+                                    + " "
+                                    + str(dict1["Measurements"][str(keys)]["k_index"])
+                                    + " "
+                                    + str(dict1["Measurements"][str(keys)]["l_index"])
+                            )
                         )
-                    )
-                    not in d
+                        not in d
                 ):
                     d[
                         str(
@@ -103,7 +171,7 @@ def create_tuples(x, y, y_err):
     Counts need to be normalized to monitor before"""
     t = list()
     for i in range(len(x)):
-        tup = (x[i], y[i], y_err)
+        tup = (x[i], y[i], y_err[i])
         t.append(tup)
     return t
 
@@ -149,7 +217,7 @@ def merge(dict1, dict2, keys, auto=True, monitor=100000):
     cor_y2, y_err2 = normalize(dict2, keys[1], monitor=monitor)
     # creates touples (om, Counts, sigma) for sorting and further processing
     tuple_list = create_tuples(x1, cor_y1, y_err1) + create_tuples(x2, cor_y2, y_err2)
-    # Sort the list on om and add 0 0 0 tuple to the last postion
+    # Sort the list on om and add 0 0 0 tuple to the last position
     sorted_t = sorted(tuple_list, key=lambda tup: tup[0])
     sorted_t.append((0, 0, 0))
     om, Counts, sigma = [], [], []
@@ -187,6 +255,7 @@ def merge(dict1, dict2, keys, auto=True, monitor=100000):
     dict1["Measurements"][keys[0]]["Counts"] = Counts
     dict1["Measurements"][keys[0]]["sigma"] = sigma
     dict1["Measurements"][keys[0]]["monitor"] = monitor
+    print('merging done')
     return dict1
 
 
@@ -219,10 +288,17 @@ def substract_measurement(dict1, dict2, keys, auto=True, monitor=100000):
     for k in range(len(res)):
         res_nom = np.append(res_nom, res[k].n)
         res_err = np.append(res_err, res[k].s)
-        
-    if len([num for num in res_nom if num < 0]) >= 0.3*len(res_nom):
+    # plt.plot(res_nom, 'r', label='final')
+    # plt.plot(cor_y1, 'g', label='dict1')
+    # plt.plot(cor_y2, 'b', label='dict2')
+    # plt.legend()
+    # plt.title(str(keys))
+    # plt.show()
+
+    if len([num for num in res_nom if num < 0]) >= 0.3 * len(res_nom):
         print(f'Warning! percentage of negative numbers in measurement subsracted {keys[0]} is '
-              f'{len([num for num in res_nom if num < 0])/len(res_nom)}')
+              f'{len([num for num in res_nom if num < 0]) / len(res_nom)}')
+
     dict1["Measurements"][str(keys[0])]["Counts"] = res_nom
     dict1["Measurements"][str(keys[0])]["sigma"] = res_err
     dict1["Measurements"][str(keys[0])]["monitor"] = monitor
@@ -243,7 +319,7 @@ def compare_dict(dict1, dict2):
     information of how many measurement differ and which ones differ
     :returns report_string string comparing all different values respecively of measurements"""
 
-    if dict1["file_type"] != dict2["file_type"]:
+    if dict1["meta"]["data_type"] != dict2["meta"]["data_type"]:
         print("select two dicts")
         return
     S = []
@@ -283,16 +359,19 @@ def compare_dict(dict1, dict2):
         for k in dict1["meta"]
         if k in dict2["meta"] and dict1["meta"][k] != dict2["meta"][k]
     }
-
+    exlude_meta_set = ["original_filename", "date", "title"]
     for keys in different_meta:
-        if keys not in conflicts:
-            conflicts[keys] = 1
+        if keys in exlude_meta_set:
+            continue
         else:
-            conflicts[keys] = conflicts[keys] + 1
+            if keys not in conflicts:
+                conflicts[keys] = 1
+            else:
+                conflicts[keys] = conflicts[keys] + 1
 
-        S.append("   Different values in %s \n" % str(keys))
-        S.append("           dict1: %s \n" % str(dict1["meta"][str(keys)]))
-        S.append("           dict2: %s \n" % str(dict2["meta"][str(keys)]))
+            S.append("   Different values in %s \n" % str(keys))
+            S.append("           dict1: %s \n" % str(dict1["meta"][str(keys)]))
+            S.append("           dict2: %s \n" % str(dict2["meta"][str(keys)]))
 
     # compare Measurements
     S.append(
@@ -305,80 +384,89 @@ def compare_dict(dict1, dict2):
     )
     S.append("Different values in Measurements:\n")
     select_set = ["om", "Counts", "sigma"]
-    exlude_set = ["time", "Counts"]
-
+    exlude_set = ["time", "Counts", "date", 'notes']
     for keys1 in comp:
         for key2 in dict1["Measurements"][str(comp[str(keys1)][0])]:
             if key2 in exlude_set:
                 continue
             if key2 not in select_set:
-                if (
-                    dict1["Measurements"][comp[str(keys1)][0]][str(key2)]
-                    != dict2["Measurements"][str(comp[str(keys1)][0])][str(key2)]
-                ):
-                    S.append(
-                        "Measurement value "
-                        "%s"
-                        ", with hkl %s differs in meausrements %s and %s \n"
-                        % (key2, keys1, comp[str(keys1)][0], comp[str(keys1)][1])
-                    )
-                    S.append(
-                        "     dict1:   %s \n"
-                        % str(dict1["Measurements"][comp[str(keys1)][0]][str(key2)])
-                    )
-                    S.append(
-                        "     dict2:   %s \n"
-                        % str(dict2["Measurements"][comp[str(keys1)][1]][str(key2)])
-                    )
-                    if key2 not in conflicts:
-                        conflicts[key2] = {}
-                        conflicts[key2]["amount"] = 1
-                        conflicts[key2]["measurements"] = str(comp[str(keys1)][0])
-                    else:
-                        conflicts[key2]["amount"] = conflicts[key2]["amount"] + 1
-                        conflicts[key2]["measurements"] = (
-                            conflicts[key2]["measurements"] + " " + (str(comp[str(keys1)][0]))
+                try:
+                    if (
+                            dict1["Measurements"][comp[str(keys1)][0]][str(key2)]
+                            != dict2["Measurements"][str(comp[str(keys1)][1])][str(key2)]
+                    ):
+                        S.append(
+                            "Measurement value "
+                            "%s"
+                            ", with hkl %s differs in meausrements %s and %s \n"
+                            % (key2, keys1, comp[str(keys1)][0], comp[str(keys1)][1])
                         )
+                        S.append(
+                            "     dict1:   %s \n"
+                            % str(dict1["Measurements"][comp[str(keys1)][0]][str(key2)])
+                        )
+                        S.append(
+                            "     dict2:   %s \n"
+                            % str(dict2["Measurements"][comp[str(keys1)][1]][str(key2)])
+                        )
+                        if key2 not in conflicts:
+                            conflicts[key2] = {}
+                            conflicts[key2]["amount"] = 1
+                            conflicts[key2]["measurements"] = str(comp[str(keys1)])
+                        else:
+
+                            conflicts[key2]["amount"] = conflicts[key2]["amount"] + 1
+                            conflicts[key2]["measurements"] = (
+                                    conflicts[key2]["measurements"] + " " + (str(comp[str(keys1)]))
+                            )
+                except KeyError as e:
+                    print('Missing keys, some files were probably merged or substracted')
+                    print(e.args)
+
             else:
-                comparison = list(dict1["Measurements"][comp[str(keys1)][0]][str(key2)]) == list(
-                    dict2["Measurements"][comp[str(keys1)][1]][str(key2)]
-                )
-                if len(list(dict1["Measurements"][comp[str(keys1)][0]][str(key2)])) != len(
-                    list(dict2["Measurements"][comp[str(keys1)][1]][str(key2)])
-                ):
-                    if str("different length of %s" % key2) not in warnings:
-                        warnings[str("different length of %s" % key2)] = list()
-                        warnings[str("different length of %s" % key2)].append(
-                            (str(comp[keys1][0]), str(comp[keys1][1]))
-                        )
-                    else:
-                        warnings[str("different length of %s" % key2)].append(
-                            (str(comp[keys1][0]), str(comp[keys1][1]))
-                        )
-                if not comparison:
-                    S.append(
-                        "Measurement value "
-                        "%s"
-                        " differs in measurement %s and %s \n"
-                        % (key2, comp[str(keys1)][0], comp[str(keys1)][1])
+                try:
+                    comparison = list(dict1["Measurements"][comp[str(keys1)][0]][str(key2)]) == list(
+                        dict2["Measurements"][comp[str(keys1)][1]][str(key2)]
                     )
-                    S.append(
-                        "       dict1:   %s \n"
-                        % str(list(dict1["Measurements"][comp[str(keys1)][0]][str(key2)]))
-                    )
-                    S.append(
-                        "       dict2:   %s \n"
-                        % str(list(dict2["Measurements"][comp[str(keys1)][1]][str(key2)]))
-                    )
-                    if key2 not in conflicts:
-                        conflicts[key2] = {}
-                        conflicts[key2]["amount"] = 1
-                        conflicts[key2]["measurements"] = str(comp[str(keys1)][0])
-                    else:
-                        conflicts[key2]["amount"] = conflicts[key2]["amount"] + 1
-                        conflicts[key2]["measurements"] = (
-                            conflicts[key2]["measurements"] + " " + (str(comp[str(keys1)][1]))
+                    if len(list(dict1["Measurements"][comp[str(keys1)][0]][str(key2)])) != len(
+                            list(dict2["Measurements"][comp[str(keys1)][1]][str(key2)])
+                    ):
+                        if str("different length of %s" % key2) not in warnings:
+                            warnings[str("different length of %s" % key2)] = list()
+                            warnings[str("different length of %s" % key2)].append(
+                                (str(comp[keys1][0]), str(comp[keys1][1]))
+                            )
+                        else:
+                            warnings[str("different length of %s" % key2)].append(
+                                (str(comp[keys1][0]), str(comp[keys1][1]))
+                            )
+                    if not comparison:
+                        S.append(
+                            "Measurement value "
+                            "%s"
+                            " differs in measurement %s and %s \n"
+                            % (key2, comp[str(keys1)][0], comp[str(keys1)][1])
                         )
+                        S.append(
+                            "       dict1:   %s \n"
+                            % str(list(dict1["Measurements"][comp[str(keys1)][0]][str(key2)]))
+                        )
+                        S.append(
+                            "       dict2:   %s \n"
+                            % str(list(dict2["Measurements"][comp[str(keys1)][1]][str(key2)]))
+                        )
+                        if key2 not in conflicts:
+                            conflicts[key2] = {}
+                            conflicts[key2]["amount"] = 1
+                            conflicts[key2]["measurements"] = str(comp[str(keys1)])
+                        else:
+                            conflicts[key2]["amount"] = conflicts[key2]["amount"] + 1
+                            conflicts[key2]["measurements"] = (
+                                    conflicts[key2]["measurements"] + " " + (str(comp[str(keys1)]))
+                            )
+                except KeyError as e:
+                    print('Missing keys, some files were probably merged or substracted')
+                    print(e.args)
 
     for keys in conflicts:
         try:
@@ -390,27 +478,27 @@ def compare_dict(dict1, dict2):
 
 
 def guess_next(dict1, dict2, comp):
-    """iterates thorough the scans and tries to decide if the scans should be 
+    """iterates thorough the scans and tries to decide if the scans should be
     substracted or merged"""
     threshold = 0.05
     for keys in comp:
         if (
-            abs(
-                (
-                    dict1["Measurements"][str(comp[keys][0])]["temperature"]
-                    - dict2["Measurements"][str(comp[keys][1])]["temperature"]
+                abs(
+                    (
+                            dict1["Measurements"][str(comp[keys][0])]["temperature"]
+                            - dict2["Measurements"][str(comp[keys][1])]["temperature"]
+                    )
+                    / dict2["Measurements"][str(comp[keys][1])]["temperature"]
                 )
-                / dict2["Measurements"][str(comp[keys][1])]["temperature"]
-            )
-            < threshold
-            and abs(
-                (
+                < threshold
+                and abs(
+            (
                     dict1["Measurements"][str(comp[keys][0])]["mag_field"]
                     - dict2["Measurements"][str(comp[keys][1])]["mag_field"]
-                )
-                / dict2["Measurements"][str(comp[keys][1])]["mag_field"]
             )
-            < threshold
+            / dict2["Measurements"][str(comp[keys][1])]["mag_field"]
+        )
+                < threshold
         ):
             comp[keys] = comp[keys] + tuple("m")
         else:
