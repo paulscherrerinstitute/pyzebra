@@ -142,6 +142,11 @@ def fitccl(
     # u.ufloat to work with uncertanities
     fit_area = u.ufloat(result.params["g_amp"].value, result.params["g_amp"].stderr)
     comps = result.eval_components()
+    
+    if result.params["g_amp"].stderr is None:
+        result.params["g_amp"].stderr = result.params["g_amp"].value
+    elif result.params["g_amp"].stderr > result.params["g_amp"].value:
+        result.params["g_amp"].stderr = result.params["g_amp"].value
 
     if len(meas["peak_indexes"]) == 0:
         # for case of no peak, there is no reason to integrate, therefore fit and int are equal
