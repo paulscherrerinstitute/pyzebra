@@ -95,7 +95,7 @@ def create():
     upload_button.on_change("value", upload_button_callback)
 
     def _update_table():
-        num_of_peaks = [meas["num_of_peaks"] for meas in det_data["Measurements"].values()]
+        num_of_peaks = [meas.get("num_of_peaks", 0) for meas in det_data["Measurements"].values()]
         meas_table_source.data.update(peaks=num_of_peaks)
 
     def _update_plot(ind):
@@ -245,6 +245,26 @@ def create():
     peakfind_all_button = Button(label="Peak Find All", button_type="primary")
     peakfind_all_button.on_click(peakfind_all_button_callback)
 
+    def peakfind_button_callback():
+        nonlocal det_data
+        sel_ind = meas_table_source.selected.indices[-1]
+        meas = meas_table_source.data["measurement"][sel_ind]
+        det_data = pyzebra.ccl_findpeaks(
+            det_data,
+            meas,
+            int_threshold=peak_int_ratio_spinner.value,
+            prominence=peak_prominence_spinner.value,
+            smooth=smooth_toggle.active,
+            window_size=window_size_spinner.value,
+            poly_order=poly_order_spinner.value,
+        )
+
+        _update_table()
+        _update_plot(meas)
+
+    peakfind_button = Button(label="Peak Find Current")
+    peakfind_button.on_click(peakfind_button_callback)
+
     def fit_all_button_callback():
         nonlocal det_data
         for meas in det_data["Measurements"]:
@@ -289,6 +309,51 @@ def create():
     fit_all_button = Button(label="Fit All", button_type="primary")
     fit_all_button.on_click(fit_all_button_callback)
 
+    def fit_button_callback():
+        nonlocal det_data
+        sel_ind = meas_table_source.selected.indices[-1]
+        meas = meas_table_source.data["measurement"][sel_ind]
+
+        num_of_peaks = det_data["Measurements"][meas].get("num_of_peaks")
+        if num_of_peaks is not None and num_of_peaks == 1:
+            det_data = pyzebra.fitccl(
+                det_data,
+                meas,
+                guess=[
+                    centre_guess.value,
+                    sigma_guess.value,
+                    ampl_guess.value,
+                    slope_guess.value,
+                    offset_guess.value,
+                ],
+                vary=[
+                    centre_vary.active,
+                    sigma_vary.active,
+                    ampl_vary.active,
+                    slope_vary.active,
+                    offset_vary.active,
+                ],
+                constraints_min=[
+                    centre_min.value,
+                    sigma_min.value,
+                    ampl_min.value,
+                    slope_min.value,
+                    offset_min.value,
+                ],
+                constraints_max=[
+                    centre_max.value,
+                    sigma_max.value,
+                    ampl_max.value,
+                    slope_max.value,
+                    offset_max.value,
+                ],
+            )
+
+        _update_plot(meas)
+
+    fit_button = Button(label="Fit Current")
+    fit_button.on_click(fit_button_callback)
+
     def export_results(det_data):
         if det_data["meta"]["indices"] == "hkl":
             ext = ".comm"
@@ -317,6 +382,7 @@ def create():
         row(peak_int_ratio_spinner, peak_prominence_spinner),
         smooth_toggle,
         row(window_size_spinner, poly_order_spinner),
+        peakfind_button,
         peakfind_all_button,
     )
 
@@ -347,6 +413,7 @@ def create():
             column(div_8, slope_guess, slope_vary, slope_min, slope_max),
             column(div_9, offset_guess, offset_vary, offset_min, offset_max),
         ),
+        row(fit_button),
         row(fit_all_button),
     )
 
