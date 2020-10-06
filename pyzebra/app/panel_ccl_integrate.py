@@ -275,7 +275,7 @@ def create():
     fitparam_reset_button = Button(label="Reset to defaults")
     fitparam_reset_button.on_click(fitparam_reset_button_callback)
 
-    fit_output_textinput = TextAreaInput(title="Fit results:", width=600, height=400)
+    fit_output_textinput = TextAreaInput(title="Fit results:", width=450, height=400)
 
     def peakfind_all_button_callback():
         nonlocal det_data
@@ -407,6 +407,24 @@ def create():
     fit_button = Button(label="Fit Current")
     fit_button.on_click(fit_button_callback)
 
+    preview_output_textinput = TextAreaInput(title="Export file preview:", width=450, height=400)
+
+    def preview_output_button_callback():
+        if det_data["meta"]["indices"] == "hkl":
+            ext = ".comm"
+        elif det_data["meta"]["indices"] == "real":
+            ext = ".incomm"
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_file = temp_dir + "/temp"
+            pyzebra.export_comm(det_data, temp_file)
+
+            with open(f"{temp_file}{ext}") as f:
+                preview_output_textinput.value = f.read()
+
+    preview_output_button = Button(label="Preview file", default_size=220)
+    preview_output_button.on_click(preview_output_button_callback)
+
     def export_results(det_data):
         if det_data["meta"]["indices"] == "hkl":
             ext = ".comm"
@@ -426,7 +444,7 @@ def create():
         cont, ext = export_results(det_data)
         js_data.data.update(cont=[cont], ext=[ext])
 
-    save_button = Button(label="Export to .comm/.incomm file:")
+    save_button = Button(label="Download file", button_type="success", default_size=220)
     save_button.on_click(save_button_callback)
     save_button.js_on_click(CustomJS(args={"js_data": js_data}, code=javaScript))
 
@@ -471,12 +489,14 @@ def create():
         row(fit_all_button),
     )
 
+    export_layout = column(preview_output_textinput, row(preview_output_button, save_button))
+
     upload_div = Div(text="Or upload .ccl file:")
     tab_layout = column(
         row(proposal_textinput, ccl_file_select),
         row(column(Spacer(height=5), upload_div), upload_button),
-        row(meas_table, plot, Spacer(width=30), fit_output_textinput),
-        row(findpeak_controls, Spacer(width=30), fitpeak_controls, column(save_button)),
+        row(meas_table, plot, Spacer(width=30), fit_output_textinput, export_layout),
+        row(findpeak_controls, Spacer(width=30), fitpeak_controls),
     )
 
     return Panel(child=tab_layout, title="ccl integrate")
