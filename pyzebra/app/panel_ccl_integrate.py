@@ -255,6 +255,8 @@ def create():
     offset_vary = Toggle(default_size=100, active=True)
     offset_min = Spinner(default_size=100)
     offset_max = Spinner(default_size=100)
+    integ_from = Spinner(title="Integrate from:", default_size=145)
+    integ_to = Spinner(title="to:", default_size=145)
 
     def fitparam_reset_button_callback():
         centre_guess.value = None
@@ -277,6 +279,8 @@ def create():
         offset_vary.active = True
         offset_min.value = None
         offset_max.value = None
+        integ_from.value = None
+        integ_to.value = None
 
     fitparam_reset_button = Button(label="Reset to defaults")
     fitparam_reset_button.on_click(fitparam_reset_button_callback)
@@ -360,6 +364,8 @@ def create():
                         slope_max.value,
                         offset_max.value,
                     ],
+                    numfit_min=integ_from.value,
+                    numfit_max=integ_to.value,
                 )
 
         sel_ind = meas_table_source.selected.indices[-1]
@@ -498,7 +504,8 @@ def create():
             column(div_8, slope_guess, slope_vary, slope_min, slope_max),
             column(div_9, offset_guess, offset_vary, offset_min, offset_max),
         ),
-        row(fitparam_reset_button, export_fit_checkbox),
+        row(integ_from, integ_to, column(Spacer(height=25), export_fit_checkbox)),
+        row(fitparam_reset_button),
         row(fit_button),
         row(fit_all_button),
     )
