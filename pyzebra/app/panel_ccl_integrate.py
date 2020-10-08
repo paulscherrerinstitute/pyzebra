@@ -7,6 +7,7 @@ from bokeh.layouts import column, row
 from bokeh.models import (
     BasicTicker,
     Button,
+    CheckboxGroup,
     Circle,
     ColumnDataSource,
     CustomJS,
@@ -127,6 +128,11 @@ def create():
 
         fit = meas.get("fit")
         if fit is not None:
+            if meas["fit"]["export_fit"]:
+                export_fit_checkbox.active = [0]
+            else:
+                export_fit_checkbox.active = []
+
             plot_gauss_source.data.update(x=x, y=meas["fit"]["comps"]["gaussian"])
             plot_bkg_source.data.update(x=x, y=meas["fit"]["comps"]["background"])
             params = fit["result"].params
@@ -407,6 +413,14 @@ def create():
     fit_button = Button(label="Fit Current")
     fit_button.on_click(fit_button_callback)
 
+    def export_fit_checkbox_callback(_attr, _old, new):
+        sel_ind = meas_table_source.selected.indices[-1]
+        meas = meas_table_source.data["measurement"][sel_ind]
+        det_data["Measurements"][meas]["fit"]["export_fit"] = bool(new)
+
+    export_fit_checkbox = CheckboxGroup(labels=["Export fit"], width=100)
+    export_fit_checkbox.on_change("active", export_fit_checkbox_callback)
+
     preview_output_textinput = TextAreaInput(title="Export file preview:", width=450, height=400)
 
     def preview_output_button_callback():
@@ -484,7 +498,7 @@ def create():
             column(div_8, slope_guess, slope_vary, slope_min, slope_max),
             column(div_9, offset_guess, offset_vary, offset_min, offset_max),
         ),
-        row(fitparam_reset_button),
+        row(fitparam_reset_button, export_fit_checkbox),
         row(fit_button),
         row(fit_all_button),
     )
