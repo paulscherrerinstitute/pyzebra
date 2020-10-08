@@ -213,7 +213,7 @@ def create():
             meas = det_data["Measurements"][meas_name]
 
             meas["num_of_peaks"] = 1
-            meas["peak_indexes"] = [float(new)]
+            meas["peak_indexes"] = [int(new)]
             meas["peak_heights"] = [0]
             _update_table()
             _update_plot(meas_name)
