@@ -1,9 +1,15 @@
 import numpy as np
 from lmfit import Model, Parameters
 from scipy.integrate import simps
-
 import uncertainties as u
 
+def bin_data(array, binsize):
+    if isinstance(binsize, int) and 0 < binsize < len(array):
+        return [np.mean(array[binsize * i:binsize * i + binsize]) for i in range(int(
+            np.ceil(len(array) / binsize)))]
+    else:
+        print("Binsize need to be positive integer smaller than lenght of array")
+        return array
 
 def find_nearest(array, value):
     # find nearest value and return index
@@ -30,6 +36,7 @@ def fitccl(
     constraints_max,
     numfit_min=None,
     numfit_max=None,
+    binning=None
 ):
     """Made for fitting of ccl date where 1 peak is expected. Allows for combination of gaussian and linear model combination
     :param data: dictionary after peak fining
@@ -40,6 +47,7 @@ def fitccl(
     :param numfit_max: maximal value on x axis for numerical integration - if none is centre of gaussian plus 3 sigma
     :param constraints_min: min constranits value for fit
     :param constraints_max: max constranits value for fit
+    :param binning : binning of the data
     :return data dict with additional values
     order for guess, vary, constraints_min, constraints_max:
     [Gaussian centre, Gaussian sigma, Gaussian amplitude, background slope, background intercept]
@@ -56,10 +64,21 @@ def fitccl(
         print("More than 1 peak, measurement skipped")
         return
 
-    x = list(meas["om"])
-    y = list(meas["Counts"])
-    # if the dictionaries were merged/substracted, takes the errors from them, if not, takes them as sqrt(y)
-    y_err = np.sqrt(y) if meas.get("sigma", None) is None else meas.get("sigma")
+    if binning is None or binning == 0 or binning == 1:
+        x = list(meas["om"])
+        y = list(meas["Counts"])
+        y_err = list(np.sqrt(y)) if meas.get("sigma", None) is None else list(meas["sigma"])
+        centre = x[int(meas["peak_indexes"])]
+    else:
+        x = list(meas["om"])
+        centre = x[int(meas["peak_indexes"])]
+        x = bin_data(x, binning)
+        y = list(meas["Counts"])
+        y_err = list(np.sqrt(y)) if meas.get("sigma", None) is None else list(meas["sigma"])
+        combined = bin_data(create_uncertanities(y,y_err), binning)
+        y = [combined[i].n for i in range(len(combined))]
+        y_err = [combined[i].s for i in range(len(combined))]
+
 
     if len(meas["peak_indexes"]) == 0:
         # Case for no peak, gaussian in centre, sigma as 20% of range
@@ -75,8 +94,8 @@ def fitccl(
     elif len(meas["peak_indexes"]) == 1:
         # case for one peak, takse into account users guesses
         print("one peak")
-        peak_index, peak_height = meas["peak_indexes"], meas["peak_heights"]
-        guess[0] = x[int(peak_index)] if guess[0] is None else guess[0]
+        peak_height = meas["peak_heights"]
+        guess[0] = centre if guess[0] is None else guess[0]
         guess[1] = 0.1 if guess[1] is None else guess[1]
         guess[2] = float(peak_height / 10) if guess[2] is None else float(guess[2])
         guess[3] = 0 if guess[3] is None else guess[3]
@@ -84,7 +103,7 @@ def fitccl(
         constraints_min[0] = np.min(x) if constraints_min[0] is None else constraints_min[0]
         constraints_max[0] = np.max(x) if constraints_max[0] is None else constraints_max[0]
 
-    centre = x[int(peak_index)]
+
 
     def gaussian(x, g_cen, g_width, g_amp):
         """1-d gaussian: gaussian(x, amp, cen, wid)"""
