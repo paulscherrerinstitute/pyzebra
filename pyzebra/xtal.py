@@ -2,6 +2,7 @@ import math
 
 import numpy as np
 from matplotlib import pyplot as plt
+from numba import njit
 from scipy.optimize import curve_fit
 
 import pyzebra
@@ -28,6 +29,7 @@ def z4frgn(wave, ga, nu):
     return z4
 
 
+@njit(cache=True)
 def phimat(phi):
     """BUSING AND LEVY CONVENTION ROTATION MATRIX FOR PHI OR OMEGA
 
@@ -66,6 +68,7 @@ def z1frnb(wave, ga, nu, om):
     return z3
 
 
+@njit(cache=True)
 def chimat(chi):
     """BUSING AND LEVY CONVENTION ROTATION MATRIX FOR CHI
 
@@ -87,6 +90,7 @@ def chimat(chi):
     return dum
 
 
+@njit(cache=True)
 def z1frz3(z3, chi, phi):
     """CALCULATE Z1 = [PHI]T.[CHI]T.Z3
 
@@ -122,6 +126,7 @@ def z1frmd(wave, ga, om, chi, phi, nu):
     return z1
 
 
+@njit(cache=True)
 def det2pol(ddist, gammad, nud, x, y):
     """CONVERTS FROM DETECTOR COORDINATES TO POLAR COORDINATES
 
