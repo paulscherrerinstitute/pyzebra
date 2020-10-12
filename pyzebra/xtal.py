@@ -6,8 +6,8 @@ from scipy.optimize import curve_fit
 
 import pyzebra
 
+pi_r = 180 / np.pi
 
-pir = 180 / np.pi
 
 def z4frgn(wave, ga, nu):
     """CALCULATES DIFFRACTION VECTOR IN LAB SYSTEM FROM GA AND NU
@@ -18,12 +18,12 @@ def z4frgn(wave, ga, nu):
     Returns:
         Z4
     """
-    gar = ga / pir
-    nur = nu / pir
+    ga_r = ga / pi_r
+    nu_r = nu / pi_r
     z4 = [0.0, 0.0, 0.0]
-    z4[0] = (np.sin(gar) * np.cos(nur)) / wave
-    z4[1] = (np.cos(gar) * np.cos(nur) - 1.0) / wave
-    z4[2] = (np.sin(nur)) / wave
+    z4[0] = (np.sin(ga_r) * np.cos(nu_r)) / wave
+    z4[1] = (np.cos(ga_r) * np.cos(nu_r) - 1.0) / wave
+    z4[2] = (np.sin(nu_r)) / wave
 
     return z4
 
@@ -37,11 +37,11 @@ def phimat(phi):
     Returns:
         DUM
     """
-    phr = phi / pir
+    ph_r = phi / pi_r
 
     dum = np.zeros(9).reshape(3, 3)
-    dum[0, 0] = np.cos(phr)
-    dum[0, 1] = np.sin(phr)
+    dum[0, 0] = np.cos(ph_r)
+    dum[0, 1] = np.sin(ph_r)
     dum[1, 0] = -dum[0, 1]
     dum[1, 1] = dum[0, 0]
     dum[2, 2] = 1
@@ -75,11 +75,11 @@ def chimat(chi):
     Returns:
         DUM
     """
-    chr = chi / pir
+    ch_r = chi / pi_r
 
     dum = np.zeros(9).reshape(3, 3)
-    dum[0, 0] = np.cos(chr)
-    dum[0, 2] = np.sin(chr)
+    dum[0, 0] = np.cos(ch_r)
+    dum[0, 2] = np.sin(ch_r)
     dum[1, 1] = 1
     dum[2, 0] = -dum[0, 2]
     dum[2, 2] = dum[0, 0]
@@ -144,8 +144,8 @@ def det2pol(ddist, gammad, nud, x, y):
     z = ddist * np.sin(yobs / ddist)
     d = np.sqrt(a * a + b * b)
 
-    gamma = gammad + np.arctan2(a, b) * pir
-    nu = nud + np.arctan2(z, d) * pir
+    gamma = gammad + np.arctan2(a, b) * pi_r
+    nu = nud + np.arctan2(z, d) * pi_r
 
     return gamma, nu
 
@@ -161,10 +161,10 @@ def eqchph(z1):
     """
     if z1[0] != 0 or z1[1] != 0:
         ph = np.arctan2(z1[1], z1[0])
-        ph = ph * pir
+        ph = ph * pi_r
         d = np.sqrt(z1[0] * z1[0] + z1[1] * z1[1])
         ch = np.arctan2(z1[2], d)
-        ch = ch * pir
+        ch = ch * pi_r
     else:
         ph = 0
         ch = 90
@@ -193,7 +193,7 @@ def dandth(wave, z1):
         ds = 1 / dstar
         sint = wave * dstar / 2
         if np.abs(sint) <= 1:
-            th = np.arcsin(sint) * pir
+            th = np.arcsin(sint) * pi_r
         else:
             ierr = 2
             th = 0
@@ -251,13 +251,13 @@ def fixdnu(wave, z1, ch2, ph2, nu):
         ga = 0
         om = 0
     else:
-        if np.abs(np.cos(nu / pir)) > 0.0001:
-            cosga = np.cos(tth / pir) / np.cos(nu / pir)
+        if np.abs(np.cos(nu / pi_r)) > 0.0001:
+            cosga = np.cos(tth / pi_r) / np.cos(nu / pi_r)
             if np.abs(cosga) <= 1:
-                ga = np.arccos(cosga) * pir
+                ga = np.arccos(cosga) * pi_r
                 z4 = z4frgn(wave, ga, nu)
-                om = np.arctan2(-z4[1], z4[0]) * pir
-                ch2 = np.arcsin(z4[2] * wave / (2 * np.sin(theta / pir))) * pir
+                om = np.arctan2(-z4[1], z4[0]) * pi_r
+                ch2 = np.arcsin(z4[2] * wave / (2 * np.sin(theta / pi_r))) * pi_r
                 ch = ch - ch2
                 ch = ch - 360 * np.trunc((np.sign(ch) * 180 + ch) / 360)
             else:
