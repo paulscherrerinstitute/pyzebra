@@ -60,6 +60,8 @@ def read_detector_data(filepath):
         det_data["chi_angle"] = h5f["/entry1/sample/chi"][:]  # ch
         det_data["phi_angle"] = h5f["/entry1/sample/phi"][:]  # ph
         det_data["UB"] = h5f["/entry1/sample/UB"][:].reshape(3, 3)
+        det_data["magnetic_field"] = h5f["/entry1/sample/magnetic_field"][:]
+        det_data["temperature"] = h5f["/entry1/sample/temperature"][:]
 
     return det_data
 

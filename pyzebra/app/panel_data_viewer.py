@@ -83,6 +83,9 @@ def create():
             image_glyph.color_mapper.low = im_min
             image_glyph.color_mapper.high = im_max
 
+        magnetic_field_spinner.value = det_data["magnetic_field"][index]
+        temperature_spinner.value = det_data["temperature"][index]
+
     def update_overview_plot():
         h5_data = det_data["data"]
         n_im, n_y, n_x = h5_data.shape
@@ -438,12 +441,18 @@ def create():
     selection_button = Button(label="Add selection")
     selection_button.on_click(selection_button_callback)
 
+    magnetic_field_spinner = Spinner(
+        title="Magnetic field:", format="0.00", width=145, disabled=True
+    )
+    temperature_spinner = Spinner(title="Temperature:", format="0.00", width=145, disabled=True)
+
     # Final layout
     layout_image = column(
         gridplot([[proj_v, None], [plot, proj_h]], merge_tools=False), row(index_spinner)
     )
     colormap_layout = column(colormap, auto_toggle, display_max_spinner, display_min_spinner)
     hkl_layout = column(radio_button_group, hkl_button)
+    params_layout = row(magnetic_field_spinner, temperature_spinner)
 
     layout_overview = column(
         gridplot(
@@ -461,7 +470,7 @@ def create():
             layout_overview,
             row(frame_button_group, selection_button, selection_list),
         ),
-        column(roi_avg_plot, layout_image, row(colormap_layout, hkl_layout)),
+        column(roi_avg_plot, layout_image, row(colormap_layout, column(params_layout, hkl_layout))),
     )
 
     return Panel(child=tab_layout, title="Data Viewer")
