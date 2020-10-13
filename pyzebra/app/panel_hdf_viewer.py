@@ -83,6 +83,12 @@ def create():
             image_glyph.color_mapper.low = im_min
             image_glyph.color_mapper.high = im_max
 
+        magnetic_field_spinner.value = det_data["magnetic_field"][index]
+        temperature_spinner.value = det_data["temperature"][index]
+
+        gamma, nu = calculate_pol(det_data, index)
+        image_source.data.update(gamma=[gamma], nu=[nu])
+
     def update_overview_plot():
         h5_data = det_data["data"]
         n_im, n_y, n_x = h5_data.shape
@@ -153,6 +159,8 @@ def create():
             h=[np.zeros((1, 1))],
             k=[np.zeros((1, 1))],
             l=[np.zeros((1, 1))],
+            gamma=[np.zeros((1, 1))],
+            nu=[np.zeros((1, 1))],
             x=[0],
             y=[0],
             dw=[IMAGE_W],
@@ -163,10 +171,14 @@ def create():
     h_glyph = Image(image="h", x="x", y="y", dw="dw", dh="dh", global_alpha=0)
     k_glyph = Image(image="k", x="x", y="y", dw="dw", dh="dh", global_alpha=0)
     l_glyph = Image(image="l", x="x", y="y", dw="dw", dh="dh", global_alpha=0)
+    gamma_glyph = Image(image="gamma", x="x", y="y", dw="dw", dh="dh", global_alpha=0)
+    nu_glyph = Image(image="nu", x="x", y="y", dw="dw", dh="dh", global_alpha=0)
 
     plot.add_glyph(image_source, h_glyph)
     plot.add_glyph(image_source, k_glyph)
     plot.add_glyph(image_source, l_glyph)
+    plot.add_glyph(image_source, gamma_glyph)
+    plot.add_glyph(image_source, nu_glyph)
 
     image_glyph = Image(image="image", x="x", y="y", dw="dw", dh="dh")
     plot.add_glyph(image_source, image_glyph, name="image_glyph")
@@ -207,7 +219,16 @@ def create():
     proj_h.add_glyph(proj_h_line_source, Line(x="x", y="y", line_color="steelblue"))
 
     # add tools
-    hovertool = HoverTool(tooltips=[("intensity", "@image"), ("h", "@h"), ("k", "@k"), ("l", "@l")])
+    hovertool = HoverTool(
+        tooltips=[
+            ("intensity", "@image"),
+            ("gamma", "@gamma"),
+            ("nu", "@nu"),
+            ("h", "@h"),
+            ("k", "@k"),
+            ("l", "@l"),
+        ]
+    )
 
     box_edit_source = ColumnDataSource(dict(x=[], y=[], width=[], height=[]))
     box_edit_glyph = Rect(
@@ -438,12 +459,18 @@ def create():
     selection_button = Button(label="Add selection")
     selection_button.on_click(selection_button_callback)
 
+    magnetic_field_spinner = Spinner(
+        title="Magnetic field:", format="0.00", width=145, disabled=True
+    )
+    temperature_spinner = Spinner(title="Temperature:", format="0.00", width=145, disabled=True)
+
     # Final layout
     layout_image = column(
         gridplot([[proj_v, None], [plot, proj_h]], merge_tools=False), row(index_spinner)
     )
     colormap_layout = column(colormap, auto_toggle, display_max_spinner, display_min_spinner)
     hkl_layout = column(radio_button_group, hkl_button)
+    params_layout = row(magnetic_field_spinner, temperature_spinner)
 
     layout_overview = column(
         gridplot(
@@ -461,7 +488,7 @@ def create():
             layout_overview,
             row(frame_button_group, selection_button, selection_list),
         ),
-        column(roi_avg_plot, layout_image, row(colormap_layout, hkl_layout)),
+        column(roi_avg_plot, layout_image, row(colormap_layout, column(params_layout, hkl_layout))),
     )
 
     return Panel(child=tab_layout, title="hdf viewer")
@@ -495,3 +522,18 @@ def calculate_hkl(det_data, index, setup_type="nb_bi"):
             )
 
     return h, k, l
+
+
+def calculate_pol(det_data, index):
+    gamma = np.empty(shape=(IMAGE_H, IMAGE_W))
+    nu = np.empty(shape=(IMAGE_H, IMAGE_W))
+
+    ddist = det_data["ddist"]
+    gammad = det_data["pol_angle"][index]
+    nud = det_data["tlt_angle"]
+
+    for xi in np.arange(IMAGE_W):
+        for yi in np.arange(IMAGE_H):
+            gamma[yi, xi], nu[yi, xi] = pyzebra.det2pol(ddist, gammad, nud, xi, yi)
+
+    return gamma, nu

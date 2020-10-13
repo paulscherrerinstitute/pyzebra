@@ -1,6 +1,7 @@
 import math
 
 import numpy as np
+from numba import njit
 from scipy.optimize import curve_fit
 
 import pyzebra
@@ -10,6 +11,7 @@ try:
 except ImportError:
     print("matplotlib is not available")
 
+pi_r = 180 / np.pi
 
 
 def z4frgn(wave, ga, nu):
@@ -21,19 +23,17 @@ def z4frgn(wave, ga, nu):
     Returns:
         Z4
     """
-    sin = np.sin
-    cos = np.cos
-    pir = 180 / np.pi
-    gar = ga / pir
-    nur = nu / pir
+    ga_r = ga / pi_r
+    nu_r = nu / pi_r
     z4 = [0.0, 0.0, 0.0]
-    z4[0] = (sin(gar) * cos(nur)) / wave
-    z4[1] = (cos(gar) * cos(nur) - 1.0) / wave
-    z4[2] = (sin(nur)) / wave
+    z4[0] = (np.sin(ga_r) * np.cos(nu_r)) / wave
+    z4[1] = (np.cos(ga_r) * np.cos(nu_r) - 1.0) / wave
+    z4[2] = (np.sin(nu_r)) / wave
 
     return z4
 
 
+@njit(cache=True)
 def phimat(phi):
     """BUSING AND LEVY CONVENTION ROTATION MATRIX FOR PHI OR OMEGA
 
@@ -43,14 +43,11 @@ def phimat(phi):
     Returns:
         DUM
     """
-    sin = np.sin
-    cos = np.cos
-    pir = 180 / np.pi
-    phr = phi / pir
+    ph_r = phi / pi_r
 
     dum = np.zeros(9).reshape(3, 3)
-    dum[0, 0] = cos(phr)
-    dum[0, 1] = sin(phr)
+    dum[0, 0] = np.cos(ph_r)
+    dum[0, 1] = np.sin(ph_r)
     dum[1, 0] = -dum[0, 1]
     dum[1, 1] = dum[0, 0]
     dum[2, 2] = 1
@@ -67,7 +64,6 @@ def z1frnb(wave, ga, nu, om):
     Returns:
         Z1
     """
-
     z4 = z4frgn(wave, ga, nu)
     dum = phimat(phi=om)
     dumt = np.transpose(dum)
@@ -76,6 +72,7 @@ def z1frnb(wave, ga, nu, om):
     return z3
 
 
+@njit(cache=True)
 def chimat(chi):
     """BUSING AND LEVY CONVENTION ROTATION MATRIX FOR CHI
 
@@ -85,14 +82,11 @@ def chimat(chi):
     Returns:
         DUM
     """
-    sin = np.sin
-    cos = np.cos
-    pir = 180 / np.pi
-    chr = chi / pir
+    ch_r = chi / pi_r
 
     dum = np.zeros(9).reshape(3, 3)
-    dum[0, 0] = cos(chr)
-    dum[0, 2] = sin(chr)
+    dum[0, 0] = np.cos(ch_r)
+    dum[0, 2] = np.sin(ch_r)
     dum[1, 1] = 1
     dum[2, 0] = -dum[0, 2]
     dum[2, 2] = dum[0, 0]
@@ -100,6 +94,7 @@ def chimat(chi):
     return dum
 
 
+@njit(cache=True)
 def z1frz3(z3, chi, phi):
     """CALCULATE Z1 = [PHI]T.[CHI]T.Z3
 
@@ -109,7 +104,6 @@ def z1frz3(z3, chi, phi):
     Returns:
         Z1
     """
-
     dum1 = chimat(chi)
     dum2 = np.transpose(dum1)
     z2 = dum2.dot(z3)
@@ -136,6 +130,7 @@ def z1frmd(wave, ga, om, chi, phi, nu):
     return z1
 
 
+@njit(cache=True)
 def det2pol(ddist, gammad, nud, x, y):
     """CONVERTS FROM DETECTOR COORDINATES TO POLAR COORDINATES
 
@@ -157,10 +152,9 @@ def det2pol(ddist, gammad, nud, x, y):
     b = ddist * np.cos(yobs / ddist)
     z = ddist * np.sin(yobs / ddist)
     d = np.sqrt(a * a + b * b)
-    pir = 180 / np.pi
 
-    gamma = gammad + np.arctan2(a, b) * pir
-    nu = nud + np.arctan2(z, d) * pir
+    gamma = gammad + np.arctan2(a, b) * pi_r
+    nu = nud + np.arctan2(z, d) * pi_r
 
     return gamma, nu
 
@@ -174,14 +168,12 @@ def eqchph(z1):
     Returns:
         chi, phi
     """
-    pir = 180 / np.pi
-
     if z1[0] != 0 or z1[1] != 0:
         ph = np.arctan2(z1[1], z1[0])
-        ph = ph * pir
+        ph = ph * pi_r
         d = np.sqrt(z1[0] * z1[0] + z1[1] * z1[1])
         ch = np.arctan2(z1[2], d)
-        ch = ch * pir
+        ch = ch * pi_r
     else:
         ph = 0
         ch = 90
@@ -203,8 +195,6 @@ def dandth(wave, z1):
     Returns:
         ds, th
     """
-    pir = 180 / np.pi
-
     ierr = 0
     dstar = np.sqrt(z1[0] * z1[0] + z1[1] * z1[1] + z1[2] * z1[2])
 
@@ -212,7 +202,7 @@ def dandth(wave, z1):
         ds = 1 / dstar
         sint = wave * dstar / 2
         if np.abs(sint) <= 1:
-            th = np.arcsin(sint) * pir
+            th = np.arcsin(sint) * pi_r
         else:
             ierr = 2
             th = 0
@@ -262,8 +252,6 @@ def fixdnu(wave, z1, ch2, ph2, nu):
     Returns:
         tth, om, ch, ph
     """
-    pir = 180 / np.pi
-
     tth, om, ch, ph, ierr = angs4c(wave, z1, ch2, ph2)
     theta = om
     if ierr != 0:
@@ -272,13 +260,13 @@ def fixdnu(wave, z1, ch2, ph2, nu):
         ga = 0
         om = 0
     else:
-        if np.abs(np.cos(nu / pir)) > 0.0001:
-            cosga = np.cos(tth / pir) / np.cos(nu / pir)
+        if np.abs(np.cos(nu / pi_r)) > 0.0001:
+            cosga = np.cos(tth / pi_r) / np.cos(nu / pi_r)
             if np.abs(cosga) <= 1:
-                ga = np.arccos(cosga) * pir
+                ga = np.arccos(cosga) * pi_r
                 z4 = z4frgn(wave, ga, nu)
-                om = np.arctan2(-z4[1], z4[0]) * pir
-                ch2 = np.arcsin(z4[2] * wave / (2 * np.sin(theta / pir))) * pir
+                om = np.arctan2(-z4[1], z4[0]) * pi_r
+                ch2 = np.arcsin(z4[2] * wave / (2 * np.sin(theta / pi_r))) * pi_r
                 ch = ch - ch2
                 ch = ch - 360 * np.trunc((np.sign(ch) * 180 + ch) / 360)
             else:
@@ -317,8 +305,6 @@ def angtohkl(wave, ddist, gammad, om, ch, ph, nud, x, y):
     Returns:
 
     """
-    pir = 180 / np.pi
-
     # define ub matrix if testing angtohkl(wave=1.18,ddist=616,gammad=48.66,om=-22.80,ch=0,ph=0,nud=0,x=128,y=64) against f90:
     #    ub = np.array([-0.0178803,-0.0749231,0.0282804,-0.0070082,-0.0368001,-0.0577467,0.1609116,-0.0099281,0.0006274]).reshape(3,3)
     ub = np.array(
