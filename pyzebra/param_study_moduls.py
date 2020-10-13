@@ -15,11 +15,11 @@ def load_dats(filepath):
         data_type = "txt"
         file_list = list()
         with open(filepath, "r") as infile:
-            col_names = next(infile).split()
+            col_names = next(infile).split(",")
             for line in infile:
                 if "END" in line:
                     break
-                file_list.append(tuple(line.split()))
+                file_list.append(tuple(line.split(",")))
     elif isinstance(filepath, list):
         data_type = "list"
         file_list = filepath
