@@ -64,7 +64,7 @@ def create():
         ccl_file_select.options = ccl_file_list
         ccl_file_select.value = ccl_file_list[0][0]
 
-    proposal_textinput = TextInput(title="Enter proposal number:")
+    proposal_textinput = TextInput(title="Enter proposal number:", default_size=145)
     proposal_textinput.on_change("value", proposal_textinput_callback)
 
     def ccl_file_select_callback(_attr, _old, new):
@@ -224,14 +224,14 @@ def create():
             _update_table()
             _update_plot(meas_name)
 
-    peak_pos_textinput = TextInput(title="Peak position:")
+    peak_pos_textinput = TextInput(title="Peak position:", default_size=145)
     peak_pos_textinput.on_change("value", peak_pos_textinput_callback)
 
     peak_int_ratio_spinner = Spinner(
         title="Peak intensity ratio:", value=0.8, step=0.01, low=0, high=1, default_size=145
     )
     peak_prominence_spinner = Spinner(title="Peak prominence:", value=50, low=0, default_size=145)
-    smooth_toggle = Toggle(label="Smooth curve")
+    smooth_toggle = Toggle(label="Smooth curve", default_size=145)
     window_size_spinner = Spinner(title="Window size:", value=7, step=2, low=1, default_size=145)
     poly_order_spinner = Spinner(title="Poly order:", value=3, low=0, default_size=145)
 
@@ -282,7 +282,7 @@ def create():
         integ_from.value = None
         integ_to.value = None
 
-    fitparam_reset_button = Button(label="Reset to defaults")
+    fitparam_reset_button = Button(label="Reset to defaults", default_size=145)
     fitparam_reset_button.on_click(fitparam_reset_button_callback)
 
     fit_output_textinput = TextAreaInput(title="Fit results:", width=450, height=400)
@@ -305,7 +305,7 @@ def create():
         sel_ind = meas_table_source.selected.indices[-1]
         _update_plot(meas_table_source.data["measurement"][sel_ind])
 
-    peakfind_all_button = Button(label="Peak Find All", button_type="primary")
+    peakfind_all_button = Button(label="Peak Find All", button_type="primary", default_size=145)
     peakfind_all_button.on_click(peakfind_all_button_callback)
 
     def peakfind_button_callback():
@@ -325,7 +325,7 @@ def create():
         _update_table()
         _update_plot(meas)
 
-    peakfind_button = Button(label="Peak Find Current")
+    peakfind_button = Button(label="Peak Find Current", default_size=145)
     peakfind_button.on_click(peakfind_button_callback)
 
     def fit_all_button_callback():
@@ -371,7 +371,7 @@ def create():
         sel_ind = meas_table_source.selected.indices[-1]
         _update_plot(meas_table_source.data["measurement"][sel_ind])
 
-    fit_all_button = Button(label="Fit All", button_type="primary")
+    fit_all_button = Button(label="Fit All", button_type="primary", default_size=145)
     fit_all_button.on_click(fit_all_button_callback)
 
     def fit_button_callback():
@@ -416,7 +416,7 @@ def create():
 
         _update_plot(meas)
 
-    fit_button = Button(label="Fit Current")
+    fit_button = Button(label="Fit Current", default_size=145)
     fit_button.on_click(fit_button_callback)
 
     def export_fit_checkbox_callback(_attr, _old, new):
@@ -469,45 +469,43 @@ def create():
     save_button.js_on_click(CustomJS(args={"js_data": js_data}, code=javaScript))
 
     findpeak_controls = column(
-        peak_pos_textinput,
+        row(peak_pos_textinput, column(Spacer(height=19), smooth_toggle)),
         row(peak_int_ratio_spinner, peak_prominence_spinner),
-        smooth_toggle,
         row(window_size_spinner, poly_order_spinner),
-        peakfind_button,
-        peakfind_all_button,
+        row(peakfind_button, peakfind_all_button),
     )
 
     div_1 = Div(text="Guess:")
     div_2 = Div(text="Vary:")
     div_3 = Div(text="Min:")
     div_4 = Div(text="Max:")
-    div_5 = Div(text="Gauss Centre:")
-    div_6 = Div(text="Gauss Sigma:")
-    div_7 = Div(text="Gauss Ampl.:")
-    div_8 = Div(text="Slope:")
-    div_9 = Div(text="Offset:")
-    fitpeak_controls = column(
-        row(
-            column(
-                Spacer(height=36),
-                div_1,
-                Spacer(height=12),
-                div_2,
-                Spacer(height=12),
-                div_3,
-                Spacer(height=12),
-                div_4,
-            ),
-            column(div_5, centre_guess, centre_vary, centre_min, centre_max),
-            column(div_6, sigma_guess, sigma_vary, sigma_min, sigma_max),
-            column(div_7, ampl_guess, ampl_vary, ampl_min, ampl_max),
-            column(div_8, slope_guess, slope_vary, slope_min, slope_max),
-            column(div_9, offset_guess, offset_vary, offset_min, offset_max),
+    div_5 = Div(text="Gauss Centre:", margin=[5, 5, -5, 5])
+    div_6 = Div(text="Gauss Sigma:", margin=[5, 5, -5, 5])
+    div_7 = Div(text="Gauss Ampl.:", margin=[5, 5, -5, 5])
+    div_8 = Div(text="Slope:", margin=[5, 5, -5, 5])
+    div_9 = Div(text="Offset:", margin=[5, 5, -5, 5])
+    fitpeak_controls = row(
+        column(
+            Spacer(height=36),
+            div_1,
+            Spacer(height=12),
+            div_2,
+            Spacer(height=12),
+            div_3,
+            Spacer(height=12),
+            div_4,
         ),
-        row(integ_from, integ_to, column(Spacer(height=25), export_fit_checkbox)),
-        row(fitparam_reset_button),
-        row(fit_button),
-        row(fit_all_button),
+        column(div_5, centre_guess, centre_vary, centre_min, centre_max),
+        column(div_6, sigma_guess, sigma_vary, sigma_min, sigma_max),
+        column(div_7, ampl_guess, ampl_vary, ampl_min, ampl_max),
+        column(div_8, slope_guess, slope_vary, slope_min, slope_max),
+        column(div_9, offset_guess, offset_vary, offset_min, offset_max),
+        Spacer(width=20),
+        column(
+            row(integ_from, integ_to),
+            row(fitparam_reset_button, column(Spacer(height=5), export_fit_checkbox)),
+            row(fit_button, fit_all_button),
+        ),
     )
 
     export_layout = column(preview_output_textinput, row(preview_output_button, save_button))
