@@ -157,7 +157,7 @@ def fitccl(
         ),
     )
     # the weighted fit
-    result = mod.fit(y, params, weights=y_err, x=x, calc_covar=True)
+    result = mod.fit(y, params, weights=[1/y_err[i] for i in range(len(y_err))], x=x, calc_covar=True)
     # u.ufloat to work with uncertanities
     fit_area = u.ufloat(result.params["g_amp"].value, result.params["g_amp"].stderr)
     comps = result.eval_components()
