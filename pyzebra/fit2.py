@@ -67,19 +67,25 @@ def fitccl(
         # return in case of more than 1 peaks
         print("More than 1 peak, measurement skipped")
         return
-
     if binning is None or binning == 0 or binning == 1:
         x = list(meas["om"])
         y = list(meas["Counts"])
         y_err = list(np.sqrt(y)) if meas.get("sigma", None) is None else list(meas["sigma"])
-        centre = x[int(meas["peak_indexes"])]
+        print(meas["peak_indexes"])
+        if not meas["peak_indexes"]:
+            centre = np.mean(x)
+        else:
+            centre = x[int(meas["peak_indexes"])]
     else:
         x = list(meas["om"])
-        centre = x[int(meas["peak_indexes"])]
+        if not meas["peak_indexes"]:
+            centre = np.mean(x)
+        else:
+            centre = x[int(meas["peak_indexes"])]
         x = bin_data(x, binning)
         y = list(meas["Counts"])
         y_err = list(np.sqrt(y)) if meas.get("sigma", None) is None else list(meas["sigma"])
-        combined = bin_data(create_uncertanities(y, y_err), binning)
+        combined = bin_data(create_uncertanities(y,y_err), binning)
         y = [combined[i].n for i in range(len(combined))]
         y_err = [combined[i].s for i in range(len(combined))]
 
