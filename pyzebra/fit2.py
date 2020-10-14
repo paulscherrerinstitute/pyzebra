@@ -87,7 +87,7 @@ def fitccl(
         # Case for no peak, gaussian in centre, sigma as 20% of range
         print("No peak")
         peak_index = find_nearest(x, np.mean(x))
-        guess[0] = x[int(peak_index)] if guess[0] is None else guess[0]
+        guess[0] = centre if guess[0] is None else guess[0]
         guess[1] = (x[-1] - x[0]) / 5 if guess[1] is None else guess[1]
         guess[2] = 50 if guess[2] is None else guess[2]
         guess[3] = 0 if guess[3] is None else guess[3]
@@ -119,7 +119,7 @@ def fitccl(
     mod = Model(gaussian) + Model(background)
     params = Parameters()
     params.add_many(
-        ("g_cen", x[int(peak_index)], bool(vary[0]), np.min(x), np.max(x), None, None),
+        ("g_cen", guess[0], bool(vary[0]), np.min(x), np.max(x), None, None),
         ("g_width", guess[1], bool(vary[1]), constraints_min[1], constraints_max[1], None, None,),
         ("g_amp", guess[2], bool(vary[2]), constraints_min[2], constraints_max[2], None, None,),
         ("slope", guess[3], bool(vary[3]), constraints_min[3], constraints_max[3], None, None,),
