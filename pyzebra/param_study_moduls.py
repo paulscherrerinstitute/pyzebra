@@ -1,10 +1,11 @@
-from load_1Dnn import load_1D
-from ccl_dict_operation import add_dict
-import pandas as pd
-from mpl_toolkits.mplot3d import Axes3D  # dont delete, otherwise waterfall wont work
-import matplotlib.pyplot as plt
 import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+from load_1Dnn import load_1D
+from mpl_toolkits.mplot3d import Axes3D  # dont delete, otherwise waterfall wont work
+
+from ccl_dict_operation import add_dict
 
 
 def load_dats(filepath):

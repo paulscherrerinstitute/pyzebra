@@ -1,15 +1,19 @@
 import numpy as np
+import uncertainties as u
 from lmfit import Model, Parameters
 from scipy.integrate import simps
-import uncertainties as u
+
 
 def bin_data(array, binsize):
     if isinstance(binsize, int) and 0 < binsize < len(array):
-        return [np.mean(array[binsize * i:binsize * i + binsize]) for i in range(int(
-            np.ceil(len(array) / binsize)))]
+        return [
+            np.mean(array[binsize * i : binsize * i + binsize])
+            for i in range(int(np.ceil(len(array) / binsize)))
+        ]
     else:
         print("Binsize need to be positive integer smaller than lenght of array")
         return array
+
 
 def find_nearest(array, value):
     # find nearest value and return index
@@ -36,7 +40,7 @@ def fitccl(
     constraints_max,
     numfit_min=None,
     numfit_max=None,
-    binning=None
+    binning=None,
 ):
     """Made for fitting of ccl date where 1 peak is expected. Allows for combination of gaussian and linear model combination
     :param data: dictionary after peak fining
@@ -75,17 +79,16 @@ def fitccl(
         x = bin_data(x, binning)
         y = list(meas["Counts"])
         y_err = list(np.sqrt(y)) if meas.get("sigma", None) is None else list(meas["sigma"])
-        combined = bin_data(create_uncertanities(y,y_err), binning)
+        combined = bin_data(create_uncertanities(y, y_err), binning)
         y = [combined[i].n for i in range(len(combined))]
         y_err = [combined[i].s for i in range(len(combined))]
-
 
     if len(meas["peak_indexes"]) == 0:
         # Case for no peak, gaussian in centre, sigma as 20% of range
         print("No peak")
         peak_index = find_nearest(x, np.mean(x))
         guess[0] = x[int(peak_index)] if guess[0] is None else guess[0]
-        guess[1] = (x[-1] - x[0])/5 if guess[1] is None else guess[1]
+        guess[1] = (x[-1] - x[0]) / 5 if guess[1] is None else guess[1]
         guess[2] = 50 if guess[2] is None else guess[2]
         guess[3] = 0 if guess[3] is None else guess[3]
         guess[4] = np.mean(y) if guess[4] is None else guess[4]
@@ -103,8 +106,6 @@ def fitccl(
         constraints_min[0] = np.min(x) if constraints_min[0] is None else constraints_min[0]
         constraints_max[0] = np.max(x) if constraints_max[0] is None else constraints_max[0]
 
-
-
     def gaussian(x, g_cen, g_width, g_amp):
         """1-d gaussian: gaussian(x, amp, cen, wid)"""
         return (g_amp / (np.sqrt(2 * np.pi) * g_width)) * np.exp(
@@ -119,49 +120,19 @@ def fitccl(
     params = Parameters()
     params.add_many(
         ("g_cen", x[int(peak_index)], bool(vary[0]), np.min(x), np.max(x), None, None),
-        (
-            "g_width",
-            guess[1],
-            bool(vary[1]),
-            constraints_min[1],
-            constraints_max[1],
-            None,
-            None,
-        ),
-        (
-            "g_amp",
-            guess[2],
-            bool(vary[2]),
-            constraints_min[2],
-            constraints_max[2],
-            None,
-            None,
-        ),
-        (
-            "slope",
-            guess[3],
-            bool(vary[3]),
-            constraints_min[3],
-            constraints_max[3],
-            None,
-            None,
-        ),
-        (
-            "intercept",
-            guess[4],
-            bool(vary[4]),
-            constraints_min[4],
-            constraints_max[4],
-            None,
-            None,
-        ),
+        ("g_width", guess[1], bool(vary[1]), constraints_min[1], constraints_max[1], None, None,),
+        ("g_amp", guess[2], bool(vary[2]), constraints_min[2], constraints_max[2], None, None,),
+        ("slope", guess[3], bool(vary[3]), constraints_min[3], constraints_max[3], None, None,),
+        ("intercept", guess[4], bool(vary[4]), constraints_min[4], constraints_max[4], None, None,),
     )
     # the weighted fit
-    result = mod.fit(y, params, weights=[np.abs(1/y_err[i]) for i in range(len(y_err))], x=x, calc_covar=True)
+    result = mod.fit(
+        y, params, weights=[np.abs(1 / y_err[i]) for i in range(len(y_err))], x=x, calc_covar=True
+    )
     # u.ufloat to work with uncertanities
     fit_area = u.ufloat(result.params["g_amp"].value, result.params["g_amp"].stderr)
     comps = result.eval_components()
-    
+
     if result.params["g_amp"].stderr is None:
         result.params["g_amp"].stderr = result.params["g_amp"].value
     elif result.params["g_amp"].stderr > result.params["g_amp"].value:
@@ -183,7 +154,8 @@ def fitccl(
 
         it = -1
         while abs(numfit_max - numfit_min) < 3:
-            # in the case the peak is very thin and numerical integration would be on zero omega difference, finds closes values
+            # in the case the peak is very thin and numerical integration would be on zero omega
+            # difference, finds closes values
             it = it + 1
             numfit_min = find_nearest(
                 x,

@@ -97,7 +97,7 @@ def parse_1D(fileobj, data_type):
 
     # read data
     if data_type == ".ccl":
-        metadata['data_type'] = data_type
+        metadata["data_type"] = data_type
         measurements = {}
         decimal = list()
         data = fileobj.readlines()
@@ -162,7 +162,7 @@ def parse_1D(fileobj, data_type):
 
     elif data_type == ".dat":
         # skip the first 2 rows, the third row contans the column names
-        metadata['data_type'] = data_type
+        metadata["data_type"] = data_type
         next(fileobj)
         next(fileobj)
         col_names = next(fileobj).split()
