@@ -38,12 +38,12 @@ def export_comm(data, path, lorentz=False):
             h_str = f'{int(meas["h_index"]):{padding[1]}}'
             k_str = f'{int(meas["k_index"]):{padding[1]}}'
             l_str = f'{int(meas["l_index"]):{padding[1]}}'
-            if meas["fit"]["export_fit"] is True:
+            if data["meta"]["area_method"] == "fit":
                 area = float(meas["fit"]["fit_area"].n)
                 sigma_str = (
                     f'{"{:8.2f}".format(float(meas["fit"]["fit_area"].s)):{align}{padding[2]}}'
                 )
-            else:
+            elif data["meta"]["area_method"] == "integ":
                 area = float(meas["fit"]["int_area"].n)
                 sigma_str = (
                     f'{"{:8.2f}".format(float(meas["fit"]["int_area"].s)):{align}{padding[2]}}'

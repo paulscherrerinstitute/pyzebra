@@ -7,7 +7,6 @@ from bokeh.layouts import column, row
 from bokeh.models import (
     BasicTicker,
     Button,
-    CheckboxGroup,
     Circle,
     ColumnDataSource,
     CustomJS,
@@ -20,6 +19,7 @@ from bokeh.models import (
     LinearAxis,
     Panel,
     Plot,
+    RadioButtonGroup,
     Select,
     Spacer,
     Spinner,
@@ -128,11 +128,6 @@ def create():
 
         fit = meas.get("fit")
         if fit is not None:
-            if meas["fit"]["export_fit"]:
-                export_fit_checkbox.active = [0]
-            else:
-                export_fit_checkbox.active = []
-
             plot_gauss_source.data.update(x=x, y=meas["fit"]["comps"]["gaussian"])
             plot_bkg_source.data.update(x=x, y=meas["fit"]["comps"]["background"])
             params = fit["result"].params
@@ -419,13 +414,13 @@ def create():
     fit_button = Button(label="Fit Current", default_size=145)
     fit_button.on_click(fit_button_callback)
 
-    def export_fit_checkbox_callback(_attr, _old, new):
-        sel_ind = meas_table_source.selected.indices[-1]
-        meas = meas_table_source.data["measurement"][sel_ind]
-        det_data["Measurements"][meas]["fit"]["export_fit"] = bool(new)
+    def area_method_radiobutton_callback(_attr, _old, new):
+        det_data["meta"]["area_method"] = ("fit", "integ")[new]
 
-    export_fit_checkbox = CheckboxGroup(labels=["Export fit"], width=100)
-    export_fit_checkbox.on_change("active", export_fit_checkbox_callback)
+    area_method_radiobutton = RadioButtonGroup(
+        labels=["Fit", "Integral"], active=0, default_size=145
+    )
+    area_method_radiobutton.on_change("active", area_method_radiobutton_callback)
 
     preview_output_textinput = TextAreaInput(title="Export file preview:", width=450, height=400)
 
@@ -503,7 +498,7 @@ def create():
         Spacer(width=20),
         column(
             row(integ_from, integ_to),
-            row(fitparam_reset_button, column(Spacer(height=5), export_fit_checkbox)),
+            row(fitparam_reset_button, area_method_radiobutton),
             row(fit_button, fit_all_button),
         ),
     )
