@@ -183,4 +183,4 @@ def parse_1D(fileobj, data_type):
     metadata["data_type"] = data_type
     metadata["area_method"] = "fit"
 
-    return {"meta": metadata, "Measurements": measurements}
+    return {"meta": metadata, "meas": measurements}

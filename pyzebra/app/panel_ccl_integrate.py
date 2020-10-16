@@ -75,7 +75,7 @@ def create():
             _, ext = os.path.splitext(new)
             det_data = pyzebra.parse_1D(file, ext)
 
-        meas_list = list(det_data["Measurements"].keys())
+        meas_list = list(det_data["meas"].keys())
         meas_table_source.data.update(measurement=meas_list, peaks=[0] * len(meas_list))
         meas_table_source.selected.indices = []
         meas_table_source.selected.indices = [0]
@@ -89,7 +89,7 @@ def create():
             _, ext = os.path.splitext(upload_button.filename)
             det_data = pyzebra.parse_1D(file, ext)
 
-        meas_list = list(det_data["Measurements"].keys())
+        meas_list = list(det_data["meas"].keys())
         meas_table_source.data.update(measurement=meas_list, peaks=[0] * len(meas_list))
         meas_table_source.selected.indices = []
         meas_table_source.selected.indices = [0]
@@ -98,14 +98,14 @@ def create():
     upload_button.on_change("value", upload_button_callback)
 
     def _update_table():
-        num_of_peaks = [meas.get("num_of_peaks", 0) for meas in det_data["Measurements"].values()]
+        num_of_peaks = [meas.get("num_of_peaks", 0) for meas in det_data["meas"].values()]
         meas_table_source.data.update(peaks=num_of_peaks)
 
     def _update_plot(ind):
         nonlocal peak_pos_textinput_lock
         peak_pos_textinput_lock = True
 
-        meas = det_data["Measurements"][ind]
+        meas = det_data["meas"][ind]
         y = meas["Counts"]
         x = meas["om"]
 
@@ -223,7 +223,7 @@ def create():
         if new is not None and not peak_pos_textinput_lock:
             sel_ind = meas_table_source.selected.indices[-1]
             meas_name = meas_table_source.data["measurement"][sel_ind]
-            meas = det_data["Measurements"][meas_name]
+            meas = det_data["meas"][meas_name]
 
             meas["num_of_peaks"] = 1
             peak_ind = (np.abs(meas["om"] - float(new))).argmin()
@@ -296,7 +296,7 @@ def create():
     fit_output_textinput = TextAreaInput(title="Fit results:", width=450, height=400)
 
     def peakfind_all_button_callback():
-        for meas in det_data["Measurements"].values():
+        for meas in det_data["meas"].values():
             pyzebra.ccl_findpeaks(
                 meas,
                 int_threshold=peak_int_ratio_spinner.value,
@@ -318,7 +318,7 @@ def create():
         sel_ind = meas_table_source.selected.indices[-1]
         meas = meas_table_source.data["measurement"][sel_ind]
         pyzebra.ccl_findpeaks(
-            det_data["Measurements"][meas],
+            det_data["meas"][meas],
             int_threshold=peak_int_ratio_spinner.value,
             prominence=peak_prominence_spinner.value,
             smooth=smooth_toggle.active,
@@ -333,7 +333,7 @@ def create():
     peakfind_button.on_click(peakfind_button_callback)
 
     def fit_all_button_callback():
-        for meas in det_data["Measurements"].values():
+        for meas in det_data["meas"].values():
             num_of_peaks = meas.get("num_of_peaks")
             if num_of_peaks is not None and num_of_peaks == 1:
                 pyzebra.fitccl(
@@ -380,10 +380,10 @@ def create():
         sel_ind = meas_table_source.selected.indices[-1]
         meas = meas_table_source.data["measurement"][sel_ind]
 
-        num_of_peaks = det_data["Measurements"][meas].get("num_of_peaks")
+        num_of_peaks = det_data["meas"][meas].get("num_of_peaks")
         if num_of_peaks is not None and num_of_peaks == 1:
             pyzebra.fitccl(
-                det_data["Measurements"][meas],
+                det_data["meas"][meas],
                 guess=[
                     centre_guess.value,
                     sigma_guess.value,

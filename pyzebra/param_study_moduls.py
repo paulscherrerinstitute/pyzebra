@@ -38,12 +38,12 @@ def load_dats(filepath):
                 dict1 = add_dict(dict1, load_1D(file_list[i][0]))
             else:
                 dict1 = add_dict(dict1, load_1D(file_list[i]))
-        dict1["Measurements"][str("M" + str(i + 1))]["params"] = {}
+        dict1["meas"][str("M" + str(i + 1))]["params"] = {}
         if data_type == "txt":
             for x in range(len(col_names) - 1):
-                dict1["Measurements"][str("M" + str(i + 1))]["params"][
-                    col_names[x + 1]
-                ] = file_list[i][x + 1]
+                dict1["meas"][str("M" + str(i + 1))]["params"][col_names[x + 1]] = file_list[i][
+                    x + 1
+                ]
 
     return dict1
 
@@ -55,7 +55,7 @@ def create_dataframe(dict1):
     # create dictionary to which we pull only wanted items before transforming it to pd.dataframe
     pull_dict = {}
     pull_dict["filenames"] = list()
-    for key in dict1["Measurements"]["M1"]["params"]:
+    for key in dict1["meas"]["M1"]["params"]:
         pull_dict[key] = list()
     pull_dict["temperature"] = list()
     pull_dict["mag_field"] = list()
@@ -65,21 +65,19 @@ def create_dataframe(dict1):
     pull_dict["Counts"] = list()
 
     # populate the dict
-    for keys in dict1["Measurements"]:
-        if "file_of_origin" in dict1["Measurements"][keys]:
-            pull_dict["filenames"].append(
-                dict1["Measurements"][keys]["file_of_origin"].split("/")[-1]
-            )
+    for keys in dict1["meas"]:
+        if "file_of_origin" in dict1["meas"][keys]:
+            pull_dict["filenames"].append(dict1["meas"][keys]["file_of_origin"].split("/")[-1])
         else:
             pull_dict["filenames"].append(dict1["meta"]["original_filename"].split("/")[-1])
-        for key in dict1["Measurements"][keys]["params"]:
-            pull_dict[str(key)].append(float(dict1["Measurements"][keys]["params"][key]))
-        pull_dict["temperature"].append(dict1["Measurements"][keys]["temperature"])
-        pull_dict["mag_field"].append(dict1["Measurements"][keys]["mag_field"])
-        pull_dict["fit_area"].append(dict1["Measurements"][keys]["fit"]["fit_area"])
-        pull_dict["int_area"].append(dict1["Measurements"][keys]["fit"]["int_area"])
-        pull_dict["om"].append(dict1["Measurements"][keys]["om"])
-        pull_dict["Counts"].append(dict1["Measurements"][keys]["Counts"])
+        for key in dict1["meas"][keys]["params"]:
+            pull_dict[str(key)].append(float(dict1["meas"][keys]["params"][key]))
+        pull_dict["temperature"].append(dict1["meas"][keys]["temperature"])
+        pull_dict["mag_field"].append(dict1["meas"][keys]["mag_field"])
+        pull_dict["fit_area"].append(dict1["meas"][keys]["fit"]["fit_area"])
+        pull_dict["int_area"].append(dict1["meas"][keys]["fit"]["int_area"])
+        pull_dict["om"].append(dict1["meas"][keys]["om"])
+        pull_dict["Counts"].append(dict1["meas"][keys]["Counts"])
 
     return pd.DataFrame(data=pull_dict)
 
