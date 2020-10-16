@@ -152,7 +152,7 @@ def parse_1D(fileobj, data_type):
                     int(next_line.split()[0]),
                 )
                 d["Counts"] = counts
-                measurements[str("M" + str(measurement_number))] = d
+                measurements[measurement_number] = d
 
                 if all(decimal):
                     metadata["indices"] = "hkl"

@@ -30,11 +30,11 @@ def export_comm(data, path, lorentz=False):
         padding = [4, 6, 10, 8]
 
     with open(str(path + extension), "w") as out_file:
-        for keys, meas in data["meas"].items():
+        for key, meas in data["meas"].items():
             if "fit" not in meas:
-                print("Measurement skipped - no fit value for:", keys)
+                print("Measurement skipped - no fit value for:", key)
                 continue
-            meas_number_str = f"{keys[1:]:{align}{padding[0]}}"
+            meas_number_str = f"{key:{align}{padding[0]}}"
             h_str = f'{int(meas["h_index"]):{padding[1]}}'
             k_str = f'{int(meas["k_index"]):{padding[1]}}'
             l_str = f'{int(meas["l_index"]):{padding[1]}}'
