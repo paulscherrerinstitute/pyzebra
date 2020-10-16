@@ -23,6 +23,7 @@ from bokeh.models import (
     RadioButtonGroup,
     Select,
     Spacer,
+    Span,
     Spinner,
     TableColumn,
     TextAreaInput,
@@ -153,10 +154,14 @@ def create():
                     (params["g_amp"].value - fit["int_area"].n) / params["g_amp"].value,
                 )
             )
+            numfit_min_span.location = x[fit["numfit"][0]]
+            numfit_max_span.location = x[fit["numfit"][1]]
         else:
             plot_gauss_source.data.update(x=[], y=[])
             plot_bkg_source.data.update(x=[], y=[])
             fit_output_textinput.value = ""
+            numfit_min_span.location = None
+            numfit_max_span.location = None
 
     # Main plot
     plot = Plot(
@@ -189,6 +194,12 @@ def create():
 
     plot_circle_source = ColumnDataSource(dict(x=[], y=[]))
     plot.add_glyph(plot_circle_source, Circle(x="x", y="y"))
+
+    numfit_min_span = Span(location=None, dimension='height', line_dash='dashed')
+    plot.add_layout(numfit_min_span)
+
+    numfit_max_span = Span(location=None, dimension='height', line_dash='dashed')
+    plot.add_layout(numfit_max_span)
 
     # Measurement select
     def meas_table_callback(_attr, _old, new):

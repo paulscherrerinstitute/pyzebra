@@ -223,6 +223,7 @@ def fitccl(
     d["full_report"] = result.fit_report()
     d["result"] = result
     d["comps"] = comps
+    d["numfit"] = [numfit_min, numfit_max]
     meas["fit"] = d
 
     return data
