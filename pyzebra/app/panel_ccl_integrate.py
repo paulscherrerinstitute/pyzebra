@@ -154,8 +154,17 @@ def create():
                     (params["g_amp"].value - fit["int_area"].n) / params["g_amp"].value,
                 )
             )
-            numfit_min_span.location = x[fit["numfit"][0]]
-            numfit_max_span.location = x[fit["numfit"][1]]
+            numfit_min, numfit_max = fit["numfit"]
+            if numfit_min is None:
+                numfit_min_span.location = None
+            else:
+                numfit_min_span.location = x[numfit_min]
+
+            if numfit_max is None:
+                numfit_max_span.location = None
+            else:
+                numfit_max_span.location = x[numfit_max]
+
         else:
             plot_gauss_source.data.update(x=[], y=[])
             plot_bkg_source.data.update(x=[], y=[])
@@ -334,56 +343,8 @@ def create():
 
     def fit_all_button_callback():
         for meas in det_data["meas"].values():
-            num_of_peaks = meas.get("num_of_peaks")
-            if num_of_peaks is not None and num_of_peaks == 1:
-                pyzebra.fitccl(
-                    meas,
-                    guess=[
-                        centre_guess.value,
-                        sigma_guess.value,
-                        ampl_guess.value,
-                        slope_guess.value,
-                        offset_guess.value,
-                    ],
-                    vary=[
-                        centre_vary.active,
-                        sigma_vary.active,
-                        ampl_vary.active,
-                        slope_vary.active,
-                        offset_vary.active,
-                    ],
-                    constraints_min=[
-                        centre_min.value,
-                        sigma_min.value,
-                        ampl_min.value,
-                        slope_min.value,
-                        offset_min.value,
-                    ],
-                    constraints_max=[
-                        centre_max.value,
-                        sigma_max.value,
-                        ampl_max.value,
-                        slope_max.value,
-                        offset_max.value,
-                    ],
-                    numfit_min=integ_from.value,
-                    numfit_max=integ_to.value,
-                )
-
-        sel_ind = meas_table_source.selected.indices[-1]
-        _update_plot(meas_table_source.data["measurement"][sel_ind])
-
-    fit_all_button = Button(label="Fit All", button_type="primary", default_size=145)
-    fit_all_button.on_click(fit_all_button_callback)
-
-    def fit_button_callback():
-        sel_ind = meas_table_source.selected.indices[-1]
-        meas = meas_table_source.data["measurement"][sel_ind]
-
-        num_of_peaks = det_data["meas"][meas].get("num_of_peaks")
-        if num_of_peaks is not None and num_of_peaks == 1:
             pyzebra.fitccl(
-                det_data["meas"][meas],
+                meas,
                 guess=[
                     centre_guess.value,
                     sigma_guess.value,
@@ -412,7 +373,51 @@ def create():
                     slope_max.value,
                     offset_max.value,
                 ],
+                numfit_min=integ_from.value,
+                numfit_max=integ_to.value,
             )
+
+        sel_ind = meas_table_source.selected.indices[-1]
+        _update_plot(meas_table_source.data["measurement"][sel_ind])
+
+    fit_all_button = Button(label="Fit All", button_type="primary", default_size=145)
+    fit_all_button.on_click(fit_all_button_callback)
+
+    def fit_button_callback():
+        sel_ind = meas_table_source.selected.indices[-1]
+        meas = meas_table_source.data["measurement"][sel_ind]
+
+        pyzebra.fitccl(
+            det_data["meas"][meas],
+            guess=[
+                centre_guess.value,
+                sigma_guess.value,
+                ampl_guess.value,
+                slope_guess.value,
+                offset_guess.value,
+            ],
+            vary=[
+                centre_vary.active,
+                sigma_vary.active,
+                ampl_vary.active,
+                slope_vary.active,
+                offset_vary.active,
+            ],
+            constraints_min=[
+                centre_min.value,
+                sigma_min.value,
+                ampl_min.value,
+                slope_min.value,
+                offset_min.value,
+            ],
+            constraints_max=[
+                centre_max.value,
+                sigma_max.value,
+                ampl_max.value,
+                slope_max.value,
+                offset_max.value,
+            ],
+        )
 
         _update_plot(meas)
 
