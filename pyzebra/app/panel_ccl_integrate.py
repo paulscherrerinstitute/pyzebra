@@ -226,9 +226,9 @@ def create():
             meas = det_data["Measurements"][meas_name]
 
             meas["num_of_peaks"] = 1
-            meas["peak_indexes"] = [(np.abs(meas["om"] - float(new))).argmin()]
-            print(meas["peak_indexes"])
-            meas["peak_heights"] = [0]
+            peak_ind = (np.abs(meas["om"] - float(new))).argmin()
+            meas["peak_indexes"] = np.array([peak_ind], dtype=np.int64)
+            meas["peak_heights"] = np.array([meas["smooth_peaks"][peak_ind]])
             _update_table()
             _update_plot(meas_name)
 
