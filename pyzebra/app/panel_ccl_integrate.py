@@ -3,6 +3,7 @@ import io
 import os
 import tempfile
 
+import numpy as np
 from bokeh.layouts import column, row
 from bokeh.models import (
     BasicTicker,
@@ -105,7 +106,7 @@ def create():
 
         meas = det_data["Measurements"][ind]
         y = meas["Counts"]
-        x = list(range(len(y)))
+        x = meas["om"]
 
         plot_line_source.data.update(x=x, y=y)
 
@@ -113,11 +114,11 @@ def create():
         if num_of_peaks is not None and num_of_peaks > 0:
             peak_indexes = meas["peak_indexes"]
             if len(peak_indexes) == 1:
-                peak_pos_textinput.value = str(peak_indexes[0])
+                peak_pos_textinput.value = str(meas["om"][peak_indexes[0]])
             else:
-                peak_pos_textinput.value = str(peak_indexes)
+                peak_pos_textinput.value = str([meas["om"][ind] for ind in peak_indexes])
 
-            plot_circle_source.data.update(x=peak_indexes, y=meas["peak_heights"])
+            plot_circle_source.data.update(x=meas["om"][peak_indexes], y=meas["peak_heights"])
             plot_line_smooth_source.data.update(x=x, y=meas["smooth_peaks"])
         else:
             peak_pos_textinput.value = None
@@ -167,7 +168,7 @@ def create():
     )
 
     plot.add_layout(LinearAxis(axis_label="Counts"), place="left")
-    plot.add_layout(LinearAxis(), place="below")
+    plot.add_layout(LinearAxis(axis_label="Omega"), place="below")
 
     plot.add_layout(Grid(dimension=0, ticker=BasicTicker()))
     plot.add_layout(Grid(dimension=1, ticker=BasicTicker()))
@@ -214,7 +215,8 @@ def create():
             meas = det_data["Measurements"][meas_name]
 
             meas["num_of_peaks"] = 1
-            meas["peak_indexes"] = [int(new)]
+            meas["peak_indexes"] = [(np.abs(meas["om"] - float(new))).argmin()]
+            print(meas["peak_indexes"])
             meas["peak_heights"] = [0]
             _update_table()
             _update_plot(meas_name)
