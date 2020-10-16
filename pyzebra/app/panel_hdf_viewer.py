@@ -376,7 +376,7 @@ def create():
         overview_plot_x_image_glyph.color_mapper = LinearColorMapper(palette=cmap_dict[new])
         overview_plot_y_image_glyph.color_mapper = LinearColorMapper(palette=cmap_dict[new])
 
-    colormap = Select(title="Colormap:", options=list(cmap_dict.keys()))
+    colormap = Select(title="Colormap:", options=list(cmap_dict.keys()), default_size=145)
     colormap.on_change("value", colormap_callback)
     colormap.value = "plasma"
 
@@ -395,7 +395,7 @@ def create():
 
         update_image()
 
-    auto_toggle = Toggle(label="Auto Range", active=True, button_type="default")
+    auto_toggle = Toggle(label="Auto Range", active=True, button_type="default", default_size=145)
     auto_toggle.on_click(auto_toggle_callback)
 
     # ---- colormap display max value
@@ -409,6 +409,7 @@ def create():
         value=1,
         step=STEP,
         disabled=auto_toggle.active,
+        default_size=145,
     )
     display_max_spinner.on_change("value", display_max_spinner_callback)
 
@@ -423,6 +424,7 @@ def create():
         value=0,
         step=STEP,
         disabled=auto_toggle.active,
+        default_size=145,
     )
     display_min_spinner.on_change("value", display_min_spinner_callback)
 
@@ -465,12 +467,21 @@ def create():
     temperature_spinner = Spinner(title="Temperature:", format="0.00", width=145, disabled=True)
 
     # Final layout
-    layout_image = column(
-        gridplot([[proj_v, None], [plot, proj_h]], merge_tools=False), row(index_spinner)
+    layout_image = column(gridplot([[proj_v, None], [plot, proj_h]], merge_tools=False))
+    colormap_layout = column(
+        row(colormap, column(Spacer(height=19), auto_toggle)),
+        row(display_max_spinner, display_min_spinner),
     )
-    colormap_layout = column(colormap, auto_toggle, display_max_spinner, display_min_spinner)
     hkl_layout = column(radio_button_group, hkl_button)
     params_layout = row(magnetic_field_spinner, temperature_spinner)
+
+    layout_controls = row(
+        column(selection_button, selection_list),
+        Spacer(width=20),
+        column(frame_button_group, colormap_layout),
+        Spacer(width=20),
+        column(index_spinner, params_layout, hkl_layout),
+    )
 
     layout_overview = column(
         gridplot(
@@ -486,9 +497,9 @@ def create():
         column(
             row(column(Spacer(height=5), upload_div), upload_button, filelist),
             layout_overview,
-            row(frame_button_group, selection_button, selection_list),
+            layout_controls,
         ),
-        column(roi_avg_plot, layout_image, row(colormap_layout, column(params_layout, hkl_layout))),
+        column(roi_avg_plot, layout_image),
     )
 
     return Panel(child=tab_layout, title="hdf viewer")
