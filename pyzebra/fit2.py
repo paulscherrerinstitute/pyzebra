@@ -32,8 +32,7 @@ def create_uncertanities(y, y_err):
 
 
 def fitccl(
-    data,
-    keys,
+    meas,
     guess,
     vary,
     constraints_min,
@@ -43,8 +42,7 @@ def fitccl(
     binning=None,
 ):
     """Made for fitting of ccl date where 1 peak is expected. Allows for combination of gaussian and linear model combination
-    :param data: dictionary after peak fining
-    :param keys: name of the measurement in the data dict (i.e. M123)
+    :param meas: measurement in the data dict (i.e. M123)
     :param guess: initial guess for the fitting, if none, some values are added automatically in order (see below)
     :param vary: True if parameter can vary during fitting, False if it to be fixed
     :param numfit_min: minimal value on x axis for numerical integration - if none is centre of gaussian minus 3 sigma
@@ -61,8 +59,6 @@ def fitccl(
     constraints_min = [23, None, 50, 0, 0]
     constraints_min = [80, None, 1000, 0, 100]
     """
-    meas = data["Measurements"][keys]
-
     if len(meas["peak_indexes"]) > 1:
         # return in case of more than 1 peaks
         print("More than 1 peak, measurement skipped")
@@ -85,7 +81,7 @@ def fitccl(
         x = bin_data(x, binning)
         y = list(meas["Counts"])
         y_err = list(np.sqrt(y)) if meas.get("sigma", None) is None else list(meas["sigma"])
-        combined = bin_data(create_uncertanities(y,y_err), binning)
+        combined = bin_data(create_uncertanities(y, y_err), binning)
         y = [combined[i].n for i in range(len(combined))]
         y_err = [combined[i].s for i in range(len(combined))]
 
@@ -126,10 +122,10 @@ def fitccl(
     params = Parameters()
     params.add_many(
         ("g_cen", guess[0], bool(vary[0]), np.min(x), np.max(x), None, None),
-        ("g_width", guess[1], bool(vary[1]), constraints_min[1], constraints_max[1], None, None,),
-        ("g_amp", guess[2], bool(vary[2]), constraints_min[2], constraints_max[2], None, None,),
-        ("slope", guess[3], bool(vary[3]), constraints_min[3], constraints_max[3], None, None,),
-        ("intercept", guess[4], bool(vary[4]), constraints_min[4], constraints_max[4], None, None,),
+        ("g_width", guess[1], bool(vary[1]), constraints_min[1], constraints_max[1], None, None),
+        ("g_amp", guess[2], bool(vary[2]), constraints_min[2], constraints_max[2], None, None),
+        ("slope", guess[3], bool(vary[3]), constraints_min[3], constraints_max[3], None, None),
+        ("intercept", guess[4], bool(vary[4]), constraints_min[4], constraints_max[4], None, None),
     )
     # the weighted fit
     result = mod.fit(
@@ -225,5 +221,3 @@ def fitccl(
     d["comps"] = comps
     d["numfit"] = [numfit_min, numfit_max]
     meas["fit"] = d
-
-    return data
