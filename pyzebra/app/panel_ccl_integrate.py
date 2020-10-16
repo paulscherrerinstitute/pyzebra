@@ -417,6 +417,8 @@ def create():
                 slope_max.value,
                 offset_max.value,
             ],
+            numfit_min=integ_from.value,
+            numfit_max=integ_to.value,
         )
 
         _update_plot(meas)
