@@ -96,8 +96,8 @@ def parse_1D(fileobj, data_type):
             break
 
     # read data
+    measurements = {}
     if data_type == ".ccl":
-        measurements = {}
         decimal = list()
         for line in fileobj:
             counts = []
@@ -155,8 +155,8 @@ def parse_1D(fileobj, data_type):
         next(fileobj)
         next(fileobj)
         col_names = next(fileobj).split()
-
         data_cols = defaultdict(list)
+
         for line in fileobj:
             if "END-OF-DATA" in line:
                 # this is the end of data
@@ -165,7 +165,15 @@ def parse_1D(fileobj, data_type):
             for name, val in zip(col_names, line.split()):
                 data_cols[name].append(float(val))
 
-        measurements = dict(data_cols)
+        data_cols['h_index'] = float(metadata['title'].split()[-3])
+        data_cols['k_index'] = float(metadata['title'].split()[-2])
+        data_cols['l_index'] = float(metadata['title'].split()[-1])
+        data_cols['temperature'] = metadata['temp']
+        data_cols['mag_field'] = metadata['mf']
+        data_cols['omega_angle'] = metadata['omega']
+        data_cols['number_of_measurements'] = len(data_cols['om'])
+        data_cols['monitor'] = data_cols['Monitor1'][0]
+        measurements["1"] = dict(data_cols)
 
     else:
         print("Unknown file extention")
