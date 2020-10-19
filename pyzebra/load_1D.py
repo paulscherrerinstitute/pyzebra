@@ -57,6 +57,40 @@ META_VARS_FLOAT = (
 )
 META_UB_MATRIX = ("ub1j", "ub2j", "ub3j")
 
+CCL_FIRST_LINE = (
+    # the first element is `measurement_number`, which we don't save to metadata
+    ("h_index", float),
+    ("k_index", float),
+    ("l_index", float),
+)
+
+CCL_FIRST_LINE_BI = (
+    *CCL_FIRST_LINE,
+    ("twotheta_angle", float),
+    ("omega_angle", float),
+    ("chi_angle", float),
+    ("phi_angle", float),
+)
+
+CCL_FIRST_LINE_NB = (
+    *CCL_FIRST_LINE,
+    ("gamma_angle", float),
+    ("omega_angle", float),
+    ("nu_angle", float),
+    ("unkwn_angle", float),
+)
+
+CCL_SECOND_LINE = (
+    ("number_of_measurements", int),
+    ("angle_step", float),
+    ("monitor", float),
+    ("temperature", float),
+    ("mag_field", float),
+    ("date", str),
+    ("time", str),
+    ("scan_type", str),
+)
+
 
 def load_1D(filepath):
     """
@@ -99,42 +133,31 @@ def parse_1D(fileobj, data_type):
     measurements = {}
     if data_type == ".ccl":
         decimal = list()
-        for line in fileobj:
-            counts = []
-            measurement_number = int(line.split()[0])
-            d = {}
-            d["h_index"] = float(line.split()[1])
-            decimal.append(bool(Decimal(d["h_index"]) % 1 == 0))
-            d["k_index"] = float(line.split()[2])
-            decimal.append(bool(Decimal(d["k_index"]) % 1 == 0))
-            d["l_index"] = float(line.split()[3])
-            decimal.append(bool(Decimal(d["l_index"]) % 1 == 0))
-            if metadata["zebra_mode"] == "bi":
-                d["twotheta_angle"] = float(line.split()[4])  # gamma
-                d["omega_angle"] = float(line.split()[5])  # omega
-                d["chi_angle"] = float(line.split()[6])  # nu
-                d["phi_angle"] = float(line.split()[7])  # doesnt matter
-            elif metadata["zebra_mode"] == "nb":
-                d["gamma_angle"] = float(line.split()[4])  # gamma
-                d["omega_angle"] = float(line.split()[5])  # omega
-                d["nu_angle"] = float(line.split()[6])  # nu
-                d["unkwn_angle"] = float(line.split()[7])
 
+        if metadata["zebra_mode"] == "bi":
+            ccl_first_line = CCL_FIRST_LINE_BI
+        elif metadata["zebra_mode"] == "nb":
+            ccl_first_line = CCL_FIRST_LINE_NB
+        ccl_second_line = CCL_SECOND_LINE
+
+        for line in fileobj:
+            d = {}
+
+            # first line
+            measurement_number, *params = line.split()
+            for param, (param_name, param_type) in zip(params, ccl_first_line):
+                d[param_name] = param_type(param)
+
+            decimal.append(bool(Decimal(d["h_index"]) % 1 == 0))
+            decimal.append(bool(Decimal(d["k_index"]) % 1 == 0))
+            decimal.append(bool(Decimal(d["l_index"]) % 1 == 0))
+
+            # second line
             next_line = next(fileobj)
-            d["number_of_measurements"] = int(next_line.split()[0])
-            d["angle_step"] = float(next_line.split()[1])
-            d["monitor"] = float(next_line.split()[2])
-            d["temperature"] = float(next_line.split()[3])
-            d["mag_field"] = float(next_line.split()[4])
-            d["date"] = str(next_line.split()[5])
-            d["time"] = str(next_line.split()[6])
-            d["scan_type"] = str(next_line.split()[7])
-            for i in range(
-                int(int(next_line.split()[0]) / 10) + (int(next_line.split()[0]) % 10 > 0)
-            ):
-                fileline = next(fileobj).split()
-                numbers = [int(w) for w in fileline]
-                counts = counts + numbers
+            params = next_line.split()
+            for param, (param_name, param_type) in zip(params, ccl_second_line):
+                d[param_name] = param_type(param)
+
             d["om"] = np.linspace(
                 float(line.split()[5])
                 - (int(next_line.split()[0]) / 2) * float(next_line.split()[1]),
@@ -142,8 +165,19 @@ def parse_1D(fileobj, data_type):
                 + (int(next_line.split()[0]) / 2) * float(next_line.split()[1]),
                 int(next_line.split()[0]),
             )
+
+            # subsequent lines with counts
+            counts = []
+            for i in range(
+                int(int(next_line.split()[0]) / 10) + (int(next_line.split()[0]) % 10 > 0)
+            ):
+                fileline = next(fileobj).split()
+                numbers = [int(w) for w in fileline]
+                counts = counts + numbers
+
             d["Counts"] = counts
-            measurements[measurement_number] = d
+
+            measurements[int(measurement_number)] = d
 
             if all(decimal):
                 metadata["indices"] = "hkl"
