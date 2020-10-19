@@ -159,22 +159,15 @@ def parse_1D(fileobj, data_type):
                 d[param_name] = param_type(param)
 
             d["om"] = np.linspace(
-                float(line.split()[5])
-                - (int(next_line.split()[0]) / 2) * float(next_line.split()[1]),
-                float(line.split()[5])
-                + (int(next_line.split()[0]) / 2) * float(next_line.split()[1]),
-                int(next_line.split()[0]),
+                d["omega_angle"] - (d["number_of_measurements"] / 2) * d["angle_step"],
+                d["omega_angle"] + (d["number_of_measurements"] / 2) * d["angle_step"],
+                d["number_of_measurements"],
             )
 
             # subsequent lines with counts
             counts = []
-            for i in range(
-                int(int(next_line.split()[0]) / 10) + (int(next_line.split()[0]) % 10 > 0)
-            ):
-                fileline = next(fileobj).split()
-                numbers = [int(w) for w in fileline]
-                counts = counts + numbers
-
+            while len(counts) < d["number_of_measurements"]:
+                counts.extend(map(int, next(fileobj).split()))
             d["Counts"] = counts
 
             measurements[int(measurement_number)] = d
