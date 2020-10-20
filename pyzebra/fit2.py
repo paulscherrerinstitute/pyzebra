@@ -131,14 +131,16 @@ def fitccl(
     result = mod.fit(
         y, params, weights=[np.abs(1 / y_err[i]) for i in range(len(y_err))], x=x, calc_covar=True
     )
-    # u.ufloat to work with uncertanities
-    fit_area = u.ufloat(result.params["g_amp"].value, result.params["g_amp"].stderr)
-    comps = result.eval_components()
-
+    
     if result.params["g_amp"].stderr is None:
         result.params["g_amp"].stderr = result.params["g_amp"].value
     elif result.params["g_amp"].stderr > result.params["g_amp"].value:
         result.params["g_amp"].stderr = result.params["g_amp"].value
+    # u.ufloat to work with uncertanities
+    fit_area = u.ufloat(result.params["g_amp"].value, result.params["g_amp"].stderr)
+    comps = result.eval_components()
+
+
 
     if len(meas["peak_indexes"]) == 0:
         # for case of no peak, there is no reason to integrate, therefore fit and int are equal
