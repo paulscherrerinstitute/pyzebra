@@ -76,7 +76,9 @@ def create():
             det_data = pyzebra.parse_1D(file, ext)
 
         meas_list = list(det_data["meas"].keys())
-        meas_table_source.data.update(measurement=meas_list, peaks=[0] * len(meas_list))
+        meas_table_source.data.update(
+            measurement=meas_list, peaks=[0] * len(meas_list), fit=[0] * len(meas_list)
+        )
         meas_table_source.selected.indices = []
         meas_table_source.selected.indices = [0]
 
@@ -90,7 +92,9 @@ def create():
             det_data = pyzebra.parse_1D(file, ext)
 
         meas_list = list(det_data["meas"].keys())
-        meas_table_source.data.update(measurement=meas_list, peaks=[0] * len(meas_list))
+        meas_table_source.data.update(
+            measurement=meas_list, peaks=[0] * len(meas_list), fit=[0] * len(meas_list)
+        )
         meas_table_source.selected.indices = []
         meas_table_source.selected.indices = [0]
 
@@ -99,7 +103,8 @@ def create():
 
     def _update_table():
         num_of_peaks = [meas.get("num_of_peaks", 0) for meas in det_data["meas"].values()]
-        meas_table_source.data.update(peaks=num_of_peaks)
+        fit_ok = [(1 if "fit" in meas else 0) for meas in det_data["meas"].values()]
+        meas_table_source.data.update(peaks=num_of_peaks, fit=fit_ok)
 
     def _update_plot(ind):
         nonlocal peak_pos_textinput_lock
@@ -215,14 +220,15 @@ def create():
         if new:
             _update_plot(meas_table_source.data["measurement"][new[-1]])
 
-    meas_table_source = ColumnDataSource(dict(measurement=[], peaks=[]))
+    meas_table_source = ColumnDataSource(dict(measurement=[], peaks=[], fit=[]))
     meas_table = DataTable(
         source=meas_table_source,
         columns=[
             TableColumn(field="measurement", title="Meas"),
             TableColumn(field="peaks", title="Peaks"),
+            TableColumn(field="fit", title="Fit"),
         ],
-        width=100,
+        width=150,
         index_position=None,
     )
 
@@ -379,6 +385,7 @@ def create():
 
         sel_ind = meas_table_source.selected.indices[-1]
         _update_plot(meas_table_source.data["measurement"][sel_ind])
+        _update_table()
 
     fit_all_button = Button(label="Fit All", button_type="primary", default_size=145)
     fit_all_button.on_click(fit_all_button_callback)
@@ -422,6 +429,7 @@ def create():
         )
 
         _update_plot(meas)
+        _update_table()
 
     fit_button = Button(label="Fit Current", default_size=145)
     fit_button.on_click(fit_button_callback)
