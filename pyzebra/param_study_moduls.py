@@ -1,11 +1,12 @@
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-from load_1Dnn import load_1D
-from mpl_toolkits.mplot3d import Axes3D  # dont delete, otherwise waterfall wont work
-
+from load_1D import load_1D
 from ccl_dict_operation import add_dict
+import pandas as pd
+from mpl_toolkits.mplot3d import Axes3D  # dont delete, otherwise waterfall wont work
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+import numpy as np
+import pickle
+import scipy.io as sio
 
 
 def load_dats(filepath):
@@ -17,6 +18,7 @@ def load_dats(filepath):
         file_list = list()
         with open(filepath, "r") as infile:
             col_names = next(infile).split(",")
+            col_names = [col_names[i].rstrip() for i in range(len(col_names))]
             for line in infile:
                 if "END" in line:
                     break
@@ -24,8 +26,6 @@ def load_dats(filepath):
     elif isinstance(filepath, list):
         data_type = "list"
         file_list = filepath
-
-    print(file_list)
     dict1 = {}
     for i in range(len(file_list)):
         if not dict1:
@@ -38,12 +38,12 @@ def load_dats(filepath):
                 dict1 = add_dict(dict1, load_1D(file_list[i][0]))
             else:
                 dict1 = add_dict(dict1, load_1D(file_list[i]))
-        dict1["meas"][str("M" + str(i + 1))]["params"] = {}
+        dict1["meas"][i + 1]["params"] = {}
         if data_type == "txt":
             for x in range(len(col_names) - 1):
-                dict1["meas"][str("M" + str(i + 1))]["params"][col_names[x + 1]] = file_list[i][
-                    x + 1
-                ]
+                dict1["meas"][i + 1]["params"][
+                    col_names[x + 1]
+                ] = file_list[i][x + 1]
 
     return dict1
 
@@ -55,7 +55,7 @@ def create_dataframe(dict1):
     # create dictionary to which we pull only wanted items before transforming it to pd.dataframe
     pull_dict = {}
     pull_dict["filenames"] = list()
-    for key in dict1["meas"]["M1"]["params"]:
+    for key in dict1["meas"][1]["params"]:
         pull_dict[key] = list()
     pull_dict["temperature"] = list()
     pull_dict["mag_field"] = list()
@@ -67,7 +67,9 @@ def create_dataframe(dict1):
     # populate the dict
     for keys in dict1["meas"]:
         if "file_of_origin" in dict1["meas"][keys]:
-            pull_dict["filenames"].append(dict1["meas"][keys]["file_of_origin"].split("/")[-1])
+            pull_dict["filenames"].append(
+                dict1["meas"][keys]["file_of_origin"].split("/")[-1]
+            )
         else:
             pull_dict["filenames"].append(dict1["meta"]["original_filename"].split("/")[-1])
         for key in dict1["meas"][keys]["params"]:
@@ -143,3 +145,62 @@ def make_graph(data, sorting_parameter, style):
         plt.clim(color_matrix.mean(), color_matrix.max())
 
     return fig
+def save_dict(obj, name):
+    """ saves dictionary as pickle file in binary format
+    :arg obj - object to save
+    :arg name - name of the file
+    NOTE: path should be added later"""
+    with open(name + '.pkl', 'wb') as f:
+        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
+
+
+def load_dict(name):
+    """load dictionary from picle file
+    :arg name - name of the file to load
+    NOTE: expect the file in the same folder, path should be added later
+    :return dictionary"""
+    with open(name + '.pkl', 'rb') as f:
+        return pickle.load(f)
+# pickle, mat, h5, txt, csv, json
+def save_table(data, filetype, name, path=None):
+    print("Saving: ", filetype)
+    path = "" if path is None else path
+    if filetype == "pickle":
+        # to work with uncertanities, see uncertanity module
+        with open(path + name + '.pkl', 'wb') as f:
+            pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
+    if filetype == "mat":
+        # matlab doesent allow some special character to be in var names, also cant start with
+        # numbers, in need, add some to the romove_character list
+        data["fit_area_nom"] = [data["fit_area"][i].n for i in range(len(data["fit_area"]))]
+        data["fit_area_err"] = [data["fit_area"][i].s for i in range(len(data["fit_area"]))]
+        data["int_area_nom"] = [data["int_area"][i].n for i in range(len(data["int_area"]))]
+        data["int_area_err"] = [data["int_area"][i].s for i in range(len(data["int_area"]))]
+        data = data.drop(columns=['fit_area', 'int_area'])
+        remove_characters = [" ", "[", "]", "{", "}", "(",")"]
+        for character in remove_characters:
+            data.columns = [data.columns[i].replace(character,"") for i in range(len(data.columns))]
+        sio.savemat((path + name + '.mat'), {name: col.values for name, col in data.items()})
+    if filetype == "csv" or "txt":
+        data["fit_area_nom"] = [data["fit_area"][i].n for i in range(len(data["fit_area"]))]
+        data["fit_area_err"] = [data["fit_area"][i].s for i in range(len(data["fit_area"]))]
+        data["int_area_nom"] = [data["int_area"][i].n for i in range(len(data["int_area"]))]
+        data["int_area_err"] = [data["int_area"][i].s for i in range(len(data["int_area"]))]
+        data = data.drop(columns=['fit_area', 'int_area', 'om', 'Counts'])
+        if filetype == "csv":
+            data.to_csv(path + name + '.csv')
+        if filetype == "txt":
+            with open((path + name + '.txt'), 'w') as outfile:
+                data.to_string(outfile)
+    if filetype == "h5":
+        hdf = pd.HDFStore((path + name + ".h5"))
+        hdf.put("data", data)
+        hdf.close()
+    if filetype == "json":
+        data.to_json((path + name + ".json"))
+
+
+
+
+
+
