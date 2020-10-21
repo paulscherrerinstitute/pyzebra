@@ -176,12 +176,13 @@ def parse_1D(fileobj, data_type):
         data_cols['omega_angle'] = metadata['omega']
         data_cols['number_of_measurements'] = len(data_cols['om'])
         data_cols['monitor'] = data_cols['Monitor1'][0]
-        measurements[1] = dict(data_cols)
+        
         # add angles to scan from meta
         data_cols["twotheta_angle"] = metadata['2-theta']
         data_cols["chi_angle"] = metadata['chi']
         data_cols["phi_angle"] = metadata['phi']
         data_cols["nu_angle"] = metadata['nu']
+        measurements[1] = dict(data_cols)
 
     else:
         print("Unknown file extention")
