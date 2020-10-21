@@ -57,40 +57,6 @@ META_VARS_FLOAT = (
 )
 META_UB_MATRIX = ("ub1j", "ub2j", "ub3j")
 
-CCL_FIRST_LINE = (
-    # the first element is `measurement_number`, which we don't save to metadata
-    ("h_index", float),
-    ("k_index", float),
-    ("l_index", float),
-)
-
-CCL_FIRST_LINE_BI = (
-    *CCL_FIRST_LINE,
-    ("twotheta_angle", float),
-    ("omega_angle", float),
-    ("chi_angle", float),
-    ("phi_angle", float),
-)
-
-CCL_FIRST_LINE_NB = (
-    *CCL_FIRST_LINE,
-    ("gamma_angle", float),
-    ("omega_angle", float),
-    ("nu_angle", float),
-    ("unkwn_angle", float),
-)
-
-CCL_SECOND_LINE = (
-    ("number_of_measurements", int),
-    ("angle_step", float),
-    ("monitor", float),
-    ("temperature", float),
-    ("mag_field", float),
-    ("date", str),
-    ("time", str),
-    ("scan_type", str),
-)
-
 
 def load_1D(filepath):
     """
@@ -133,44 +99,51 @@ def parse_1D(fileobj, data_type):
     measurements = {}
     if data_type == ".ccl":
         decimal = list()
-
-        if metadata["zebra_mode"] == "bi":
-            ccl_first_line = CCL_FIRST_LINE_BI
-        elif metadata["zebra_mode"] == "nb":
-            ccl_first_line = CCL_FIRST_LINE_NB
-        ccl_second_line = CCL_SECOND_LINE
-
         for line in fileobj:
-            d = {}
-
-            # first line
-            measurement_number, *params = line.split()
-            for param, (param_name, param_type) in zip(params, ccl_first_line):
-                d[param_name] = param_type(param)
-
-            decimal.append(bool(Decimal(d["h_index"]) % 1 == 0))
-            decimal.append(bool(Decimal(d["k_index"]) % 1 == 0))
-            decimal.append(bool(Decimal(d["l_index"]) % 1 == 0))
-
-            # second line
-            next_line = next(fileobj)
-            params = next_line.split()
-            for param, (param_name, param_type) in zip(params, ccl_second_line):
-                d[param_name] = param_type(param)
-
-            d["om"] = np.linspace(
-                d["omega_angle"] - (d["number_of_measurements"] / 2) * d["angle_step"],
-                d["omega_angle"] + (d["number_of_measurements"] / 2) * d["angle_step"],
-                d["number_of_measurements"],
-            )
-
-            # subsequent lines with counts
             counts = []
-            while len(counts) < d["number_of_measurements"]:
-                counts.extend(map(int, next(fileobj).split()))
-            d["Counts"] = counts
+            measurement_number = int(line.split()[0])
+            d = {}
+            d["h_index"] = float(line.split()[1])
+            decimal.append(bool(Decimal(d["h_index"]) % 1 == 0))
+            d["k_index"] = float(line.split()[2])
+            decimal.append(bool(Decimal(d["k_index"]) % 1 == 0))
+            d["l_index"] = float(line.split()[3])
+            decimal.append(bool(Decimal(d["l_index"]) % 1 == 0))
+            if metadata["zebra_mode"] == "bi":
+                d["twotheta_angle"] = float(line.split()[4])  # gamma
+                d["omega_angle"] = float(line.split()[5])  # omega
+                d["chi_angle"] = float(line.split()[6])  # nu
+                d["phi_angle"] = float(line.split()[7])  # doesnt matter
+            elif metadata["zebra_mode"] == "nb":
+                d["gamma_angle"] = float(line.split()[4])  # gamma
+                d["omega_angle"] = float(line.split()[5])  # omega
+                d["nu_angle"] = float(line.split()[6])  # nu
+                d["unkwn_angle"] = float(line.split()[7])
 
-            measurements[int(measurement_number)] = d
+            next_line = next(fileobj)
+            d["number_of_measurements"] = int(next_line.split()[0])
+            d["angle_step"] = float(next_line.split()[1])
+            d["monitor"] = float(next_line.split()[2])
+            d["temperature"] = float(next_line.split()[3])
+            d["mag_field"] = float(next_line.split()[4])
+            d["date"] = str(next_line.split()[5])
+            d["time"] = str(next_line.split()[6])
+            d["scan_type"] = str(next_line.split()[7])
+            for i in range(
+                int(int(next_line.split()[0]) / 10) + (int(next_line.split()[0]) % 10 > 0)
+            ):
+                fileline = next(fileobj).split()
+                numbers = [int(w) for w in fileline]
+                counts = counts + numbers
+            d["om"] = np.linspace(
+                float(line.split()[5])
+                - (int(next_line.split()[0]) / 2) * float(next_line.split()[1]),
+                float(line.split()[5])
+                + (int(next_line.split()[0]) / 2) * float(next_line.split()[1]),
+                int(next_line.split()[0]),
+            )
+            d["Counts"] = counts
+            measurements[measurement_number] = d
 
             if all(decimal):
                 metadata["indices"] = "hkl"
@@ -192,15 +165,23 @@ def parse_1D(fileobj, data_type):
             for name, val in zip(col_names, line.split()):
                 data_cols[name].append(float(val))
 
-        data_cols['h_index'] = float(metadata['title'].split()[-3])
-        data_cols['k_index'] = float(metadata['title'].split()[-2])
-        data_cols['l_index'] = float(metadata['title'].split()[-1])
+        try:
+            data_cols['h_index'] = float(metadata['title'].split()[-3])
+            data_cols['k_index'] = float(metadata['title'].split()[-2])
+            data_cols['l_index'] = float(metadata['title'].split()[-1])
+        except (ValueError, IndexError):
+            print("seems hkl is not in title")
         data_cols['temperature'] = metadata['temp']
         data_cols['mag_field'] = metadata['mf']
         data_cols['omega_angle'] = metadata['omega']
         data_cols['number_of_measurements'] = len(data_cols['om'])
         data_cols['monitor'] = data_cols['Monitor1'][0]
         measurements[1] = dict(data_cols)
+        # add angles to scan from meta
+        data_cols["twotheta_angle"] = metadata['2-theta']
+        data_cols["chi_angle"] = metadata['chi']
+        data_cols["phi_angle"] = metadata['phi']
+        data_cols["nu_angle"] = metadata['nu']
 
     else:
         print("Unknown file extention")
