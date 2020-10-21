@@ -87,7 +87,7 @@ def create():
         temperature_spinner.value = det_data["temperature"][index]
 
         gamma, nu = calculate_pol(det_data, index)
-        omega = det_data["rot_angle"][index]
+        omega = np.ones((IMAGE_H, IMAGE_W)) * det_data["rot_angle"][index]
         image_source.data.update(gamma=[gamma], nu=[nu], omega=[omega])
 
     def update_overview_plot():
