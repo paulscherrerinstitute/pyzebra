@@ -87,8 +87,7 @@ def create():
         temperature_spinner.value = det_data["temperature"][index]
 
         gamma, nu = calculate_pol(det_data, index)
-        omega = det_data["rot_angle"][index]
-        image_source.data.update(gamma=[gamma], nu=[nu], omega=[omega])
+        image_source.data.update(gamma=[gamma], nu=[nu])
 
     def update_overview_plot():
         h5_data = det_data["data"]
@@ -162,7 +161,6 @@ def create():
             l=[np.zeros((1, 1))],
             gamma=[np.zeros((1, 1))],
             nu=[np.zeros((1, 1))],
-            omega=[np.zeros((1, 1))],
             x=[0],
             y=[0],
             dw=[IMAGE_W],
@@ -175,14 +173,12 @@ def create():
     l_glyph = Image(image="l", x="x", y="y", dw="dw", dh="dh", global_alpha=0)
     gamma_glyph = Image(image="gamma", x="x", y="y", dw="dw", dh="dh", global_alpha=0)
     nu_glyph = Image(image="nu", x="x", y="y", dw="dw", dh="dh", global_alpha=0)
-    omega_glyph = Image(image="omega", x="x", y="y", dw="dw", dh="dh", global_alpha=0)
 
     plot.add_glyph(image_source, h_glyph)
     plot.add_glyph(image_source, k_glyph)
     plot.add_glyph(image_source, l_glyph)
     plot.add_glyph(image_source, gamma_glyph)
     plot.add_glyph(image_source, nu_glyph)
-    plot.add_glyph(image_source, omega_glyph)
 
     image_glyph = Image(image="image", x="x", y="y", dw="dw", dh="dh")
     plot.add_glyph(image_source, image_glyph, name="image_glyph")
@@ -228,7 +224,6 @@ def create():
             ("intensity", "@image"),
             ("gamma", "@gamma"),
             ("nu", "@nu"),
-            ("omega", "@omega"),
             ("h", "@h"),
             ("k", "@k"),
             ("l", "@l"),
