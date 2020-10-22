@@ -67,8 +67,8 @@ def export_comm(data, path, lorentz=False):
             line = (
                 scan_number_str
                 + h_str
-                + l_str
                 + k_str
+                + l_str
                 + int_str
                 + sigma_str
                 + angle_str1
