@@ -5,11 +5,11 @@ from scipy.signal import savgol_filter
 
 
 def ccl_findpeaks(
-    meas, int_threshold=0.8, prominence=50, smooth=False, window_size=7, poly_order=3
+    scan, int_threshold=0.8, prominence=50, smooth=False, window_size=7, poly_order=3
 ):
 
-    """function iterates through the dictionary created by load_cclv2 and locates peaks for each measurement
-    args:   meas - a single measurement,
+    """function iterates through the dictionary created by load_cclv2 and locates peaks for each scan
+    args:   scan - a single scan,
 
             int_threshold - fraction of threshold_intensity/max_intensity, must be positive num between 0 and 1
                         i.e. will only detect peaks above 75% of max intensity
@@ -54,8 +54,8 @@ def ccl_findpeaks(
         prominence = 50
         print("Invalid value for prominence, select positive number, new value set to:", prominence)
 
-    omega = meas["om"]
-    counts = np.array(meas["Counts"])
+    omega = scan["om"]
+    counts = np.array(scan["Counts"])
     if smooth:
         itp = interp1d(omega, counts, kind="linear")
         absintensity = [abs(number) for number in counts]
@@ -69,7 +69,7 @@ def ccl_findpeaks(
     peaks, properties = sc.signal.find_peaks(
         smooth_peaks, height=int_threshold * max(smooth_peaks), prominence=prominence
     )
-    meas["num_of_peaks"] = len(peaks)
-    meas["peak_indexes"] = peaks
-    meas["peak_heights"] = properties["peak_heights"]
-    meas["smooth_peaks"] = smooth_peaks  # smoothed curve
+    scan["num_of_peaks"] = len(peaks)
+    scan["peak_indexes"] = peaks
+    scan["peak_heights"] = properties["peak_heights"]
+    scan["smooth_peaks"] = smooth_peaks  # smoothed curve

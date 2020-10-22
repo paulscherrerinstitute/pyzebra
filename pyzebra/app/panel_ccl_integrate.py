@@ -77,16 +77,16 @@ def create():
             _, ext = os.path.splitext(new)
             det_data = pyzebra.parse_1D(file, ext)
 
-        meas_list = list(det_data["meas"].keys())
+        scan_list = list(det_data["scan"].keys())
         hkl = [
             f'{int(m["h_index"])} {int(m["k_index"])} {int(m["l_index"])}'
-            for m in det_data["meas"].values()
+            for m in det_data["scan"].values()
         ]
-        meas_table_source.data.update(
-            measurement=meas_list, hkl=hkl, peaks=[0] * len(meas_list), fit=[0] * len(meas_list)
+        scan_table_source.data.update(
+            scan=scan_list, hkl=hkl, peaks=[0] * len(scan_list), fit=[0] * len(scan_list)
         )
-        meas_table_source.selected.indices = []
-        meas_table_source.selected.indices = [0]
+        scan_table_source.selected.indices = []
+        scan_table_source.selected.indices = [0]
 
     ccl_file_select = Select(title="Available .ccl files")
     ccl_file_select.on_change("value", ccl_file_select_callback)
@@ -97,45 +97,45 @@ def create():
             _, ext = os.path.splitext(upload_button.filename)
             det_data = pyzebra.parse_1D(file, ext)
 
-        meas_list = list(det_data["meas"].keys())
+        scan_list = list(det_data["scan"].keys())
         hkl = [
             f'{int(m["h_index"])} {int(m["k_index"])} {int(m["l_index"])}'
-            for m in det_data["meas"].values()
+            for m in det_data["scan"].values()
         ]
-        meas_table_source.data.update(
-            measurement=meas_list, hkl=hkl, peaks=[0] * len(meas_list), fit=[0] * len(meas_list)
+        scan_table_source.data.update(
+            scan=scan_list, hkl=hkl, peaks=[0] * len(scan_list), fit=[0] * len(scan_list)
         )
-        meas_table_source.selected.indices = []
-        meas_table_source.selected.indices = [0]
+        scan_table_source.selected.indices = []
+        scan_table_source.selected.indices = [0]
 
     upload_button = FileInput(accept=".ccl")
     upload_button.on_change("value", upload_button_callback)
 
     def _update_table():
-        num_of_peaks = [meas.get("num_of_peaks", 0) for meas in det_data["meas"].values()]
-        fit_ok = [(1 if "fit" in meas else 0) for meas in det_data["meas"].values()]
-        meas_table_source.data.update(peaks=num_of_peaks, fit=fit_ok)
+        num_of_peaks = [scan.get("num_of_peaks", 0) for scan in det_data["scan"].values()]
+        fit_ok = [(1 if "fit" in scan else 0) for scan in det_data["scan"].values()]
+        scan_table_source.data.update(peaks=num_of_peaks, fit=fit_ok)
 
     def _update_plot(ind):
         nonlocal peak_pos_textinput_lock
         peak_pos_textinput_lock = True
 
-        meas = det_data["meas"][ind]
-        y = meas["Counts"]
-        x = meas["om"]
+        scan = det_data["scan"][ind]
+        y = scan["Counts"]
+        x = scan["om"]
 
         plot_scatter_source.data.update(x=x, y=y, y_upper=y + np.sqrt(y), y_lower=y - np.sqrt(y))
 
-        num_of_peaks = meas.get("num_of_peaks")
+        num_of_peaks = scan.get("num_of_peaks")
         if num_of_peaks is not None and num_of_peaks > 0:
-            peak_indexes = meas["peak_indexes"]
+            peak_indexes = scan["peak_indexes"]
             if len(peak_indexes) == 1:
-                peak_pos_textinput.value = str(meas["om"][peak_indexes[0]])
+                peak_pos_textinput.value = str(scan["om"][peak_indexes[0]])
             else:
-                peak_pos_textinput.value = str([meas["om"][ind] for ind in peak_indexes])
+                peak_pos_textinput.value = str([scan["om"][ind] for ind in peak_indexes])
 
-            plot_peak_source.data.update(x=meas["om"][peak_indexes], y=meas["peak_heights"])
-            plot_line_smooth_source.data.update(x=x, y=meas["smooth_peaks"])
+            plot_peak_source.data.update(x=scan["om"][peak_indexes], y=scan["peak_heights"])
+            plot_line_smooth_source.data.update(x=x, y=scan["smooth_peaks"])
         else:
             peak_pos_textinput.value = None
             plot_peak_source.data.update(x=[], y=[])
@@ -143,10 +143,10 @@ def create():
 
         peak_pos_textinput_lock = False
 
-        fit = meas.get("fit")
+        fit = scan.get("fit")
         if fit is not None:
-            plot_gauss_source.data.update(x=x, y=meas["fit"]["comps"]["gaussian"])
-            plot_bkg_source.data.update(x=x, y=meas["fit"]["comps"]["background"])
+            plot_gauss_source.data.update(x=x, y=scan["fit"]["comps"]["gaussian"])
+            plot_bkg_source.data.update(x=x, y=scan["fit"]["comps"]["background"])
             params = fit["result"].params
             fit_output_textinput.value = (
                 "%s \n"
@@ -226,16 +226,16 @@ def create():
     numfit_max_span = Span(location=None, dimension="height", line_dash="dashed")
     plot.add_layout(numfit_max_span)
 
-    # Measurement select
-    def meas_table_callback(_attr, _old, new):
+    # Scan select
+    def scan_table_callback(_attr, _old, new):
         if new:
-            _update_plot(meas_table_source.data["measurement"][new[-1]])
+            _update_plot(scan_table_source.data["scan"][new[-1]])
 
-    meas_table_source = ColumnDataSource(dict(measurement=[], hkl=[], peaks=[], fit=[]))
-    meas_table = DataTable(
-        source=meas_table_source,
+    scan_table_source = ColumnDataSource(dict(scan=[], hkl=[], peaks=[], fit=[]))
+    scan_table = DataTable(
+        source=scan_table_source,
         columns=[
-            TableColumn(field="measurement", title="Meas"),
+            TableColumn(field="scan", title="scan"),
             TableColumn(field="hkl", title="hkl"),
             TableColumn(field="peaks", title="Peaks"),
             TableColumn(field="fit", title="Fit"),
@@ -244,20 +244,20 @@ def create():
         index_position=None,
     )
 
-    meas_table_source.selected.on_change("indices", meas_table_callback)
+    scan_table_source.selected.on_change("indices", scan_table_callback)
 
     def peak_pos_textinput_callback(_attr, _old, new):
         if new is not None and not peak_pos_textinput_lock:
-            sel_ind = meas_table_source.selected.indices[-1]
-            meas_name = meas_table_source.data["measurement"][sel_ind]
-            meas = det_data["meas"][meas_name]
+            sel_ind = scan_table_source.selected.indices[-1]
+            scan_name = scan_table_source.data["scan"][sel_ind]
+            scan = det_data["scan"][scan_name]
 
-            meas["num_of_peaks"] = 1
-            peak_ind = (np.abs(meas["om"] - float(new))).argmin()
-            meas["peak_indexes"] = np.array([peak_ind], dtype=np.int64)
-            meas["peak_heights"] = np.array([meas["smooth_peaks"][peak_ind]])
+            scan["num_of_peaks"] = 1
+            peak_ind = (np.abs(scan["om"] - float(new))).argmin()
+            scan["peak_indexes"] = np.array([peak_ind], dtype=np.int64)
+            scan["peak_heights"] = np.array([scan["smooth_peaks"][peak_ind]])
             _update_table()
-            _update_plot(meas_name)
+            _update_plot(scan_name)
 
     peak_pos_textinput = TextInput(title="Peak position:", default_size=145)
     peak_pos_textinput.on_change("value", peak_pos_textinput_callback)
@@ -323,9 +323,9 @@ def create():
     fit_output_textinput = TextAreaInput(title="Fit results:", width=450, height=400)
 
     def peakfind_all_button_callback():
-        for meas in det_data["meas"].values():
+        for scan in det_data["scan"].values():
             pyzebra.ccl_findpeaks(
-                meas,
+                scan,
                 int_threshold=peak_int_ratio_spinner.value,
                 prominence=peak_prominence_spinner.value,
                 smooth=smooth_toggle.active,
@@ -335,17 +335,17 @@ def create():
 
         _update_table()
 
-        sel_ind = meas_table_source.selected.indices[-1]
-        _update_plot(meas_table_source.data["measurement"][sel_ind])
+        sel_ind = scan_table_source.selected.indices[-1]
+        _update_plot(scan_table_source.data["scan"][sel_ind])
 
     peakfind_all_button = Button(label="Peak Find All", button_type="primary", default_size=145)
     peakfind_all_button.on_click(peakfind_all_button_callback)
 
     def peakfind_button_callback():
-        sel_ind = meas_table_source.selected.indices[-1]
-        meas = meas_table_source.data["measurement"][sel_ind]
+        sel_ind = scan_table_source.selected.indices[-1]
+        scan = scan_table_source.data["scan"][sel_ind]
         pyzebra.ccl_findpeaks(
-            det_data["meas"][meas],
+            det_data["scan"][scan],
             int_threshold=peak_int_ratio_spinner.value,
             prominence=peak_prominence_spinner.value,
             smooth=smooth_toggle.active,
@@ -354,15 +354,15 @@ def create():
         )
 
         _update_table()
-        _update_plot(meas)
+        _update_plot(scan)
 
     peakfind_button = Button(label="Peak Find Current", default_size=145)
     peakfind_button.on_click(peakfind_button_callback)
 
     def fit_all_button_callback():
-        for meas in det_data["meas"].values():
+        for scan in det_data["scan"].values():
             pyzebra.fitccl(
-                meas,
+                scan,
                 guess=[
                     centre_guess.value,
                     sigma_guess.value,
@@ -395,19 +395,19 @@ def create():
                 numfit_max=integ_to.value,
             )
 
-        sel_ind = meas_table_source.selected.indices[-1]
-        _update_plot(meas_table_source.data["measurement"][sel_ind])
+        sel_ind = scan_table_source.selected.indices[-1]
+        _update_plot(scan_table_source.data["scan"][sel_ind])
         _update_table()
 
     fit_all_button = Button(label="Fit All", button_type="primary", default_size=145)
     fit_all_button.on_click(fit_all_button_callback)
 
     def fit_button_callback():
-        sel_ind = meas_table_source.selected.indices[-1]
-        meas = meas_table_source.data["measurement"][sel_ind]
+        sel_ind = scan_table_source.selected.indices[-1]
+        scan = scan_table_source.data["scan"][sel_ind]
 
         pyzebra.fitccl(
-            det_data["meas"][meas],
+            det_data["scan"][scan],
             guess=[
                 centre_guess.value,
                 sigma_guess.value,
@@ -440,7 +440,7 @@ def create():
             numfit_max=integ_to.value,
         )
 
-        _update_plot(meas)
+        _update_plot(scan)
         _update_table()
 
     fit_button = Button(label="Fit Current", default_size=145)
@@ -541,7 +541,7 @@ def create():
     tab_layout = column(
         row(proposal_textinput, ccl_file_select),
         row(column(Spacer(height=5), upload_div), upload_button),
-        row(meas_table, plot, Spacer(width=30), fit_output_textinput, export_layout),
+        row(scan_table, plot, Spacer(width=30), fit_output_textinput, export_layout),
         row(findpeak_controls, Spacer(width=30), fitpeak_controls),
     )
 

@@ -38,12 +38,10 @@ def load_dats(filepath):
                 dict1 = add_dict(dict1, load_1D(file_list[i][0]))
             else:
                 dict1 = add_dict(dict1, load_1D(file_list[i]))
-        dict1["meas"][i + 1]["params"] = {}
+        dict1["scan"][i + 1]["params"] = {}
         if data_type == "txt":
             for x in range(len(col_names) - 1):
-                dict1["meas"][i + 1]["params"][
-                    col_names[x + 1]
-                ] = file_list[i][x + 1]
+                dict1["scan"][i + 1]["params"][col_names[x + 1]] = file_list[i][x + 1]
 
     return dict1
 
@@ -55,7 +53,7 @@ def create_dataframe(dict1):
     # create dictionary to which we pull only wanted items before transforming it to pd.dataframe
     pull_dict = {}
     pull_dict["filenames"] = list()
-    for key in dict1["meas"][1]["params"]:
+    for key in dict1["scan"][1]["params"]:
         pull_dict[key] = list()
     pull_dict["temperature"] = list()
     pull_dict["mag_field"] = list()
@@ -65,21 +63,19 @@ def create_dataframe(dict1):
     pull_dict["Counts"] = list()
 
     # populate the dict
-    for keys in dict1["meas"]:
-        if "file_of_origin" in dict1["meas"][keys]:
-            pull_dict["filenames"].append(
-                dict1["meas"][keys]["file_of_origin"].split("/")[-1]
-            )
+    for keys in dict1["scan"]:
+        if "file_of_origin" in dict1["scan"][keys]:
+            pull_dict["filenames"].append(dict1["scan"][keys]["file_of_origin"].split("/")[-1])
         else:
             pull_dict["filenames"].append(dict1["meta"]["original_filename"].split("/")[-1])
-        for key in dict1["meas"][keys]["params"]:
-            pull_dict[str(key)].append(float(dict1["meas"][keys]["params"][key]))
-        pull_dict["temperature"].append(dict1["meas"][keys]["temperature"])
-        pull_dict["mag_field"].append(dict1["meas"][keys]["mag_field"])
-        pull_dict["fit_area"].append(dict1["meas"][keys]["fit"]["fit_area"])
-        pull_dict["int_area"].append(dict1["meas"][keys]["fit"]["int_area"])
-        pull_dict["om"].append(dict1["meas"][keys]["om"])
-        pull_dict["Counts"].append(dict1["meas"][keys]["Counts"])
+        for key in dict1["scan"][keys]["params"]:
+            pull_dict[str(key)].append(float(dict1["scan"][keys]["params"][key]))
+        pull_dict["temperature"].append(dict1["scan"][keys]["temperature"])
+        pull_dict["mag_field"].append(dict1["scan"][keys]["mag_field"])
+        pull_dict["fit_area"].append(dict1["scan"][keys]["fit"]["fit_area"])
+        pull_dict["int_area"].append(dict1["scan"][keys]["fit"]["int_area"])
+        pull_dict["om"].append(dict1["scan"][keys]["om"])
+        pull_dict["Counts"].append(dict1["scan"][keys]["Counts"])
 
     return pd.DataFrame(data=pull_dict)
 
@@ -145,12 +141,14 @@ def make_graph(data, sorting_parameter, style):
         plt.clim(color_matrix.mean(), color_matrix.max())
 
     return fig
+
+
 def save_dict(obj, name):
     """ saves dictionary as pickle file in binary format
     :arg obj - object to save
     :arg name - name of the file
     NOTE: path should be added later"""
-    with open(name + '.pkl', 'wb') as f:
+    with open(name + ".pkl", "wb") as f:
         pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
 
 
@@ -159,15 +157,17 @@ def load_dict(name):
     :arg name - name of the file to load
     NOTE: expect the file in the same folder, path should be added later
     :return dictionary"""
-    with open(name + '.pkl', 'rb') as f:
+    with open(name + ".pkl", "rb") as f:
         return pickle.load(f)
+
+
 # pickle, mat, h5, txt, csv, json
 def save_table(data, filetype, name, path=None):
     print("Saving: ", filetype)
     path = "" if path is None else path
     if filetype == "pickle":
         # to work with uncertanities, see uncertanity module
-        with open(path + name + '.pkl', 'wb') as f:
+        with open(path + name + ".pkl", "wb") as f:
             pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
     if filetype == "mat":
         # matlab doesent allow some special character to be in var names, also cant start with
@@ -176,21 +176,23 @@ def save_table(data, filetype, name, path=None):
         data["fit_area_err"] = [data["fit_area"][i].s for i in range(len(data["fit_area"]))]
         data["int_area_nom"] = [data["int_area"][i].n for i in range(len(data["int_area"]))]
         data["int_area_err"] = [data["int_area"][i].s for i in range(len(data["int_area"]))]
-        data = data.drop(columns=['fit_area', 'int_area'])
-        remove_characters = [" ", "[", "]", "{", "}", "(",")"]
+        data = data.drop(columns=["fit_area", "int_area"])
+        remove_characters = [" ", "[", "]", "{", "}", "(", ")"]
         for character in remove_characters:
-            data.columns = [data.columns[i].replace(character,"") for i in range(len(data.columns))]
-        sio.savemat((path + name + '.mat'), {name: col.values for name, col in data.items()})
+            data.columns = [
+                data.columns[i].replace(character, "") for i in range(len(data.columns))
+            ]
+        sio.savemat((path + name + ".mat"), {name: col.values for name, col in data.items()})
     if filetype == "csv" or "txt":
         data["fit_area_nom"] = [data["fit_area"][i].n for i in range(len(data["fit_area"]))]
         data["fit_area_err"] = [data["fit_area"][i].s for i in range(len(data["fit_area"]))]
         data["int_area_nom"] = [data["int_area"][i].n for i in range(len(data["int_area"]))]
         data["int_area_err"] = [data["int_area"][i].s for i in range(len(data["int_area"]))]
-        data = data.drop(columns=['fit_area', 'int_area', 'om', 'Counts'])
+        data = data.drop(columns=["fit_area", "int_area", "om", "Counts"])
         if filetype == "csv":
-            data.to_csv(path + name + '.csv')
+            data.to_csv(path + name + ".csv")
         if filetype == "txt":
-            with open((path + name + '.txt'), 'w') as outfile:
+            with open((path + name + ".txt"), "w") as outfile:
                 data.to_string(outfile)
     if filetype == "h5":
         hdf = pd.HDFStore((path + name + ".h5"))
@@ -198,9 +200,3 @@ def save_table(data, filetype, name, path=None):
         hdf.close()
     if filetype == "json":
         data.to_json((path + name + ".json"))
-
-
-
-
-
-

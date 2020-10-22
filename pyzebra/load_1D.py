@@ -58,7 +58,7 @@ META_VARS_FLOAT = (
 META_UB_MATRIX = ("ub1j", "ub2j", "ub3j")
 
 CCL_FIRST_LINE = (
-    # the first element is `measurement_number`, which we don't save to metadata
+    # the first element is `scan_number`, which we don't save to metadata
     ("h_index", float),
     ("k_index", float),
     ("l_index", float),
@@ -100,8 +100,8 @@ def load_1D(filepath):
 
     :arg filepath
     :returns det_variables
-    - dictionary of all detector/scan variables and dictinionary for every measurement.
-    Names of these dictionaries are M + measurement number. They include HKL indeces, angles,
+    - dictionary of all detector/scan variables and dictinionary for every scan.
+    Names of these dictionaries are M + scan number. They include HKL indeces, angles,
     monitors, stepsize and array of counts
     """
     with open(filepath, "r") as infile:
@@ -130,7 +130,7 @@ def parse_1D(fileobj, data_type):
             break
 
     # read data
-    measurements = {}
+    scan = {}
     if data_type == ".ccl":
         decimal = list()
 
@@ -144,7 +144,7 @@ def parse_1D(fileobj, data_type):
             d = {}
 
             # first line
-            measurement_number, *params = line.split()
+            scan_number, *params = line.split()
             for param, (param_name, param_type) in zip(params, ccl_first_line):
                 d[param_name] = param_type(param)
 
@@ -170,7 +170,7 @@ def parse_1D(fileobj, data_type):
                 counts.extend(map(int, next(fileobj).split()))
             d["Counts"] = counts
 
-            measurements[int(measurement_number)] = d
+            scan[int(scan_number)] = d
 
             if all(decimal):
                 metadata["indices"] = "hkl"
@@ -209,7 +209,7 @@ def parse_1D(fileobj, data_type):
         data_cols["phi_angle"] = metadata["phi"]
         data_cols["nu_angle"] = metadata["nu"]
 
-        measurements[1] = dict(data_cols)
+        scan[1] = dict(data_cols)
 
     else:
         print("Unknown file extention")
@@ -218,4 +218,4 @@ def parse_1D(fileobj, data_type):
     metadata["data_type"] = data_type
     metadata["area_method"] = "fit"
 
-    return {"meta": metadata, "meas": measurements}
+    return {"meta": metadata, "scan": scan}

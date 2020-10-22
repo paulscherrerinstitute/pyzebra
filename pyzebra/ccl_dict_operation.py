@@ -12,17 +12,17 @@ def add_dict(dict1, dict2):
     :return dict1 : combined dictionary
     Note: dict1 must be made from ccl, otherwise we would have to change the structure of loaded
     dat file"""
-    max_measurement_dict1 = max([int(str(keys)[1:]) for keys in dict1["meas"]])
+    max_measurement_dict1 = max([int(str(keys)[1:]) for keys in dict1["scan"]])
     if dict2["meta"]["data_type"] == ".ccl":
         new_filenames = [
             "M" + str(x + max_measurement_dict1)
-            for x in [int(str(keys)[1:]) for keys in dict2["meas"]]
+            for x in [int(str(keys)[1:]) for keys in dict2["scan"]]
         ]
         new_meta_name = "meta" + str(dict2["meta"]["original_filename"])
         if new_meta_name not in dict1:
-            for keys, name in zip(dict2["meas"], new_filenames):
-                dict2["meas"][keys]["file_of_origin"] = str(dict2["meta"]["original_filename"])
-                dict1["meas"][name] = dict2["meas"][keys]
+            for keys, name in zip(dict2["scan"], new_filenames):
+                dict2["scan"][keys]["file_of_origin"] = str(dict2["meta"]["original_filename"])
+                dict1["scan"][name] = dict2["scan"][keys]
 
             dict1[new_meta_name] = dict2["meta"]
 
@@ -40,14 +40,14 @@ def add_dict(dict1, dict2):
         d["h_index"] = float(hkl.split()[-3])
         d["k_index"] = float(hkl.split()[-2])
         d["l_index"] = float(hkl.split()[-1])
-        d["number_of_measurements"] = len(dict2["meas"]["NP"])
-        d["om"] = dict2["meas"]["om"]
-        d["Counts"] = dict2["meas"]["Counts"]
-        d["monitor"] = dict2["meas"]["Monitor1"][0]
+        d["number_of_measurements"] = len(dict2["scan"]["NP"])
+        d["om"] = dict2["scan"]["om"]
+        d["Counts"] = dict2["scan"]["Counts"]
+        d["monitor"] = dict2["scan"]["Monitor1"][0]
         d["temperature"] = dict2["meta"]["temp"]
         d["mag_field"] = dict2["meta"]["mf"]
         d["omega_angle"] = dict2["meta"]["omega"]
-        dict1["meas"][new_name] = d
+        dict1["scan"][new_name] = d
         print(hkl.split())
         for keys in d:
             print(keys)
@@ -80,18 +80,18 @@ def scan_dict(dict):
     """
 
     d = {}
-    for i in dict["meas"]:
-        for j in dict["meas"]:
-            if dict["meas"][str(i)] != dict["meas"][str(j)]:
+    for i in dict["scan"]:
+        for j in dict["scan"]:
+            if dict["scan"][str(i)] != dict["scan"][str(j)]:
                 itup = (
-                    dict["meas"][str(i)]["h_index"],
-                    dict["meas"][str(i)]["k_index"],
-                    dict["meas"][str(i)]["l_index"],
+                    dict["scan"][str(i)]["h_index"],
+                    dict["scan"][str(i)]["k_index"],
+                    dict["scan"][str(i)]["l_index"],
                 )
                 jtup = (
-                    dict["meas"][str(j)]["h_index"],
-                    dict["meas"][str(j)]["k_index"],
-                    dict["meas"][str(j)]["l_index"],
+                    dict["scan"][str(j)]["h_index"],
+                    dict["scan"][str(j)]["k_index"],
+                    dict["scan"][str(j)]["l_index"],
                 )
                 if itup != jtup:
                     pass
@@ -109,52 +109,52 @@ def scan_dict(dict):
 
 def compare_hkl(dict1, dict2):
     """Compares two dictionaries based on hkl indexes and return dictionary with str(h k l) as
-    key and tuple with keys to same measurement in dict1 and dict2
+    key and tuple with keys to same scan in dict1 and dict2
     :arg dict1 : first dictionary
     :arg dict2 : second dictionary
     :return d : dict with matches
-    example of one key: '0.0 0.0 -1.0 : ('M1', 'M9')' meaning that 001 hkl measurement is M1 in
+    example of one key: '0.0 0.0 -1.0 : ('M1', 'M9')' meaning that 001 hkl scan is M1 in
     first dict and M9 in second"""
     d = {}
     dupl = 0
-    for keys in dict1["meas"]:
-        for key in dict2["meas"]:
+    for keys in dict1["scan"]:
+        for key in dict2["scan"]:
             if (
-                dict1["meas"][str(keys)]["h_index"] == dict2["meas"][str(key)]["h_index"]
-                and dict1["meas"][str(keys)]["k_index"] == dict2["meas"][str(key)]["k_index"]
-                and dict1["meas"][str(keys)]["l_index"] == dict2["meas"][str(key)]["l_index"]
+                dict1["scan"][str(keys)]["h_index"] == dict2["scan"][str(key)]["h_index"]
+                and dict1["scan"][str(keys)]["k_index"] == dict2["scan"][str(key)]["k_index"]
+                and dict1["scan"][str(keys)]["l_index"] == dict2["scan"][str(key)]["l_index"]
             ):
 
                 if (
                     str(
                         (
-                            str(dict1["meas"][str(keys)]["h_index"])
+                            str(dict1["scan"][str(keys)]["h_index"])
                             + " "
-                            + str(dict1["meas"][str(keys)]["k_index"])
+                            + str(dict1["scan"][str(keys)]["k_index"])
                             + " "
-                            + str(dict1["meas"][str(keys)]["l_index"])
+                            + str(dict1["scan"][str(keys)]["l_index"])
                         )
                     )
                     not in d
                 ):
                     d[
                         str(
-                            str(dict1["meas"][str(keys)]["h_index"])
+                            str(dict1["scan"][str(keys)]["h_index"])
                             + " "
-                            + str(dict1["meas"][str(keys)]["k_index"])
+                            + str(dict1["scan"][str(keys)]["k_index"])
                             + " "
-                            + str(dict1["meas"][str(keys)]["l_index"])
+                            + str(dict1["scan"][str(keys)]["l_index"])
                         )
                     ] = (str(keys), str(key))
                 else:
                     dupl = dupl + 1
                     d[
                         str(
-                            str(dict1["meas"][str(keys)]["h_index"])
+                            str(dict1["scan"][str(keys)]["h_index"])
                             + " "
-                            + str(dict1["meas"][str(keys)]["k_index"])
+                            + str(dict1["scan"][str(keys)]["k_index"])
                             + " "
-                            + str(dict1["meas"][str(keys)]["l_index"])
+                            + str(dict1["scan"][str(keys)]["l_index"])
                             + "_dupl"
                             + str(dupl)
                         )
@@ -176,16 +176,16 @@ def create_tuples(x, y, y_err):
 
 
 def normalize(dict, key, monitor):
-    """Normalizes the measurement to monitor, checks if sigma exists, otherwise creates it
+    """Normalizes the scan to monitor, checks if sigma exists, otherwise creates it
     :arg dict : dictionary to from which to tkae the scan
     :arg key : which scan to normalize from dict1
     :arg monitor : final monitor
     :return counts - normalized counts
     :return sigma - normalized sigma"""
 
-    counts = np.array(dict["meas"][key]["Counts"])
-    sigma = np.sqrt(counts) if "sigma" not in dict["meas"][key] else dict["meas"][key]["sigma"]
-    monitor_ratio = monitor / dict["meas"][key]["monitor"]
+    counts = np.array(dict["scan"][key]["Counts"])
+    sigma = np.sqrt(counts) if "sigma" not in dict["scan"][key] else dict["scan"][key]["sigma"]
+    monitor_ratio = monitor / dict["scan"][key]["monitor"]
     scaled_counts = counts * monitor_ratio
     scaled_sigma = np.array(sigma) * monitor_ratio
 
@@ -195,19 +195,19 @@ def normalize(dict, key, monitor):
 def merge(dict1, dict2, keys, auto=True, monitor=100000):
     """merges the two tuples and sorts them, if om value is same, Counts value is average
     averaging is propagated into sigma if dict1 == dict2, key[1] is deleted after merging
-    :arg dict1 : dictionary to which measurement will be merged
-    :arg dict2 : dictionary from which measurement will be merged
+    :arg dict1 : dictionary to which scan will be merged
+    :arg dict2 : dictionary from which scan will be merged
     :arg keys : tuple with key to dict1 and dict2
     :arg auto : if true, when monitors are same, does not change it, if flase, takes monitor always
     :arg monitor : final monitor after merging
     note: dict1 and dict2 can be same dict
     :return dict1 with merged scan"""
     if auto:
-        if dict1["meas"][keys[0]]["monitor"] == dict2["meas"][keys[1]]["monitor"]:
-            monitor = dict1["meas"][keys[0]]["monitor"]
+        if dict1["scan"][keys[0]]["monitor"] == dict2["scan"][keys[1]]["monitor"]:
+            monitor = dict1["scan"][keys[0]]["monitor"]
 
     # load om and Counts
-    x1, x2 = dict1["meas"][keys[0]]["om"], dict2["meas"][keys[1]]["om"]
+    x1, x2 = dict1["scan"][keys[0]]["om"], dict2["scan"][keys[1]]["om"]
     cor_y1, y_err1 = normalize(dict1, keys[0], monitor=monitor)
     cor_y2, y_err2 = normalize(dict2, keys[1], monitor=monitor)
     # creates touples (om, Counts, sigma) for sorting and further processing
@@ -237,40 +237,40 @@ def merge(dict1, dict2, keys, auto=True, monitor=100000):
             continue
 
     if dict1 == dict2:
-        del dict1["meas"][keys[1]]
+        del dict1["scan"][keys[1]]
 
     note = (
-        f"This measurement was merged with measurement {keys[1]} from "
+        f"This scan was merged with scan {keys[1]} from "
         f'file {dict2["meta"]["original_filename"]} \n'
     )
-    if "notes" not in dict1["meas"][str(keys[0])]:
-        dict1["meas"][str(keys[0])]["notes"] = note
+    if "notes" not in dict1["scan"][str(keys[0])]:
+        dict1["scan"][str(keys[0])]["notes"] = note
     else:
-        dict1["meas"][str(keys[0])]["notes"] += note
+        dict1["scan"][str(keys[0])]["notes"] += note
 
-    dict1["meas"][keys[0]]["om"] = om
-    dict1["meas"][keys[0]]["Counts"] = Counts
-    dict1["meas"][keys[0]]["sigma"] = sigma
-    dict1["meas"][keys[0]]["monitor"] = monitor
+    dict1["scan"][keys[0]]["om"] = om
+    dict1["scan"][keys[0]]["Counts"] = Counts
+    dict1["scan"][keys[0]]["sigma"] = sigma
+    dict1["scan"][keys[0]]["monitor"] = monitor
     print("merging done")
     return dict1
 
 
 def substract_measurement(dict1, dict2, keys, auto=True, monitor=100000):
-    """Substracts two measurement (measurement key2 from dict2 from measurent key1 in dict1), expects om to be same
-    :arg dict1 : dictionary to which measurement will be merged
-    :arg dict2 : dictionary from which measurement will be merged
+    """Substracts two scan (scan key2 from dict2 from measurent key1 in dict1), expects om to be same
+    :arg dict1 : dictionary to which scan will be merged
+    :arg dict2 : dictionary from which scan will be merged
     :arg keys : tuple with key to dict1 and dict2
     :arg auto : if true, when monitors are same, does not change it, if flase, takes monitor always
     :arg monitor : final monitor after merging
     :returns d : dict1 with substracted Counts from  dict2 and sigma that comes from the substraction"""
 
-    if len(dict1["meas"][keys[0]]["om"]) != len(dict2["meas"][keys[1]]["om"]):
+    if len(dict1["scan"][keys[0]]["om"]) != len(dict2["scan"][keys[1]]["om"]):
         raise ValueError("Omegas have different lengths, cannot be substracted")
 
     if auto:
-        if dict1["meas"][keys[0]]["monitor"] == dict2["meas"][keys[1]]["monitor"]:
-            monitor = dict1["meas"][keys[0]]["monitor"]
+        if dict1["scan"][keys[0]]["monitor"] == dict2["scan"][keys[1]]["monitor"]:
+            monitor = dict1["scan"][keys[0]]["monitor"]
 
     cor_y1, y_err1 = normalize(dict1, keys[0], monitor=monitor)
     cor_y2, y_err2 = normalize(dict2, keys[1], monitor=monitor)
@@ -288,21 +288,21 @@ def substract_measurement(dict1, dict2, keys, auto=True, monitor=100000):
 
     if len([num for num in res_nom if num < 0]) >= 0.3 * len(res_nom):
         print(
-            f"Warning! percentage of negative numbers in measurement subsracted {keys[0]} is "
+            f"Warning! percentage of negative numbers in scan subsracted {keys[0]} is "
             f"{len([num for num in res_nom if num < 0]) / len(res_nom)}"
         )
 
-    dict1["meas"][str(keys[0])]["Counts"] = res_nom
-    dict1["meas"][str(keys[0])]["sigma"] = res_err
-    dict1["meas"][str(keys[0])]["monitor"] = monitor
+    dict1["scan"][str(keys[0])]["Counts"] = res_nom
+    dict1["scan"][str(keys[0])]["sigma"] = res_err
+    dict1["scan"][str(keys[0])]["monitor"] = monitor
     note = (
-        f'Measurement {keys[1]} from file {dict2["meta"]["original_filename"]} '
-        f"was substracted from this measurement \n"
+        f'Scan {keys[1]} from file {dict2["meta"]["original_filename"]} '
+        f"was substracted from this scan \n"
     )
-    if "notes" not in dict1["meas"][str(keys[0])]:
-        dict1["meas"][str(keys[0])]["notes"] = note
+    if "notes" not in dict1["scan"][str(keys[0])]:
+        dict1["scan"][str(keys[0])]["notes"] = note
     else:
-        dict1["meas"][str(keys[0])]["notes"] += note
+        dict1["scan"][str(keys[0])]["notes"] += note
     return dict1
 
 
@@ -311,7 +311,7 @@ def compare_dict(dict1, dict2):
     :arg dict1 : dictionary 1 (ccl)
     :arg dict2 : dictionary 2 (ccl)
     :returns warning : dictionary with keys from primary files (if they differ) with
-    information of how many measurement differ and which ones differ
+    information of how many scan differ and which ones differ
     :returns report_string string comparing all different values respecively of measurements"""
 
     if dict1["meta"]["data_type"] != dict2["meta"]["data_type"]:
@@ -371,48 +371,48 @@ def compare_dict(dict1, dict2):
     # compare Measurements
     S.append(
         "Number of measurements in %s = %s \n"
-        % (dict1["meta"]["original_filename"], len(dict1["meas"]))
+        % (dict1["meta"]["original_filename"], len(dict1["scan"]))
     )
     S.append(
         "Number of measurements in %s = %s \n"
-        % (dict2["meta"]["original_filename"], len(dict2["meas"]))
+        % (dict2["meta"]["original_filename"], len(dict2["scan"]))
     )
     S.append("Different values in Measurements:\n")
     select_set = ["om", "Counts", "sigma"]
     exlude_set = ["time", "Counts", "date", "notes"]
     for keys1 in comp:
-        for key2 in dict1["meas"][str(comp[str(keys1)][0])]:
+        for key2 in dict1["scan"][str(comp[str(keys1)][0])]:
             if key2 in exlude_set:
                 continue
             if key2 not in select_set:
                 try:
                     if (
-                        dict1["meas"][comp[str(keys1)][0]][str(key2)]
-                        != dict2["meas"][str(comp[str(keys1)][1])][str(key2)]
+                        dict1["scan"][comp[str(keys1)][0]][str(key2)]
+                        != dict2["scan"][str(comp[str(keys1)][1])][str(key2)]
                     ):
                         S.append(
-                            "Measurement value "
+                            "Scan value "
                             "%s"
                             ", with hkl %s differs in meausrements %s and %s \n"
                             % (key2, keys1, comp[str(keys1)][0], comp[str(keys1)][1])
                         )
                         S.append(
                             "     dict1:   %s \n"
-                            % str(dict1["meas"][comp[str(keys1)][0]][str(key2)])
+                            % str(dict1["scan"][comp[str(keys1)][0]][str(key2)])
                         )
                         S.append(
                             "     dict2:   %s \n"
-                            % str(dict2["meas"][comp[str(keys1)][1]][str(key2)])
+                            % str(dict2["scan"][comp[str(keys1)][1]][str(key2)])
                         )
                         if key2 not in conflicts:
                             conflicts[key2] = {}
                             conflicts[key2]["amount"] = 1
-                            conflicts[key2]["meas"] = str(comp[str(keys1)])
+                            conflicts[key2]["scan"] = str(comp[str(keys1)])
                         else:
 
                             conflicts[key2]["amount"] = conflicts[key2]["amount"] + 1
-                            conflicts[key2]["meas"] = (
-                                conflicts[key2]["meas"] + " " + (str(comp[str(keys1)]))
+                            conflicts[key2]["scan"] = (
+                                conflicts[key2]["scan"] + " " + (str(comp[str(keys1)]))
                             )
                 except KeyError as e:
                     print("Missing keys, some files were probably merged or substracted")
@@ -420,11 +420,11 @@ def compare_dict(dict1, dict2):
 
             else:
                 try:
-                    comparison = list(dict1["meas"][comp[str(keys1)][0]][str(key2)]) == list(
-                        dict2["meas"][comp[str(keys1)][1]][str(key2)]
+                    comparison = list(dict1["scan"][comp[str(keys1)][0]][str(key2)]) == list(
+                        dict2["scan"][comp[str(keys1)][1]][str(key2)]
                     )
-                    if len(list(dict1["meas"][comp[str(keys1)][0]][str(key2)])) != len(
-                        list(dict2["meas"][comp[str(keys1)][1]][str(key2)])
+                    if len(list(dict1["scan"][comp[str(keys1)][0]][str(key2)])) != len(
+                        list(dict2["scan"][comp[str(keys1)][1]][str(key2)])
                     ):
                         if str("different length of %s" % key2) not in warnings:
                             warnings[str("different length of %s" % key2)] = list()
@@ -437,27 +437,27 @@ def compare_dict(dict1, dict2):
                             )
                     if not comparison:
                         S.append(
-                            "Measurement value "
+                            "Scan value "
                             "%s"
-                            " differs in measurement %s and %s \n"
+                            " differs in scan %s and %s \n"
                             % (key2, comp[str(keys1)][0], comp[str(keys1)][1])
                         )
                         S.append(
                             "       dict1:   %s \n"
-                            % str(list(dict1["meas"][comp[str(keys1)][0]][str(key2)]))
+                            % str(list(dict1["scan"][comp[str(keys1)][0]][str(key2)]))
                         )
                         S.append(
                             "       dict2:   %s \n"
-                            % str(list(dict2["meas"][comp[str(keys1)][1]][str(key2)]))
+                            % str(list(dict2["scan"][comp[str(keys1)][1]][str(key2)]))
                         )
                         if key2 not in conflicts:
                             conflicts[key2] = {}
                             conflicts[key2]["amount"] = 1
-                            conflicts[key2]["meas"] = str(comp[str(keys1)])
+                            conflicts[key2]["scan"] = str(comp[str(keys1)])
                         else:
                             conflicts[key2]["amount"] = conflicts[key2]["amount"] + 1
-                            conflicts[key2]["meas"] = (
-                                conflicts[key2]["meas"] + " " + (str(comp[str(keys1)]))
+                            conflicts[key2]["scan"] = (
+                                conflicts[key2]["scan"] + " " + (str(comp[str(keys1)]))
                             )
                 except KeyError as e:
                     print("Missing keys, some files were probably merged or substracted")
@@ -465,7 +465,7 @@ def compare_dict(dict1, dict2):
 
     for keys in conflicts:
         try:
-            conflicts[str(keys)]["meas"] = conflicts[str(keys)]["meas"].split(" ")
+            conflicts[str(keys)]["scan"] = conflicts[str(keys)]["scan"].split(" ")
         except:
             continue
     report_string = "".join(S)
@@ -480,18 +480,18 @@ def guess_next(dict1, dict2, comp):
         if (
             abs(
                 (
-                    dict1["meas"][str(comp[keys][0])]["temperature"]
-                    - dict2["meas"][str(comp[keys][1])]["temperature"]
+                    dict1["scan"][str(comp[keys][0])]["temperature"]
+                    - dict2["scan"][str(comp[keys][1])]["temperature"]
                 )
-                / dict2["meas"][str(comp[keys][1])]["temperature"]
+                / dict2["scan"][str(comp[keys][1])]["temperature"]
             )
             < threshold
             and abs(
                 (
-                    dict1["meas"][str(comp[keys][0])]["mag_field"]
-                    - dict2["meas"][str(comp[keys][1])]["mag_field"]
+                    dict1["scan"][str(comp[keys][0])]["mag_field"]
+                    - dict2["scan"][str(comp[keys][1])]["mag_field"]
                 )
-                / dict2["meas"][str(comp[keys][1])]["mag_field"]
+                / dict2["scan"][str(comp[keys][1])]["mag_field"]
             )
             < threshold
         ):

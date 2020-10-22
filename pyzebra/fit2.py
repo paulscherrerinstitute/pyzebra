@@ -32,7 +32,7 @@ def create_uncertanities(y, y_err):
 
 
 def fitccl(
-    meas,
+    scan,
     guess,
     vary,
     constraints_min,
@@ -42,7 +42,7 @@ def fitccl(
     binning=None,
 ):
     """Made for fitting of ccl date where 1 peak is expected. Allows for combination of gaussian and linear model combination
-    :param meas: measurement in the data dict (i.e. M123)
+    :param scan: scan in the data dict (i.e. M123)
     :param guess: initial guess for the fitting, if none, some values are added automatically in order (see below)
     :param vary: True if parameter can vary during fitting, False if it to be fixed
     :param numfit_min: minimal value on x axis for numerical integration - if none is centre of gaussian minus 3 sigma
@@ -59,33 +59,33 @@ def fitccl(
     constraints_min = [23, None, 50, 0, 0]
     constraints_min = [80, None, 1000, 0, 100]
     """
-    if len(meas["peak_indexes"]) > 1:
+    if len(scan["peak_indexes"]) > 1:
         # return in case of more than 1 peaks
-        print("More than 1 peak, measurement skipped")
+        print("More than 1 peak, scan skipped")
         return
     if binning is None or binning == 0 or binning == 1:
-        x = list(meas["om"])
-        y = list(meas["Counts"])
-        y_err = list(np.sqrt(y)) if meas.get("sigma", None) is None else list(meas["sigma"])
-        print(meas["peak_indexes"])
-        if not meas["peak_indexes"]:
+        x = list(scan["om"])
+        y = list(scan["Counts"])
+        y_err = list(np.sqrt(y)) if scan.get("sigma", None) is None else list(scan["sigma"])
+        print(scan["peak_indexes"])
+        if not scan["peak_indexes"]:
             centre = np.mean(x)
         else:
-            centre = x[int(meas["peak_indexes"])]
+            centre = x[int(scan["peak_indexes"])]
     else:
-        x = list(meas["om"])
-        if not meas["peak_indexes"]:
+        x = list(scan["om"])
+        if not scan["peak_indexes"]:
             centre = np.mean(x)
         else:
-            centre = x[int(meas["peak_indexes"])]
+            centre = x[int(scan["peak_indexes"])]
         x = bin_data(x, binning)
-        y = list(meas["Counts"])
-        y_err = list(np.sqrt(y)) if meas.get("sigma", None) is None else list(meas["sigma"])
+        y = list(scan["Counts"])
+        y_err = list(np.sqrt(y)) if scan.get("sigma", None) is None else list(scan["sigma"])
         combined = bin_data(create_uncertanities(y, y_err), binning)
         y = [combined[i].n for i in range(len(combined))]
         y_err = [combined[i].s for i in range(len(combined))]
 
-    if len(meas["peak_indexes"]) == 0:
+    if len(scan["peak_indexes"]) == 0:
         # Case for no peak, gaussian in centre, sigma as 20% of range
         print("No peak")
         peak_index = find_nearest(x, np.mean(x))
@@ -96,10 +96,10 @@ def fitccl(
         guess[4] = np.mean(y) if guess[4] is None else guess[4]
         constraints_min[2] = 0
 
-    elif len(meas["peak_indexes"]) == 1:
+    elif len(scan["peak_indexes"]) == 1:
         # case for one peak, takse into account users guesses
         print("one peak")
-        peak_height = meas["peak_heights"]
+        peak_height = scan["peak_heights"]
         guess[0] = centre if guess[0] is None else guess[0]
         guess[1] = 0.1 if guess[1] is None else guess[1]
         guess[2] = float(peak_height / 10) if guess[2] is None else float(guess[2])
@@ -144,11 +144,11 @@ def fitccl(
     fit_area = u.ufloat(result.params["g_amp"].value, result.params["g_amp"].stderr)
     comps = result.eval_components()
 
-    if len(meas["peak_indexes"]) == 0:
+    if len(scan["peak_indexes"]) == 0:
         # for case of no peak, there is no reason to integrate, therefore fit and int are equal
         int_area = fit_area
 
-    elif len(meas["peak_indexes"]) == 1:
+    elif len(scan["peak_indexes"]) == 1:
         gauss_3sigmamin = find_nearest(
             x, result.params["g_cen"].value - 3 * result.params["g_width"].value
         )
@@ -224,4 +224,4 @@ def fitccl(
     d["result"] = result
     d["comps"] = comps
     d["numfit"] = [numfit_min, numfit_max]
-    meas["fit"] = d
+    scan["fit"] = d
