@@ -192,20 +192,23 @@ def parse_1D(fileobj, data_type):
             for name, val in zip(col_names, line.split()):
                 data_cols[name].append(float(val))
 
-        data_cols['h_index'] = float(metadata['title'].split()[-3])
-        data_cols['k_index'] = float(metadata['title'].split()[-2])
-        data_cols['l_index'] = float(metadata['title'].split()[-1])
-        data_cols['temperature'] = metadata['temp']
-        data_cols['mag_field'] = metadata['mf']
-        data_cols['omega_angle'] = metadata['omega']
-        data_cols['number_of_measurements'] = len(data_cols['om'])
-        data_cols['monitor'] = data_cols['Monitor1'][0]
+        try:
+            data_cols["h_index"] = float(metadata["title"].split()[-3])
+            data_cols["k_index"] = float(metadata["title"].split()[-2])
+            data_cols["l_index"] = float(metadata["title"].split()[-1])
+        except (ValueError, IndexError):
+            print("seems hkl is not in title")
 
-        # add angles to scan from meta
-        data_cols["twotheta_angle"] = metadata['2-theta']
-        data_cols["chi_angle"] = metadata['chi']
-        data_cols["phi_angle"] = metadata['phi']
-        data_cols["nu_angle"] = metadata['nu']
+        data_cols["temperature"] = metadata["temp"]
+        data_cols["mag_field"] = metadata["mf"]
+        data_cols["omega_angle"] = metadata["omega"]
+        data_cols["number_of_measurements"] = len(data_cols["om"])
+        data_cols["monitor"] = data_cols["Monitor1"][0]
+        data_cols["twotheta_angle"] = metadata["2-theta"]
+        data_cols["chi_angle"] = metadata["chi"]
+        data_cols["phi_angle"] = metadata["phi"]
+        data_cols["nu_angle"] = metadata["nu"]
+
         measurements[1] = dict(data_cols)
 
     else:
