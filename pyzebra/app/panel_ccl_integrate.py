@@ -21,6 +21,7 @@ from bokeh.models import (
     Panel,
     Plot,
     RadioButtonGroup,
+    Scatter,
     Select,
     Spacer,
     Span,
@@ -29,6 +30,7 @@ from bokeh.models import (
     TextAreaInput,
     TextInput,
     Toggle,
+    Whisker,
 )
 
 import pyzebra
@@ -114,7 +116,7 @@ def create():
         y = meas["Counts"]
         x = meas["om"]
 
-        plot_line_source.data.update(x=x, y=y)
+        plot_scatter_source.data.update(x=x, y=y, y_upper=y + np.sqrt(y), y_lower=y - np.sqrt(y))
 
         num_of_peaks = meas.get("num_of_peaks")
         if num_of_peaks is not None and num_of_peaks > 0:
@@ -192,8 +194,9 @@ def create():
     plot.add_layout(Grid(dimension=0, ticker=BasicTicker()))
     plot.add_layout(Grid(dimension=1, ticker=BasicTicker()))
 
-    plot_line_source = ColumnDataSource(dict(x=[0], y=[0]))
-    plot.add_glyph(plot_line_source, Line(x="x", y="y", line_color="steelblue"))
+    plot_scatter_source = ColumnDataSource(dict(x=[0], y=[0], y_upper=[0], y_lower=[0]))
+    plot.add_glyph(plot_scatter_source, Scatter(x="x", y="y", line_color="steelblue"))
+    plot.add_layout(Whisker(source=plot_scatter_source, base="x", upper="y_upper", lower="y_lower"))
 
     plot_line_smooth_source = ColumnDataSource(dict(x=[0], y=[0]))
     plot.add_glyph(
