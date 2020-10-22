@@ -22,7 +22,7 @@ def parse_h5meta(file):
     for line in file:
         line = line.strip()
         if line.startswith("#begin "):
-            section = line[len("#begin "):]
+            section = line[len("#begin ") :]
             content[section] = []
 
         elif line.startswith("#end"):
@@ -64,20 +64,3 @@ def read_detector_data(filepath):
         det_data["temperature"] = h5f["/entry1/sample/temperature"][:]
 
     return det_data
-
-
-def open_h5meta(filepath):
-    """Open h5meta file like *.cami
-
-    Args:
-        filepath (str): File path of a h5meta file.
-
-    Returns:
-        dict: A dictionary with h5 names and their detector data and angles.
-    """
-    data = dict()
-    h5meta_content = read_h5meta(filepath)
-    for file in h5meta_content["filelist"]:
-        data[file] = read_detector_data(file)
-
-    return data

@@ -1,11 +1,15 @@
 import math
 
 import numpy as np
-from matplotlib import pyplot as plt
 from numba import njit
 from scipy.optimize import curve_fit
 
 import pyzebra
+
+try:
+    from matplotlib import pyplot as plt
+except ImportError:
+    print("matplotlib is not available")
 
 pi_r = 180 / np.pi
 

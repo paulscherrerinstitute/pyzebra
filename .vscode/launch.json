@@ -1,0 +1,13 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "pyzebra",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/pyzebra/cli.py",
+            "console": "internalConsole",
+            "env": {},
+        },
+    ]
+}
