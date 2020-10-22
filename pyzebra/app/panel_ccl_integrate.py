@@ -6,9 +6,9 @@ import tempfile
 import numpy as np
 from bokeh.layouts import column, row
 from bokeh.models import (
+    Asterisk,
     BasicTicker,
     Button,
-    Circle,
     ColumnDataSource,
     CustomJS,
     DataRange1d,
@@ -126,11 +126,11 @@ def create():
             else:
                 peak_pos_textinput.value = str([meas["om"][ind] for ind in peak_indexes])
 
-            plot_circle_source.data.update(x=meas["om"][peak_indexes], y=meas["peak_heights"])
+            plot_peak_source.data.update(x=meas["om"][peak_indexes], y=meas["peak_heights"])
             plot_line_smooth_source.data.update(x=x, y=meas["smooth_peaks"])
         else:
             peak_pos_textinput.value = None
-            plot_circle_source.data.update(x=[], y=[])
+            plot_peak_source.data.update(x=[], y=[])
             plot_line_smooth_source.data.update(x=[], y=[])
 
         peak_pos_textinput_lock = False
@@ -209,8 +209,8 @@ def create():
     plot_bkg_source = ColumnDataSource(dict(x=[0], y=[0]))
     plot.add_glyph(plot_bkg_source, Line(x="x", y="y", line_color="green", line_dash="dashed"))
 
-    plot_circle_source = ColumnDataSource(dict(x=[], y=[]))
-    plot.add_glyph(plot_circle_source, Circle(x="x", y="y"))
+    plot_peak_source = ColumnDataSource(dict(x=[], y=[]))
+    plot.add_glyph(plot_peak_source, Asterisk(x="x", y="y", size=10, line_color="red"))
 
     numfit_min_span = Span(location=None, dimension="height", line_dash="dashed")
     plot.add_layout(numfit_min_span)
