@@ -78,8 +78,12 @@ def create():
             det_data = pyzebra.parse_1D(file, ext)
 
         meas_list = list(det_data["meas"].keys())
+        hkl = [
+            f'{int(m["h_index"])} {int(m["k_index"])} {int(m["l_index"])}'
+            for m in det_data["meas"].values()
+        ]
         meas_table_source.data.update(
-            measurement=meas_list, peaks=[0] * len(meas_list), fit=[0] * len(meas_list)
+            measurement=meas_list, hkl=hkl, peaks=[0] * len(meas_list), fit=[0] * len(meas_list)
         )
         meas_table_source.selected.indices = []
         meas_table_source.selected.indices = [0]
@@ -94,8 +98,12 @@ def create():
             det_data = pyzebra.parse_1D(file, ext)
 
         meas_list = list(det_data["meas"].keys())
+        hkl = [
+            f'{int(m["h_index"])} {int(m["k_index"])} {int(m["l_index"])}'
+            for m in det_data["meas"].values()
+        ]
         meas_table_source.data.update(
-            measurement=meas_list, peaks=[0] * len(meas_list), fit=[0] * len(meas_list)
+            measurement=meas_list, hkl=hkl, peaks=[0] * len(meas_list), fit=[0] * len(meas_list)
         )
         meas_table_source.selected.indices = []
         meas_table_source.selected.indices = [0]
@@ -223,15 +231,16 @@ def create():
         if new:
             _update_plot(meas_table_source.data["measurement"][new[-1]])
 
-    meas_table_source = ColumnDataSource(dict(measurement=[], peaks=[], fit=[]))
+    meas_table_source = ColumnDataSource(dict(measurement=[], hkl=[], peaks=[], fit=[]))
     meas_table = DataTable(
         source=meas_table_source,
         columns=[
             TableColumn(field="measurement", title="Meas"),
+            TableColumn(field="hkl", title="hkl"),
             TableColumn(field="peaks", title="Peaks"),
             TableColumn(field="fit", title="Fit"),
         ],
-        width=150,
+        width=200,
         index_position=None,
     )
 
