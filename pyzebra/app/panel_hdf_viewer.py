@@ -106,6 +106,18 @@ def create():
         overview_plot_x_image_source.data.update(image=[overview_x], dw=[n_x])
         overview_plot_y_image_source.data.update(image=[overview_y], dw=[n_y])
 
+        if proj_auto_toggle.active:
+            im_max = int(max(np.max(overview_x), np.max(overview_y)))
+            im_min = int(min(np.min(overview_x), np.min(overview_y)))
+
+            proj_display_min_spinner.value = im_min
+            proj_display_max_spinner.value = im_max
+
+            overview_plot_x_image_glyph.color_mapper.low = im_min
+            overview_plot_y_image_glyph.color_mapper.low = im_min
+            overview_plot_x_image_glyph.color_mapper.high = im_max
+            overview_plot_y_image_glyph.color_mapper.high = im_max
+
         if frame_button_group.active == 0:  # Frame
             overview_plot_x.axis[1].axis_label = "Frame"
             overview_plot_y.axis[1].axis_label = "Frame"
@@ -407,7 +419,9 @@ def create():
 
         update_image()
 
-    auto_toggle = Toggle(label="Auto Range", active=True, button_type="default", default_size=145)
+    auto_toggle = Toggle(
+        label="Main Auto Range", active=True, button_type="default", default_size=125
+    )
     auto_toggle.on_click(auto_toggle_callback)
 
     # ---- colormap display max value
@@ -416,12 +430,12 @@ def create():
         image_glyph.color_mapper.high = new_value
 
     display_max_spinner = Spinner(
-        title="Maximal Display Value:",
+        title="Max Value:",
         low=0 + STEP,
         value=1,
         step=STEP,
         disabled=auto_toggle.active,
-        default_size=145,
+        default_size=80,
     )
     display_max_spinner.on_change("value", display_max_spinner_callback)
 
@@ -431,14 +445,62 @@ def create():
         image_glyph.color_mapper.low = new_value
 
     display_min_spinner = Spinner(
-        title="Minimal Display Value:",
+        title="Min Value:",
         high=1 - STEP,
         value=0,
         step=STEP,
         disabled=auto_toggle.active,
-        default_size=145,
+        default_size=80,
     )
     display_min_spinner.on_change("value", display_min_spinner_callback)
+
+    # ---- proj colormap auto toggle button
+    def proj_auto_toggle_callback(state):
+        if state:
+            proj_display_min_spinner.disabled = True
+            proj_display_max_spinner.disabled = True
+        else:
+            proj_display_min_spinner.disabled = False
+            proj_display_max_spinner.disabled = False
+
+        update_overview_plot()
+
+    proj_auto_toggle = Toggle(
+        label="Proj Auto Range", active=True, button_type="default", default_size=125
+    )
+    proj_auto_toggle.on_click(proj_auto_toggle_callback)
+
+    # ---- proj colormap display max value
+    def proj_display_max_spinner_callback(_attr, _old_value, new_value):
+        proj_display_min_spinner.high = new_value - STEP
+        overview_plot_x_image_glyph.color_mapper.high = new_value
+        overview_plot_y_image_glyph.color_mapper.high = new_value
+
+    proj_display_max_spinner = Spinner(
+        title="Max Value:",
+        low=0 + STEP,
+        value=1,
+        step=STEP,
+        disabled=proj_auto_toggle.active,
+        default_size=80,
+    )
+    proj_display_max_spinner.on_change("value", proj_display_max_spinner_callback)
+
+    # ---- proj colormap display min value
+    def proj_display_min_spinner_callback(_attr, _old_value, new_value):
+        proj_display_max_spinner.low = new_value + STEP
+        overview_plot_x_image_glyph.color_mapper.low = new_value
+        overview_plot_y_image_glyph.color_mapper.low = new_value
+
+    proj_display_min_spinner = Spinner(
+        title="Min Value:",
+        high=1 - STEP,
+        value=0,
+        step=STEP,
+        disabled=proj_auto_toggle.active,
+        default_size=80,
+    )
+    proj_display_min_spinner.on_change("value", proj_display_min_spinner_callback)
 
     def hkl_button_callback():
         index = index_spinner.value
@@ -481,8 +543,13 @@ def create():
     # Final layout
     layout_image = column(gridplot([[proj_v, None], [plot, proj_h]], merge_tools=False))
     colormap_layout = column(
-        row(colormap, column(Spacer(height=19), auto_toggle)),
-        row(display_max_spinner, display_min_spinner),
+        row(colormap),
+        row(column(Spacer(height=19), auto_toggle), display_max_spinner, display_min_spinner),
+        row(
+            column(Spacer(height=19), proj_auto_toggle),
+            proj_display_max_spinner,
+            proj_display_min_spinner,
+        ),
     )
     hkl_layout = column(radio_button_group, hkl_button)
     params_layout = row(magnetic_field_spinner, temperature_spinner)
