@@ -83,8 +83,15 @@ def create():
             image_glyph.color_mapper.low = im_min
             image_glyph.color_mapper.high = im_max
 
-        magnetic_field_spinner.value = det_data["magnetic_field"][index]
-        temperature_spinner.value = det_data["temperature"][index]
+        if "magnetic_field" in det_data:
+            magnetic_field_spinner.value = det_data["magnetic_field"][index]
+        else:
+            magnetic_field_spinner.value = None
+
+        if "temperature" in det_data:
+            temperature_spinner.value = det_data["temperature"][index]
+        else:
+            temperature_spinner.value = None
 
         gamma, nu = calculate_pol(det_data, index)
         omega = np.ones((IMAGE_H, IMAGE_W)) * det_data["rot_angle"][index]
