@@ -48,10 +48,10 @@ def load_dats(filepath):
                 dict1 = add_dict(dict1, load_1D(file_list[i][0]))
             else:
                 dict1 = add_dict(dict1, load_1D(file_list[i]))
-        dict1["meas"][i + 1]["params"] = {}
+        dict1["scan"][i + 1]["params"] = {}
         if data_type == "txt":
             for x in range(len(col_names) - 1):
-                dict1["meas"][i + 1]["params"][col_names[x + 1]] = file_list[i][x + 1]
+                dict1["scan"][i + 1]["params"][col_names[x + 1]] = file_list[i][x + 1]
 
     return dict1
 
@@ -63,7 +63,7 @@ def create_dataframe(dict1):
     # create dictionary to which we pull only wanted items before transforming it to pd.dataframe
     pull_dict = {}
     pull_dict["filenames"] = list()
-    for key in dict1["meas"][1]["params"]:
+    for key in dict1["scan"][1]["params"]:
         pull_dict[key] = list()
     pull_dict["temperature"] = list()
     pull_dict["mag_field"] = list()
@@ -73,19 +73,19 @@ def create_dataframe(dict1):
     pull_dict["Counts"] = list()
 
     # populate the dict
-    for keys in dict1["meas"]:
-        if "file_of_origin" in dict1["meas"][keys]:
-            pull_dict["filenames"].append(dict1["meas"][keys]["file_of_origin"].split("/")[-1])
+    for keys in dict1["scan"]:
+        if "file_of_origin" in dict1["scan"][keys]:
+            pull_dict["filenames"].append(dict1["scan"][keys]["file_of_origin"].split("/")[-1])
         else:
             pull_dict["filenames"].append(dict1["meta"]["original_filename"].split("/")[-1])
-        for key in dict1["meas"][keys]["params"]:
-            pull_dict[str(key)].append(float(dict1["meas"][keys]["params"][key]))
-        pull_dict["temperature"].append(dict1["meas"][keys]["temperature"])
-        pull_dict["mag_field"].append(dict1["meas"][keys]["mag_field"])
-        pull_dict["fit_area"].append(dict1["meas"][keys]["fit"]["fit_area"])
-        pull_dict["int_area"].append(dict1["meas"][keys]["fit"]["int_area"])
-        pull_dict["om"].append(dict1["meas"][keys]["om"])
-        pull_dict["Counts"].append(dict1["meas"][keys]["Counts"])
+        for key in dict1["scan"][keys]["params"]:
+            pull_dict[str(key)].append(float(dict1["scan"][keys]["params"][key]))
+        pull_dict["temperature"].append(dict1["scan"][keys]["temperature"])
+        pull_dict["mag_field"].append(dict1["scan"][keys]["mag_field"])
+        pull_dict["fit_area"].append(dict1["scan"][keys]["fit"]["fit_area"])
+        pull_dict["int_area"].append(dict1["scan"][keys]["fit"]["int_area"])
+        pull_dict["om"].append(dict1["scan"][keys]["om"])
+        pull_dict["Counts"].append(dict1["scan"][keys]["Counts"])
 
     return pd.DataFrame(data=pull_dict)
 
@@ -219,21 +219,22 @@ def save_table(data, filetype, name, path=None):
         :return counts - normalized counts
         :return sigma - normalized sigma"""
 
-        counts = np.array(dict["meas"][key]["Counts"])
-        sigma = np.sqrt(counts) if "sigma" not in dict["meas"][key] else dict["meas"][key]["sigma"]
-        monitor_ratio = monitor / dict["meas"][key]["monitor"]
+        counts = np.array(dict["scan"][key]["Counts"])
+        sigma = np.sqrt(counts) if "sigma" not in dict["scan"][key] else dict["scan"][key]["sigma"]
+        monitor_ratio = monitor / dict["scan"][key]["monitor"]
         scaled_counts = counts * monitor_ratio
         scaled_sigma = np.array(sigma) * monitor_ratio
 
         return scaled_counts, scaled_sigma
 
-    def merge(dict1, dict2, scand_dict_result, auto=True, monitor=100000):
+    def merge(dict1, dict2, scand_dict_result, keep=True, monitor=100000):
         """merges the two tuples and sorts them, if om value is same, Counts value is average
         averaging is propagated into sigma if dict1 == dict2, key[1] is deleted after merging
         :arg dict1 : dictionary to which measurement will be merged
         :arg dict2 : dictionary from which measurement will be merged
-        :arg keys : tuple with key to dict1 and dict2
-        :arg auto : if true, when monitors are same, does not change it, if flase, takes monitor always
+        :arg scand_dict_result : result of scan_dict after auto function
+        :arg keep : if true, when monitors are same, does not change it, if flase, takes monitor
+        always
         :arg monitor : final monitor after merging
         note: dict1 and dict2 can be same dict
         :return dict1 with merged scan"""
@@ -241,12 +242,12 @@ def save_table(data, filetype, name, path=None):
             for j in range(len(scand_dict_result[keys])):
                 first, second = scand_dict_result[keys][j][0], scand_dict_result[keys][j][1]
                 print(first, second)
-                if auto:
-                    if dict1["meas"][first]["monitor"] == dict2["meas"][second]["monitor"]:
-                        monitor = dict1["meas"][first]["monitor"]
+                if keep:
+                    if dict1["scan"][first]["monitor"] == dict2["scan"][second]["monitor"]:
+                        monitor = dict1["scan"][first]["monitor"]
 
                 # load om and Counts
-                x1, x2 = dict1["meas"][first]["om"], dict2["meas"][second]["om"]
+                x1, x2 = dict1["scan"][first]["om"], dict2["scan"][second]["om"]
                 cor_y1, y_err1 = normalize(dict1, first, monitor=monitor)
                 cor_y2, y_err2 = normalize(dict2, second, monitor=monitor)
                 # creates touples (om, Counts, sigma) for sorting and further processing
@@ -276,21 +277,21 @@ def save_table(data, filetype, name, path=None):
                         continue
 
                 if dict1 == dict2:
-                    del dict1["meas"][second]
+                    del dict1["scan"][second]
 
                 note = (
                     f"This measurement was merged with measurement {second} from "
                     f'file {dict2["meta"]["original_filename"]} \n'
                 )
-                if "notes" not in dict1["meas"][first]:
-                    dict1["meas"][first]["notes"] = note
+                if "notes" not in dict1["scan"][first]:
+                    dict1["scan"][first]["notes"] = note
                 else:
-                    dict1["meas"][first]["notes"] += note
+                    dict1["scan"][first]["notes"] += note
 
-                dict1["meas"][first]["om"] = om
-                dict1["meas"][first]["Counts"] = Counts
-                dict1["meas"][first]["sigma"] = sigma
-                dict1["meas"][first]["monitor"] = monitor
+                dict1["scan"][first]["om"] = om
+                dict1["scan"][first]["Counts"] = Counts
+                dict1["scan"][first]["sigma"] = sigma
+                dict1["scan"][first]["monitor"] = monitor
                 print("merging done")
         return dict1
 
@@ -306,15 +307,15 @@ def add_dict(dict1, dict2):
     if dict1["meta"]["zebra_mode"] != dict2["meta"]["zebra_mode"]:
         print("You are trying to add scans measured with different zebra modes")
         return
-    max_measurement_dict1 = max([keys for keys in dict1["meas"]])
+    max_measurement_dict1 = max([keys for keys in dict1["scan"]])
     new_filenames = np.arange(
-        max_measurement_dict1 + 1, max_measurement_dict1 + 1 + len(dict2["meas"])
+        max_measurement_dict1 + 1, max_measurement_dict1 + 1 + len(dict2["scan"])
     )
     new_meta_name = "meta" + str(dict2["meta"]["original_filename"])
     if new_meta_name not in dict1:
-        for keys, name in zip(dict2["meas"], new_filenames):
-            dict2["meas"][keys]["file_of_origin"] = str(dict2["meta"]["original_filename"])
-            dict1["meas"][name] = dict2["meas"][keys]
+        for keys, name in zip(dict2["scan"], new_filenames):
+            dict2["scan"][keys]["file_of_origin"] = str(dict2["meta"]["original_filename"])
+            dict1["scan"][name] = dict2["scan"][keys]
 
         dict1[new_meta_name] = dict2["meta"]
     else:
@@ -350,6 +351,7 @@ def scan_dict(dict, precision=0.5):
     :return  dictionary with matching scans, if there are none, the dict is empty
     note: can be checked by "not d", true if empty
     """
+
     if dict["meta"]["zebra_mode"] == "bi":
         angles = ["twotheta_angle", "omega_angle", "chi_angle", "phi_angle"]
     elif dict["meta"]["zebra_mode"] == "nb":
@@ -359,19 +361,19 @@ def scan_dict(dict, precision=0.5):
         return
 
     d = {}
-    for i in dict["meas"]:
-        for j in dict["meas"]:
-            if dict["meas"][i] != dict["meas"][j]:
+    for i in dict["scan"]:
+        for j in dict["scan"]:
+            if dict["scan"][i] != dict["scan"][j]:
                 itup = list()
                 for k in angles:
-                    itup.append(abs(abs(dict["meas"][i][k]) - abs(dict["meas"][j][k])))
+                    itup.append(abs(abs(dict["scan"][i][k]) - abs(dict["scan"][j][k])))
 
                 if all(i <= precision for i in itup):
-                    if str([np.around(dict["meas"][i][k], 1) for k in angles]) not in d:
-                        d[str([np.around(dict["meas"][i][k], 1) for k in angles])] = list()
-                        d[str([np.around(dict["meas"][i][k], 1) for k in angles])].append((i, j))
+                    if str([np.around(dict["scan"][i][k], 1) for k in angles]) not in d:
+                        d[str([np.around(dict["scan"][i][k], 1) for k in angles])] = list()
+                        d[str([np.around(dict["scan"][i][k], 1) for k in angles])].append((i, j))
                     else:
-                        d[str([np.around(dict["meas"][i][k], 1) for k in angles])].append((i, j))
+                        d[str([np.around(dict["scan"][i][k], 1) for k in angles])].append((i, j))
 
                 else:
                     pass
