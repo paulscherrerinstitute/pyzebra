@@ -7,4 +7,4 @@ from pyzebra.h5 import *
 from pyzebra.load_1D import load_1D, parse_1D
 from pyzebra.xtal import *
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
