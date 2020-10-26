@@ -371,11 +371,11 @@ def scan_dict(dict, precision=0.5):
                     itup.append(abs(abs(dict["scan"][i][k]) - abs(dict["scan"][j][k])))
 
                 if all(i <= precision for i in itup):
-                    if str([np.around(dict["scan"][i][k], 1) for k in angles]) not in d:
-                        d[str([np.around(dict["scan"][i][k], 1) for k in angles])] = list()
-                        d[str([np.around(dict["scan"][i][k], 1) for k in angles])].append((i, j))
+                    if str([np.around(dict["scan"][i][k], 0) for k in angles]) not in d:
+                        d[str([np.around(dict["scan"][i][k], 0) for k in angles])] = list()
+                        d[str([np.around(dict["scan"][i][k], 0) for k in angles])].append((i, j))
                     else:
-                        d[str([np.around(dict["scan"][i][k], 1) for k in angles])].append((i, j))
+                        d[str([np.around(dict["scan"][i][k], 0) for k in angles])].append((i, j))
 
                 else:
                     pass
