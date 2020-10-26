@@ -5,6 +5,7 @@ from pyzebra.comm_export import export_comm
 from pyzebra.fit2 import fitccl
 from pyzebra.h5 import *
 from pyzebra.load_1D import load_1D, parse_1D
+from pyzebra.param_study_moduls import add_dict, auto, merge, scan_dict
 from pyzebra.xtal import *
 
 __version__ = "0.1.1"

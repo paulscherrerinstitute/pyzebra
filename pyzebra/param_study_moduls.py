@@ -1,12 +1,14 @@
-from load_1D import load_1D
-import pandas as pd
-from mpl_toolkits.mplot3d import Axes3D  # dont delete, otherwise waterfall wont work
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-import numpy as np
 import pickle
+
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import scipy.io as sio
 import uncertainties as u
+from mpl_toolkits.mplot3d import Axes3D  # dont delete, otherwise waterfall wont work
+
+from .load_1D import load_1D
 
 
 def create_tuples(x, y, y_err):
@@ -211,89 +213,89 @@ def save_table(data, filetype, name, path=None):
     if filetype == "json":
         data.to_json((path + name + ".json"))
 
-    def normalize(dict, key, monitor):
-        """Normalizes the measurement to monitor, checks if sigma exists, otherwise creates it
-        :arg dict : dictionary to from which to tkae the scan
-        :arg key : which scan to normalize from dict1
-        :arg monitor : final monitor
-        :return counts - normalized counts
-        :return sigma - normalized sigma"""
+def normalize(dict, key, monitor):
+    """Normalizes the measurement to monitor, checks if sigma exists, otherwise creates it
+    :arg dict : dictionary to from which to tkae the scan
+    :arg key : which scan to normalize from dict1
+    :arg monitor : final monitor
+    :return counts - normalized counts
+    :return sigma - normalized sigma"""
 
-        counts = np.array(dict["scan"][key]["Counts"])
-        sigma = np.sqrt(counts) if "sigma" not in dict["scan"][key] else dict["scan"][key]["sigma"]
-        monitor_ratio = monitor / dict["scan"][key]["monitor"]
-        scaled_counts = counts * monitor_ratio
-        scaled_sigma = np.array(sigma) * monitor_ratio
+    counts = np.array(dict["scan"][key]["Counts"])
+    sigma = np.sqrt(counts) if "sigma" not in dict["scan"][key] else dict["scan"][key]["sigma"]
+    monitor_ratio = monitor / dict["scan"][key]["monitor"]
+    scaled_counts = counts * monitor_ratio
+    scaled_sigma = np.array(sigma) * monitor_ratio
 
-        return scaled_counts, scaled_sigma
+    return scaled_counts, scaled_sigma
 
-    def merge(dict1, dict2, scand_dict_result, keep=True, monitor=100000):
-        """merges the two tuples and sorts them, if om value is same, Counts value is average
-        averaging is propagated into sigma if dict1 == dict2, key[1] is deleted after merging
-        :arg dict1 : dictionary to which measurement will be merged
-        :arg dict2 : dictionary from which measurement will be merged
-        :arg scand_dict_result : result of scan_dict after auto function
-        :arg keep : if true, when monitors are same, does not change it, if flase, takes monitor
-        always
-        :arg monitor : final monitor after merging
-        note: dict1 and dict2 can be same dict
-        :return dict1 with merged scan"""
-        for keys in scand_dict_result:
-            for j in range(len(scand_dict_result[keys])):
-                first, second = scand_dict_result[keys][j][0], scand_dict_result[keys][j][1]
-                print(first, second)
-                if keep:
-                    if dict1["scan"][first]["monitor"] == dict2["scan"][second]["monitor"]:
-                        monitor = dict1["scan"][first]["monitor"]
+def merge(dict1, dict2, scand_dict_result, keep=True, monitor=100000):
+    """merges the two tuples and sorts them, if om value is same, Counts value is average
+    averaging is propagated into sigma if dict1 == dict2, key[1] is deleted after merging
+    :arg dict1 : dictionary to which measurement will be merged
+    :arg dict2 : dictionary from which measurement will be merged
+    :arg scand_dict_result : result of scan_dict after auto function
+    :arg keep : if true, when monitors are same, does not change it, if flase, takes monitor
+    always
+    :arg monitor : final monitor after merging
+    note: dict1 and dict2 can be same dict
+    :return dict1 with merged scan"""
+    for keys in scand_dict_result:
+        for j in range(len(scand_dict_result[keys])):
+            first, second = scand_dict_result[keys][j][0], scand_dict_result[keys][j][1]
+            print(first, second)
+            if keep:
+                if dict1["scan"][first]["monitor"] == dict2["scan"][second]["monitor"]:
+                    monitor = dict1["scan"][first]["monitor"]
 
-                # load om and Counts
-                x1, x2 = dict1["scan"][first]["om"], dict2["scan"][second]["om"]
-                cor_y1, y_err1 = normalize(dict1, first, monitor=monitor)
-                cor_y2, y_err2 = normalize(dict2, second, monitor=monitor)
-                # creates touples (om, Counts, sigma) for sorting and further processing
-                tuple_list = create_tuples(x1, cor_y1, y_err1) + create_tuples(x2, cor_y2, y_err2)
-                # Sort the list on om and add 0 0 0 tuple to the last position
-                sorted_t = sorted(tuple_list, key=lambda tup: tup[0])
-                sorted_t.append((0, 0, 0))
-                om, Counts, sigma = [], [], []
-                seen = list()
-                for i in range(len(sorted_t) - 1):
-                    if sorted_t[i][0] not in seen:
-                        if sorted_t[i][0] != sorted_t[i + 1][0]:
-                            om = np.append(om, sorted_t[i][0])
-                            Counts = np.append(Counts, sorted_t[i][1])
-                            sigma = np.append(sigma, sorted_t[i][2])
-                        else:
-                            om = np.append(om, sorted_t[i][0])
-                            counts1, counts2 = sorted_t[i][1], sorted_t[i + 1][1]
-                            sigma1, sigma2 = sorted_t[i][2], sorted_t[i + 1][2]
-                            count_err1 = u.ufloat(counts1, sigma1)
-                            count_err2 = u.ufloat(counts2, sigma2)
-                            avg = (count_err1 + count_err2) / 2
-                            Counts = np.append(Counts, avg.n)
-                            sigma = np.append(sigma, avg.s)
-                            seen.append(sorted_t[i][0])
+            # load om and Counts
+            x1, x2 = dict1["scan"][first]["om"], dict2["scan"][second]["om"]
+            cor_y1, y_err1 = normalize(dict1, first, monitor=monitor)
+            cor_y2, y_err2 = normalize(dict2, second, monitor=monitor)
+            # creates touples (om, Counts, sigma) for sorting and further processing
+            tuple_list = create_tuples(x1, cor_y1, y_err1) + create_tuples(x2, cor_y2, y_err2)
+            # Sort the list on om and add 0 0 0 tuple to the last position
+            sorted_t = sorted(tuple_list, key=lambda tup: tup[0])
+            sorted_t.append((0, 0, 0))
+            om, Counts, sigma = [], [], []
+            seen = list()
+            for i in range(len(sorted_t) - 1):
+                if sorted_t[i][0] not in seen:
+                    if sorted_t[i][0] != sorted_t[i + 1][0]:
+                        om = np.append(om, sorted_t[i][0])
+                        Counts = np.append(Counts, sorted_t[i][1])
+                        sigma = np.append(sigma, sorted_t[i][2])
                     else:
-                        continue
-
-                if dict1 == dict2:
-                    del dict1["scan"][second]
-
-                note = (
-                    f"This measurement was merged with measurement {second} from "
-                    f'file {dict2["meta"]["original_filename"]} \n'
-                )
-                if "notes" not in dict1["scan"][first]:
-                    dict1["scan"][first]["notes"] = note
+                        om = np.append(om, sorted_t[i][0])
+                        counts1, counts2 = sorted_t[i][1], sorted_t[i + 1][1]
+                        sigma1, sigma2 = sorted_t[i][2], sorted_t[i + 1][2]
+                        count_err1 = u.ufloat(counts1, sigma1)
+                        count_err2 = u.ufloat(counts2, sigma2)
+                        avg = (count_err1 + count_err2) / 2
+                        Counts = np.append(Counts, avg.n)
+                        sigma = np.append(sigma, avg.s)
+                        seen.append(sorted_t[i][0])
                 else:
-                    dict1["scan"][first]["notes"] += note
+                    continue
 
-                dict1["scan"][first]["om"] = om
-                dict1["scan"][first]["Counts"] = Counts
-                dict1["scan"][first]["sigma"] = sigma
-                dict1["scan"][first]["monitor"] = monitor
-                print("merging done")
-        return dict1
+            if dict1 == dict2:
+                del dict1["scan"][second]
+
+            note = (
+                f"This measurement was merged with measurement {second} from "
+                f'file {dict2["meta"]["original_filename"]} \n'
+            )
+            if "notes" not in dict1["scan"][first]:
+                dict1["scan"][first]["notes"] = note
+            else:
+                dict1["scan"][first]["notes"] += note
+
+            dict1["scan"][first]["om"] = om
+            dict1["scan"][first]["Counts"] = Counts
+            dict1["scan"][first]["sigma"] = sigma
+            dict1["scan"][first]["monitor"] = monitor
+            print("merging done")
+    return dict1
 
 
 def add_dict(dict1, dict2):
