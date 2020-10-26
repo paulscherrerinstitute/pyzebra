@@ -19,8 +19,10 @@ from bokeh.models import (
     Line,
     LinearAxis,
     Panel,
+    PanTool,
     Plot,
     RadioButtonGroup,
+    ResetTool,
     Scatter,
     Select,
     Spacer,
@@ -30,6 +32,7 @@ from bokeh.models import (
     TextAreaInput,
     TextInput,
     Toggle,
+    WheelZoomTool,
     Whisker,
 )
 
@@ -193,7 +196,6 @@ def create():
         y_range=DataRange1d(),
         plot_height=400,
         plot_width=700,
-        toolbar_location=None,
     )
 
     plot.add_layout(LinearAxis(axis_label="Counts"), place="left")
@@ -225,6 +227,9 @@ def create():
 
     numfit_max_span = Span(location=None, dimension="height", line_dash="dashed")
     plot.add_layout(numfit_max_span)
+
+    plot.add_tools(PanTool(), WheelZoomTool(), ResetTool())
+    plot.toolbar.logo = None
 
     # Scan select
     def scan_table_callback(_attr, _old, new):
