@@ -114,6 +114,30 @@ def create():
     upload_button = FileInput(accept=".ccl")
     upload_button.on_change("value", upload_button_callback)
 
+    def append_upload_button_callback(_attr, _old, new):
+        nonlocal det_data
+        with io.StringIO(base64.b64decode(new).decode()) as file:
+            _, ext = os.path.splitext(append_upload_button.filename)
+            append_data = pyzebra.parse_1D(file, ext)
+
+        added = pyzebra.add_dict(det_data, append_data)
+        scan_result = pyzebra.auto(pyzebra.scan_dict(added))
+        det_data = pyzebra.merge(added, added, scan_result)
+
+        scan_list = list(det_data["scan"].keys())
+        hkl = [
+            f'{int(m["h_index"])} {int(m["k_index"])} {int(m["l_index"])}'
+            for m in det_data["scan"].values()
+        ]
+        scan_table_source.data.update(
+            scan=scan_list, hkl=hkl, peaks=[0] * len(scan_list), fit=[0] * len(scan_list)
+        )
+        scan_table_source.selected.indices = []
+        scan_table_source.selected.indices = [0]
+
+    append_upload_button = FileInput(accept=".ccl,.dat")
+    append_upload_button.on_change("value", append_upload_button_callback)
+
     def _update_table():
         num_of_peaks = [scan.get("num_of_peaks", 0) for scan in det_data["scan"].values()]
         fit_ok = [(1 if "fit" in scan else 0) for scan in det_data["scan"].values()]
@@ -192,12 +216,7 @@ def create():
             numfit_max_span.location = None
 
     # Main plot
-    plot = Plot(
-        x_range=DataRange1d(),
-        y_range=DataRange1d(),
-        plot_height=400,
-        plot_width=700,
-    )
+    plot = Plot(x_range=DataRange1d(), y_range=DataRange1d(), plot_height=400, plot_width=700)
 
     plot.add_layout(LinearAxis(axis_label="Counts"), place="left")
     plot.add_layout(LinearAxis(axis_label="Omega"), place="below")
@@ -549,9 +568,15 @@ def create():
     export_layout = column(preview_output_textinput, row(preview_output_button, save_button))
 
     upload_div = Div(text="Or upload .ccl file:")
+    append_upload_div = Div(text="append extra .ccl/.dat files:")
     tab_layout = column(
         row(proposal_textinput, ccl_file_select),
-        row(column(Spacer(height=5), upload_div), upload_button),
+        row(
+            column(Spacer(height=5), upload_div),
+            upload_button,
+            column(Spacer(height=5), append_upload_div),
+            append_upload_button,
+        ),
         row(scan_table, plot, Spacer(width=30), fit_output_textinput, export_layout),
         row(findpeak_controls, Spacer(width=30), fitpeak_controls),
     )
