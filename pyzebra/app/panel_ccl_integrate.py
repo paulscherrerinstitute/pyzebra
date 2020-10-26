@@ -148,6 +148,7 @@ def create():
 
         fit = scan.get("fit")
         if fit is not None:
+            x = scan["fit"]["x_fit"]
             plot_gauss_source.data.update(x=x, y=scan["fit"]["comps"]["gaussian"])
             plot_bkg_source.data.update(x=x, y=scan["fit"]["comps"]["background"])
             params = fit["result"].params
@@ -398,6 +399,7 @@ def create():
                 ],
                 numfit_min=integ_from.value,
                 numfit_max=integ_to.value,
+                binning=bin_size_spinner.value,
             )
 
         sel_ind = scan_table_source.selected.indices[-1]
@@ -443,6 +445,7 @@ def create():
             ],
             numfit_min=integ_from.value,
             numfit_max=integ_to.value,
+            binning=bin_size_spinner.value,
         )
 
         _update_plot(scan)
@@ -458,6 +461,8 @@ def create():
         labels=["Fit", "Integral"], active=0, default_size=145
     )
     area_method_radiobutton.on_change("active", area_method_radiobutton_callback)
+
+    bin_size_spinner = Spinner(title="Bin size:", value=1, low=1, step=1, default_size=145)
 
     preview_output_textinput = TextAreaInput(title="Export file preview:", width=450, height=400)
 
@@ -535,6 +540,7 @@ def create():
         Spacer(width=20),
         column(
             row(integ_from, integ_to),
+            row(bin_size_spinner),
             row(fitparam_reset_button, area_method_radiobutton),
             row(fit_button, fit_all_button),
         ),

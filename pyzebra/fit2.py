@@ -224,4 +224,5 @@ def fitccl(
     d["result"] = result
     d["comps"] = comps
     d["numfit"] = [numfit_min, numfit_max]
+    d["x_fit"] = x
     scan["fit"] = d
