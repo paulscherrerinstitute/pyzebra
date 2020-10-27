@@ -58,7 +58,7 @@ META_VARS_FLOAT = (
 META_UB_MATRIX = ("ub1j", "ub2j", "ub3j")
 
 CCL_FIRST_LINE = (
-    # the first element is `scan_number`, which we don't save to metadata
+    ("scan_number", int),
     ("h_index", float),
     ("k_index", float),
     ("l_index", float),
@@ -144,8 +144,7 @@ def parse_1D(fileobj, data_type):
             d = {}
 
             # first line
-            scan_number, *params = line.split()
-            for param, (param_name, param_type) in zip(params, ccl_first_line):
+            for param, (param_name, param_type) in zip(line.split(), ccl_first_line):
                 d[param_name] = param_type(param)
 
             decimal.append(bool(Decimal(d["h_index"]) % 1 == 0))
@@ -154,8 +153,7 @@ def parse_1D(fileobj, data_type):
 
             # second line
             next_line = next(fileobj)
-            params = next_line.split()
-            for param, (param_name, param_type) in zip(params, ccl_second_line):
+            for param, (param_name, param_type) in zip(next_line.split(), ccl_second_line):
                 d[param_name] = param_type(param)
 
             d["om"] = np.linspace(
@@ -170,7 +168,7 @@ def parse_1D(fileobj, data_type):
                 counts.extend(map(int, next(fileobj).split()))
             d["Counts"] = counts
 
-            scan[int(scan_number)] = d
+            scan[d["scan_number"]] = d
 
             if all(decimal):
                 metadata["indices"] = "hkl"
