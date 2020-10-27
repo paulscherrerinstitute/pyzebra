@@ -8,7 +8,7 @@ import scipy.io as sio
 import uncertainties as u
 from mpl_toolkits.mplot3d import Axes3D  # dont delete, otherwise waterfall wont work
 
-from .load_1D import load_1D
+from .ccl_io import load_1D
 
 
 def create_tuples(x, y, y_err):
