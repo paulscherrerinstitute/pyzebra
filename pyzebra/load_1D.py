@@ -1,7 +1,6 @@
 import os
 import re
 from collections import defaultdict
-from decimal import Decimal
 
 import numpy as np
 
@@ -132,8 +131,6 @@ def parse_1D(fileobj, data_type):
     # read data
     scan = {}
     if data_type == ".ccl":
-        decimal = list()
-
         if metadata["zebra_mode"] == "bi":
             ccl_first_line = CCL_FIRST_LINE_BI
         elif metadata["zebra_mode"] == "nb":
@@ -146,10 +143,6 @@ def parse_1D(fileobj, data_type):
             # first line
             for param, (param_name, param_type) in zip(line.split(), ccl_first_line):
                 d[param_name] = param_type(param)
-
-            decimal.append(bool(Decimal(d["h_index"]) % 1 == 0))
-            decimal.append(bool(Decimal(d["k_index"]) % 1 == 0))
-            decimal.append(bool(Decimal(d["l_index"]) % 1 == 0))
 
             # second line
             next_line = next(fileobj)
@@ -169,11 +162,6 @@ def parse_1D(fileobj, data_type):
             d["Counts"] = counts
 
             scan[d["scan_number"]] = d
-
-            if all(decimal):
-                metadata["indices"] = "hkl"
-            else:
-                metadata["indices"] = "real"
 
     elif data_type == ".dat":
         # skip the first 2 rows, the third row contans the column names
@@ -213,6 +201,14 @@ def parse_1D(fileobj, data_type):
         print("Unknown file extention")
 
     # utility information
+    if all(
+        s["h_index"].is_integer() and s["k_index"].is_integer() and s["l_index"].is_integer()
+        for s in scan.values()
+    ):
+        metadata["indices"] = "hkl"
+    else:
+        metadata["indices"] = "real"
+
     metadata["data_type"] = data_type
     metadata["area_method"] = "fit"
 
