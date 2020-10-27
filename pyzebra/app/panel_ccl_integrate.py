@@ -2,6 +2,7 @@ import base64
 import io
 import os
 import tempfile
+from copy import deepcopy
 
 import numpy as np
 from bokeh.layouts import column, row
@@ -86,7 +87,11 @@ def create():
             for m in det_data["scan"].values()
         ]
         scan_table_source.data.update(
-            scan=scan_list, hkl=hkl, peaks=[0] * len(scan_list), fit=[0] * len(scan_list)
+            scan=scan_list,
+            hkl=hkl,
+            peaks=[0] * len(scan_list),
+            fit=[0] * len(scan_list),
+            export=[True] * len(scan_list),
         )
         scan_table_source.selected.indices = []
         scan_table_source.selected.indices = [0]
@@ -106,7 +111,11 @@ def create():
             for m in det_data["scan"].values()
         ]
         scan_table_source.data.update(
-            scan=scan_list, hkl=hkl, peaks=[0] * len(scan_list), fit=[0] * len(scan_list)
+            scan=scan_list,
+            hkl=hkl,
+            peaks=[0] * len(scan_list),
+            fit=[0] * len(scan_list),
+            export=[True] * len(scan_list),
         )
         scan_table_source.selected.indices = []
         scan_table_source.selected.indices = [0]
@@ -130,7 +139,11 @@ def create():
             for m in det_data["scan"].values()
         ]
         scan_table_source.data.update(
-            scan=scan_list, hkl=hkl, peaks=[0] * len(scan_list), fit=[0] * len(scan_list)
+            scan=scan_list,
+            hkl=hkl,
+            peaks=[0] * len(scan_list),
+            fit=[0] * len(scan_list),
+            export=[True] * len(scan_list),
         )
         scan_table_source.selected.indices = []
         scan_table_source.selected.indices = [0]
@@ -255,8 +268,9 @@ def create():
     def scan_table_callback(_attr, _old, new):
         if new:
             _update_plot(scan_table_source.data["scan"][new[-1]])
+            export_toggle.active = scan_table_source.data["export"][new[-1]]
 
-    scan_table_source = ColumnDataSource(dict(scan=[], hkl=[], peaks=[], fit=[]))
+    scan_table_source = ColumnDataSource(dict(scan=[], hkl=[], peaks=[], fit=[], export=[]))
     scan_table = DataTable(
         source=scan_table_source,
         columns=[
@@ -264,6 +278,7 @@ def create():
             TableColumn(field="hkl", title="hkl"),
             TableColumn(field="peaks", title="Peaks"),
             TableColumn(field="fit", title="Fit"),
+            TableColumn(field="export", title="Export"),
         ],
         width=200,
         index_position=None,
@@ -483,6 +498,13 @@ def create():
 
     bin_size_spinner = Spinner(title="Bin size:", value=1, low=1, step=1, default_size=145)
 
+    def export_toggle_callback(value):
+        sel_ind = scan_table_source.selected.indices[-1]
+        scan_table_source.patch({"export": [(sel_ind, value)]})
+
+    export_toggle = Toggle(label="Include in export", default_size=145)
+    export_toggle.on_click(export_toggle_callback)
+
     preview_output_textinput = TextAreaInput(title="Export file preview:", width=450, height=400)
 
     def preview_output_button_callback():
@@ -493,7 +515,11 @@ def create():
 
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_file = temp_dir + "/temp"
-            pyzebra.export_comm(det_data, temp_file)
+            export_data = deepcopy(det_data)
+            for s, export in zip(scan_table_source.data["scan"], scan_table_source.data["export"]):
+                if not export:
+                    del export_data["scan"][s]
+            pyzebra.export_comm(export_data, temp_file)
 
             with open(f"{temp_file}{ext}") as f:
                 preview_output_textinput.value = f.read()
@@ -509,7 +535,11 @@ def create():
 
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_file = temp_dir + "/temp"
-            pyzebra.export_comm(det_data, temp_file)
+            export_data = deepcopy(det_data)
+            for s, export in zip(scan_table_source.data["scan"], scan_table_source.data["export"]):
+                if not export:
+                    del export_data["scan"][s]
+            pyzebra.export_comm(export_data, temp_file)
 
             with open(f"{temp_file}{ext}") as f:
                 output_content = f.read()
@@ -559,7 +589,7 @@ def create():
         Spacer(width=20),
         column(
             row(integ_from, integ_to),
-            row(bin_size_spinner),
+            row(bin_size_spinner, column(Spacer(height=19), export_toggle)),
             row(fitparam_reset_button, area_method_radiobutton),
             row(fit_button, fit_all_button),
         ),
