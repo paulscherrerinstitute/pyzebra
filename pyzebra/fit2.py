@@ -59,6 +59,8 @@ def fitccl(
     constraints_min = [23, None, 50, 0, 0]
     constraints_min = [80, None, 1000, 0, 100]
     """
+    if "peak_indexes" not in scan:
+        scan["peak_indexes"] = []
     if len(scan["peak_indexes"]) > 1:
         # return in case of more than 1 peaks
         print("More than 1 peak, scan skipped")
