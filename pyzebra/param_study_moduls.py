@@ -418,7 +418,7 @@ def variables(dictionary):
         "h_index",
         "l_index",
         "k_index",
-        "number_of_measurements",
+        "n_points",
         "monitor",
         "Time",
         "omega_angle",

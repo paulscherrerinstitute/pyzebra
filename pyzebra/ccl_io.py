@@ -81,7 +81,7 @@ CCL_FIRST_LINE_NB = (
 )
 
 CCL_SECOND_LINE = (
-    ("number_of_measurements", int),
+    ("n_points", int),
     ("angle_step", float),
     ("monitor", float),
     ("temperature", float),
@@ -151,14 +151,14 @@ def parse_1D(fileobj, data_type):
                 d[param_name] = param_type(param)
 
             d["om"] = np.linspace(
-                d["omega_angle"] - (d["number_of_measurements"] / 2) * d["angle_step"],
-                d["omega_angle"] + (d["number_of_measurements"] / 2) * d["angle_step"],
-                d["number_of_measurements"],
+                d["omega_angle"] - (d["n_points"] / 2) * d["angle_step"],
+                d["omega_angle"] + (d["n_points"] / 2) * d["angle_step"],
+                d["n_points"],
             )
 
             # subsequent lines with counts
             counts = []
-            while len(counts) < d["number_of_measurements"]:
+            while len(counts) < d["n_points"]:
                 counts.extend(map(int, next(fileobj).split()))
             d["Counts"] = counts
 
@@ -193,7 +193,7 @@ def parse_1D(fileobj, data_type):
             print("Mag_field not present in dat file")
 
         data_cols["omega_angle"] = metadata["omega"]
-        data_cols["number_of_measurements"] = len(data_cols["om"])
+        data_cols["n_points"] = len(data_cols["om"])
         data_cols["monitor"] = data_cols["Monitor1"][0]
         data_cols["twotheta_angle"] = metadata["2-theta"]
         data_cols["chi_angle"] = metadata["chi"]
