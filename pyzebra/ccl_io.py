@@ -187,7 +187,11 @@ def parse_1D(fileobj, data_type):
             print("seems hkl is not in title")
 
         data_cols["temperature"] = metadata["temp"]
-        data_cols["mag_field"] = metadata["mf"]
+        try:
+            data_cols["mag_field"] = metadata["mf"]
+        except KeyError:
+            print("Mag_field not present in dat file")
+
         data_cols["omega_angle"] = metadata["omega"]
         data_cols["number_of_measurements"] = len(data_cols["om"])
         data_cols["monitor"] = data_cols["Monitor1"][0]
