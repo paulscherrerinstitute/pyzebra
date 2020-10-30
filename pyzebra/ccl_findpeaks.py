@@ -5,7 +5,13 @@ from scipy.signal import savgol_filter
 
 
 def ccl_findpeaks(
-    scan, int_threshold=0.8, prominence=50, smooth=False, window_size=7, poly_order=3
+    scan,
+    int_threshold=0.8,
+    prominence=50,
+    smooth=False,
+    window_size=7,
+    poly_order=3,
+    variable="om",
 ):
 
     """function iterates through the dictionary created by load_cclv2 and locates peaks for each scan
@@ -54,7 +60,7 @@ def ccl_findpeaks(
         prominence = 50
         print("Invalid value for prominence, select positive number, new value set to:", prominence)
 
-    omega = scan["om"]
+    omega = scan[variable]
     counts = np.array(scan["Counts"])
     if smooth:
         itp = interp1d(omega, counts, kind="linear")
