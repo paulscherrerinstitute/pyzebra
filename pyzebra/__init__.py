@@ -1,4 +1,3 @@
-import pyzebra.ccl_dict_operation
 from pyzebra.anatric import *
 from pyzebra.ccl_findpeaks import ccl_findpeaks
 from pyzebra.fit2 import fitccl
