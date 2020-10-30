@@ -74,8 +74,8 @@ def create():
         image_source.data.update(image=[current_image])
 
         if auto_toggle.active:
-            im_max = int(np.max(current_image))
-            im_min = int(np.min(current_image))
+            im_min = np.min(current_image)
+            im_max = np.max(current_image)
 
             display_min_spinner.value = im_min
             display_max_spinner.value = im_max
@@ -107,8 +107,8 @@ def create():
         overview_plot_y_image_source.data.update(image=[overview_y], dw=[n_y])
 
         if proj_auto_toggle.active:
-            im_max = int(max(np.max(overview_x), np.max(overview_y)))
-            im_min = int(min(np.min(overview_x), np.min(overview_y)))
+            im_min = min(np.min(overview_x), np.min(overview_y))
+            im_max = max(np.max(overview_x), np.max(overview_y))
 
             proj_display_min_spinner.value = im_min
             proj_display_max_spinner.value = im_max
@@ -407,7 +407,6 @@ def create():
     radio_button_group = RadioButtonGroup(labels=["nb", "nb_bi"], active=0)
 
     STEP = 1
-
     # ---- colormap auto toggle button
     def auto_toggle_callback(state):
         if state:
@@ -446,6 +445,7 @@ def create():
 
     display_min_spinner = Spinner(
         title="Min Value:",
+        low=0,
         high=1 - STEP,
         value=0,
         step=STEP,
@@ -454,6 +454,7 @@ def create():
     )
     display_min_spinner.on_change("value", display_min_spinner_callback)
 
+    PROJ_STEP = 0.1
     # ---- proj colormap auto toggle button
     def proj_auto_toggle_callback(state):
         if state:
@@ -472,15 +473,15 @@ def create():
 
     # ---- proj colormap display max value
     def proj_display_max_spinner_callback(_attr, _old_value, new_value):
-        proj_display_min_spinner.high = new_value - STEP
+        proj_display_min_spinner.high = new_value - PROJ_STEP
         overview_plot_x_image_glyph.color_mapper.high = new_value
         overview_plot_y_image_glyph.color_mapper.high = new_value
 
     proj_display_max_spinner = Spinner(
         title="Max Value:",
-        low=0 + STEP,
+        low=0 + PROJ_STEP,
         value=1,
-        step=STEP,
+        step=PROJ_STEP,
         disabled=proj_auto_toggle.active,
         default_size=80,
     )
@@ -488,15 +489,16 @@ def create():
 
     # ---- proj colormap display min value
     def proj_display_min_spinner_callback(_attr, _old_value, new_value):
-        proj_display_max_spinner.low = new_value + STEP
+        proj_display_max_spinner.low = new_value + PROJ_STEP
         overview_plot_x_image_glyph.color_mapper.low = new_value
         overview_plot_y_image_glyph.color_mapper.low = new_value
 
     proj_display_min_spinner = Spinner(
         title="Min Value:",
-        high=1 - STEP,
+        low=0,
+        high=1 - PROJ_STEP,
         value=0,
-        step=STEP,
+        step=PROJ_STEP,
         disabled=proj_auto_toggle.active,
         default_size=80,
     )
