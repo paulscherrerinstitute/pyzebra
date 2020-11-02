@@ -61,15 +61,15 @@ def fitccl(
     """
     if "peak_indexes" not in scan:
         scan["peak_indexes"] = []
+
     if len(scan["peak_indexes"]) > 1:
         # return in case of more than 1 peaks
-        print("More than 1 peak, scan skipped")
         return
+
     if binning is None or binning == 0 or binning == 1:
         x = list(scan["om"])
         y = list(scan["Counts"])
         y_err = list(np.sqrt(y)) if scan.get("sigma", None) is None else list(scan["sigma"])
-        print(scan["peak_indexes"])
         if not scan["peak_indexes"]:
             centre = np.mean(x)
         else:
@@ -89,7 +89,6 @@ def fitccl(
 
     if len(scan["peak_indexes"]) == 0:
         # Case for no peak, gaussian in centre, sigma as 20% of range
-        print("No peak")
         peak_index = find_nearest(x, np.mean(x))
         guess[0] = centre if guess[0] is None else guess[0]
         guess[1] = (x[-1] - x[0]) / 5 if guess[1] is None else guess[1]
@@ -100,7 +99,6 @@ def fitccl(
 
     elif len(scan["peak_indexes"]) == 1:
         # case for one peak, takse into account users guesses
-        print("one peak")
         peak_height = scan["peak_heights"]
         guess[0] = centre if guess[0] is None else guess[0]
         guess[1] = 0.1 if guess[1] is None else guess[1]
@@ -135,6 +133,7 @@ def fitccl(
             y, params, weights=[np.abs(1 / val) for val in y_err], x=x, calc_covar=True,
         )
     except ValueError:
+        print(f"Couldn't fit scan {scan['scan_number']}")
         return
 
     if result.params["g_amp"].stderr is None:
@@ -215,9 +214,9 @@ def fitccl(
     d = {}
     for pars in result.params:
         d[str(pars)] = (result.params[str(pars)].value, result.params[str(pars)].vary)
-    print(result.fit_report())
 
-    print((result.params["g_amp"].value - int_area.n) / result.params["g_amp"].value)
+    print("Scan", scan["scan_number"])
+    print(result.fit_report())
 
     d["ratio"] = (result.params["g_amp"].value - int_area.n) / result.params["g_amp"].value
     d["int_area"] = int_area
