@@ -265,10 +265,23 @@ def create():
     plot.toolbar.logo = None
 
     # Scan select
-    def scan_table_callback(_attr, _old, new):
-        if new:
-            _update_plot(scan_table_source.data["scan"][new[-1]])
-            export_toggle.active = scan_table_source.data["export"][new[-1]]
+    def scan_table_callback(_attr, old, new):
+        if not new:
+            # skip empty selections
+            return
+
+        # Avoid selection of multiple indicies (via Shift+Click or Ctrl+Click)
+        if len(new) > 1:
+            # drop selection to the previous one
+            scan_table_source.selected.indices = old
+            return
+
+        if len(old) > 1:
+            # skip unnecessary update caused by selection drop
+            return
+
+        _update_plot(scan_table_source.data["scan"][new[0]])
+        export_toggle.active = scan_table_source.data["export"][new[0]]
 
     scan_table_source = ColumnDataSource(dict(scan=[], hkl=[], peaks=[], fit=[], export=[]))
     scan_table = DataTable(
