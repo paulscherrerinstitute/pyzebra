@@ -375,16 +375,19 @@ def create():
 
     fit_output_textinput = TextAreaInput(title="Fit results:", width=450, height=400)
 
+    def _get_peakfind_params():
+        return dict(
+            int_threshold=peak_int_ratio_spinner.value,
+            prominence=peak_prominence_spinner.value,
+            smooth=smooth_toggle.active,
+            window_size=window_size_spinner.value,
+            poly_order=poly_order_spinner.value,
+        )
+
     def peakfind_all_button_callback():
+        peakfind_params = _get_peakfind_params()
         for scan in det_data["scan"].values():
-            pyzebra.ccl_findpeaks(
-                scan,
-                int_threshold=peak_int_ratio_spinner.value,
-                prominence=peak_prominence_spinner.value,
-                smooth=smooth_toggle.active,
-                window_size=window_size_spinner.value,
-                poly_order=poly_order_spinner.value,
-            )
+            pyzebra.ccl_findpeaks(scan, **peakfind_params)
 
         _update_table()
         _update_plot(_get_selected_scan())
@@ -394,14 +397,7 @@ def create():
 
     def peakfind_button_callback():
         scan = _get_selected_scan()
-        pyzebra.ccl_findpeaks(
-            scan,
-            int_threshold=peak_int_ratio_spinner.value,
-            prominence=peak_prominence_spinner.value,
-            smooth=smooth_toggle.active,
-            window_size=window_size_spinner.value,
-            poly_order=poly_order_spinner.value,
-        )
+        pyzebra.ccl_findpeaks(scan, **_get_peakfind_params())
 
         _update_table()
         _update_plot(scan)
@@ -409,54 +405,8 @@ def create():
     peakfind_button = Button(label="Peak Find Current", default_size=145)
     peakfind_button.on_click(peakfind_button_callback)
 
-    def fit_all_button_callback():
-        for scan in det_data["scan"].values():
-            pyzebra.fitccl(
-                scan,
-                guess=[
-                    centre_guess.value,
-                    sigma_guess.value,
-                    ampl_guess.value,
-                    slope_guess.value,
-                    offset_guess.value,
-                ],
-                vary=[
-                    centre_vary.active,
-                    sigma_vary.active,
-                    ampl_vary.active,
-                    slope_vary.active,
-                    offset_vary.active,
-                ],
-                constraints_min=[
-                    centre_min.value,
-                    sigma_min.value,
-                    ampl_min.value,
-                    slope_min.value,
-                    offset_min.value,
-                ],
-                constraints_max=[
-                    centre_max.value,
-                    sigma_max.value,
-                    ampl_max.value,
-                    slope_max.value,
-                    offset_max.value,
-                ],
-                numfit_min=integ_from.value,
-                numfit_max=integ_to.value,
-                binning=bin_size_spinner.value,
-            )
-
-        _update_plot(_get_selected_scan())
-        _update_table()
-
-    fit_all_button = Button(label="Fit All", button_type="primary", default_size=145)
-    fit_all_button.on_click(fit_all_button_callback)
-
-    def fit_button_callback():
-        scan = _get_selected_scan()
-
-        pyzebra.fitccl(
-            scan,
+    def _get_fit_params():
+        return dict(
             guess=[
                 centre_guess.value,
                 sigma_guess.value,
@@ -489,6 +439,22 @@ def create():
             numfit_max=integ_to.value,
             binning=bin_size_spinner.value,
         )
+
+    def fit_all_button_callback():
+        fit_params = _get_fit_params()
+        for scan in det_data["scan"].values():
+            # fit_params are updated inplace within `fitccl`
+            pyzebra.fitccl(scan, **deepcopy(fit_params))
+
+        _update_plot(_get_selected_scan())
+        _update_table()
+
+    fit_all_button = Button(label="Fit All", button_type="primary", default_size=145)
+    fit_all_button.on_click(fit_all_button_callback)
+
+    def fit_button_callback():
+        scan = _get_selected_scan()
+        pyzebra.fitccl(scan, **_get_fit_params())
 
         _update_plot(scan)
         _update_table()
