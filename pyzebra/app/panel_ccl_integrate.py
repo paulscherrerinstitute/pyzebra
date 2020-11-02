@@ -450,6 +450,8 @@ def create():
 
     bin_size_spinner = Spinner(title="Bin size:", value=1, low=1, step=1, default_size=145)
 
+    lorentz_toggle = Toggle(label="Lorentz Correction", default_size=145)
+
     preview_output_textinput = TextAreaInput(title="Export file preview:", width=450, height=400)
 
     def preview_output_button_callback():
@@ -464,7 +466,7 @@ def create():
             for s, export in zip(scan_table_source.data["scan"], scan_table_source.data["export"]):
                 if not export:
                     del export_data["scan"][s]
-            pyzebra.export_comm(export_data, temp_file)
+            pyzebra.export_comm(export_data, temp_file, lorentz=lorentz_toggle.active)
 
             with open(f"{temp_file}{ext}") as f:
                 preview_output_textinput.value = f.read()
@@ -484,7 +486,7 @@ def create():
             for s, export in zip(scan_table_source.data["scan"], scan_table_source.data["export"]):
                 if not export:
                     del export_data["scan"][s]
-            pyzebra.export_comm(export_data, temp_file)
+            pyzebra.export_comm(export_data, temp_file, lorentz=lorentz_toggle.active)
 
             with open(f"{temp_file}{ext}") as f:
                 output_content = f.read()
@@ -534,7 +536,7 @@ def create():
         Spacer(width=20),
         column(
             row(integ_from, integ_to),
-            row(bin_size_spinner),
+            row(bin_size_spinner, column(Spacer(height=19), lorentz_toggle)),
             row(fitparam_reset_button, area_method_radiobutton),
             row(fit_button, fit_all_button),
         ),
