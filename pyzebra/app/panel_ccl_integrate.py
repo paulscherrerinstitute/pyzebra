@@ -65,7 +65,7 @@ def create():
     js_data = ColumnDataSource(data=dict(cont=[], ext=[]))
 
     def proposal_textinput_callback(_attr, _old, new):
-        ccl_path = os.path.join(PROPOSAL_PATH, new)
+        ccl_path = os.path.join(PROPOSAL_PATH, new.strip())
         ccl_file_list = []
         for file in os.listdir(ccl_path):
             if file.endswith(".ccl"):
