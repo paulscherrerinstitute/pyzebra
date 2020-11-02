@@ -1,4 +1,3 @@
-import argparse
 import logging
 import sys
 from io import StringIO
@@ -11,14 +10,8 @@ import panel_ccl_integrate
 import panel_hdf_anatric
 import panel_hdf_viewer
 
-parser = argparse.ArgumentParser(
-    prog="pyzebra", formatter_class=argparse.ArgumentDefaultsHelpFormatter
-)
-
-args = parser.parse_args()
 
 doc = curdoc()
-doc.title = "pyzebra"
 
 sys.stdout = StringIO()
 stdout_textareainput = TextAreaInput(title="print output:", height=150)
@@ -26,7 +19,7 @@ stdout_textareainput = TextAreaInput(title="print output:", height=150)
 bokeh_stream = StringIO()
 bokeh_handler = logging.StreamHandler(bokeh_stream)
 bokeh_handler.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
-bokeh_logger = logging.getLogger('bokeh')
+bokeh_logger = logging.getLogger("bokeh")
 bokeh_logger.addHandler(bokeh_handler)
 bokeh_log_textareainput = TextAreaInput(title="server output:", height=150)
 

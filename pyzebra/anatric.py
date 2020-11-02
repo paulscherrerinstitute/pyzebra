@@ -2,7 +2,6 @@ import subprocess
 import xml.etree.ElementTree as ET
 
 
-ANATRIC_PATH = "/afs/psi.ch/project/sinq/rhel7/bin/anatric"
 DATA_FACTORY_IMPLEMENTATION = [
     "trics",
     "morph",
@@ -24,8 +23,8 @@ REFLECTION_PRINTER_FORMATS = [
 ALGORITHMS = ["adaptivemaxcog", "adaptivedynamic"]
 
 
-def anatric(config_file):
-    subprocess.run([ANATRIC_PATH, config_file], check=True)
+def anatric(config_file, anatric_path="/afs/psi.ch/project/sinq/rhel7/bin/anatric"):
+    subprocess.run([anatric_path, config_file], check=True)
 
 
 class AnatricConfig:

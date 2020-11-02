@@ -21,6 +21,7 @@ from pyzebra.anatric import DATA_FACTORY_IMPLEMENTATION, REFLECTION_PRINTER_FORM
 
 
 def create():
+    doc = curdoc()
     config = pyzebra.AnatricConfig()
 
     def _load_config_file(file):
@@ -345,7 +346,7 @@ def create():
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_file = temp_dir + "/temp.xml"
             config.save_as(temp_file)
-            pyzebra.anatric(temp_file)
+            pyzebra.anatric(temp_file, anatric_path=doc.anatric_path)
 
             with open(config.logfile) as f_log:
                 output_log.value = f_log.read()
@@ -404,6 +405,6 @@ def create():
         with open("debug.xml") as f_config:
             output_config.value = f_config.read()
 
-    curdoc().add_periodic_callback(update_config, 1000)
+    doc.add_periodic_callback(update_config, 1000)
 
     return Panel(child=tab_layout, title="hdf anatric")
