@@ -156,11 +156,10 @@ def create():
         fit_ok = [(1 if "fit" in scan else 0) for scan in det_data["scan"].values()]
         scan_table_source.data.update(peaks=num_of_peaks, fit=fit_ok)
 
-    def _update_plot(ind):
+    def _update_plot(scan):
         nonlocal peak_pos_textinput_lock
         peak_pos_textinput_lock = True
 
-        scan = det_data["scan"][ind]
         y = scan["Counts"]
         x = scan["om"]
 
@@ -190,14 +189,12 @@ def create():
             plot_bkg_source.data.update(x=x, y=scan["fit"]["comps"]["background"])
             params = fit["result"].params
             fit_output_textinput.value = (
-                "%s \n"
                 "Gaussian: centre = %9.4f, sigma = %9.4f, area = %9.4f \n"
                 "background: slope = %9.4f, intercept = %9.4f \n"
                 "Int. area = %9.4f +/- %9.4f \n"
                 "fit area = %9.4f +/- %9.4f \n"
                 "ratio((fit-int)/fit) = %9.4f"
                 % (
-                    ind,
                     params["g_cen"].value,
                     params["g_width"].value,
                     params["g_amp"].value,
@@ -280,7 +277,7 @@ def create():
             # skip unnecessary update caused by selection drop
             return
 
-        _update_plot(scan_table_source.data["scan"][new[0]])
+        _update_plot(det_data["scan"][scan_table_source.data["scan"][new[0]]])
         export_toggle.active = scan_table_source.data["export"][new[0]]
 
     scan_table_source = ColumnDataSource(dict(scan=[], hkl=[], peaks=[], fit=[], export=[]))
@@ -299,18 +296,21 @@ def create():
 
     scan_table_source.selected.on_change("indices", scan_table_callback)
 
+    def _get_selected_scan():
+        selected_index = scan_table_source.selected.indices[0]
+        selected_scan_id = scan_table_source.data["scan"][selected_index]
+        return det_data["scan"][selected_scan_id]
+
     def peak_pos_textinput_callback(_attr, _old, new):
         if new is not None and not peak_pos_textinput_lock:
-            sel_ind = scan_table_source.selected.indices[-1]
-            scan_name = scan_table_source.data["scan"][sel_ind]
-            scan = det_data["scan"][scan_name]
+            scan = _get_selected_scan()
 
             scan["num_of_peaks"] = 1
             peak_ind = (np.abs(scan["om"] - float(new))).argmin()
             scan["peak_indexes"] = np.array([peak_ind], dtype=np.int64)
             scan["peak_heights"] = np.array([scan["smooth_peaks"][peak_ind]])
             _update_table()
-            _update_plot(scan_name)
+            _update_plot(scan)
 
     peak_pos_textinput = TextInput(title="Peak position:", default_size=145)
     peak_pos_textinput.on_change("value", peak_pos_textinput_callback)
@@ -387,18 +387,15 @@ def create():
             )
 
         _update_table()
-
-        sel_ind = scan_table_source.selected.indices[-1]
-        _update_plot(scan_table_source.data["scan"][sel_ind])
+        _update_plot(_get_selected_scan())
 
     peakfind_all_button = Button(label="Peak Find All", button_type="primary", default_size=145)
     peakfind_all_button.on_click(peakfind_all_button_callback)
 
     def peakfind_button_callback():
-        sel_ind = scan_table_source.selected.indices[-1]
-        scan = scan_table_source.data["scan"][sel_ind]
+        scan = _get_selected_scan()
         pyzebra.ccl_findpeaks(
-            det_data["scan"][scan],
+            scan,
             int_threshold=peak_int_ratio_spinner.value,
             prominence=peak_prominence_spinner.value,
             smooth=smooth_toggle.active,
@@ -449,19 +446,17 @@ def create():
                 binning=bin_size_spinner.value,
             )
 
-        sel_ind = scan_table_source.selected.indices[-1]
-        _update_plot(scan_table_source.data["scan"][sel_ind])
+        _update_plot(_get_selected_scan())
         _update_table()
 
     fit_all_button = Button(label="Fit All", button_type="primary", default_size=145)
     fit_all_button.on_click(fit_all_button_callback)
 
     def fit_button_callback():
-        sel_ind = scan_table_source.selected.indices[-1]
-        scan = scan_table_source.data["scan"][sel_ind]
+        scan = _get_selected_scan()
 
         pyzebra.fitccl(
-            det_data["scan"][scan],
+            scan,
             guess=[
                 centre_guess.value,
                 sigma_guess.value,
@@ -512,8 +507,8 @@ def create():
     bin_size_spinner = Spinner(title="Bin size:", value=1, low=1, step=1, default_size=145)
 
     def export_toggle_callback(value):
-        sel_ind = scan_table_source.selected.indices[-1]
-        scan_table_source.patch({"export": [(sel_ind, value)]})
+        selected_index = scan_table_source.selected.indices[0]
+        scan_table_source.patch({"export": [(selected_index, value)]})
 
     export_toggle = Toggle(label="Include in export", default_size=145)
     export_toggle.on_click(export_toggle_callback)
