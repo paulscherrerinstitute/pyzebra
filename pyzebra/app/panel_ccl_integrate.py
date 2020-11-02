@@ -10,6 +10,7 @@ from bokeh.models import (
     Asterisk,
     BasicTicker,
     Button,
+    CheckboxEditor,
     ColumnDataSource,
     CustomJS,
     DataRange1d,
@@ -239,7 +240,7 @@ def create():
     plot.toolbar.logo = None
 
     # Scan select
-    def scan_table_callback(_attr, old, new):
+    def scan_table_select_callback(_attr, old, new):
         if not new:
             # skip empty selections
             return
@@ -255,7 +256,6 @@ def create():
             return
 
         _update_plot(det_data["scan"][scan_table_source.data["scan"][new[0]]])
-        export_toggle.active = scan_table_source.data["export"][new[0]]
 
     scan_table_source = ColumnDataSource(dict(scan=[], hkl=[], peaks=[], fit=[], export=[]))
     scan_table = DataTable(
@@ -265,13 +265,14 @@ def create():
             TableColumn(field="hkl", title="hkl"),
             TableColumn(field="peaks", title="Peaks"),
             TableColumn(field="fit", title="Fit"),
-            TableColumn(field="export", title="Export"),
+            TableColumn(field="export", title="Export", editor=CheckboxEditor()),
         ],
-        width=200,
+        width=250,
         index_position=None,
+        editable=True,
     )
 
-    scan_table_source.selected.on_change("indices", scan_table_callback)
+    scan_table_source.selected.on_change("indices", scan_table_select_callback)
 
     def _get_selected_scan():
         selected_index = scan_table_source.selected.indices[0]
@@ -449,13 +450,6 @@ def create():
 
     bin_size_spinner = Spinner(title="Bin size:", value=1, low=1, step=1, default_size=145)
 
-    def export_toggle_callback(value):
-        selected_index = scan_table_source.selected.indices[0]
-        scan_table_source.patch({"export": [(selected_index, value)]})
-
-    export_toggle = Toggle(label="Include in export", default_size=145)
-    export_toggle.on_click(export_toggle_callback)
-
     preview_output_textinput = TextAreaInput(title="Export file preview:", width=450, height=400)
 
     def preview_output_button_callback():
@@ -540,7 +534,7 @@ def create():
         Spacer(width=20),
         column(
             row(integ_from, integ_to),
-            row(bin_size_spinner, column(Spacer(height=19), export_toggle)),
+            row(bin_size_spinner),
             row(fitparam_reset_button, area_method_radiobutton),
             row(fit_button, fit_all_button),
         ),
