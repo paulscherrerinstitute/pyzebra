@@ -75,12 +75,7 @@ def create():
     proposal_textinput = TextInput(title="Enter proposal number:", default_size=145)
     proposal_textinput.on_change("value", proposal_textinput_callback)
 
-    def ccl_file_select_callback(_attr, _old, new):
-        nonlocal det_data
-        with open(new) as file:
-            _, ext = os.path.splitext(new)
-            det_data = pyzebra.parse_1D(file, ext)
-
+    def _init_datatable():
         scan_list = list(det_data["scan"].keys())
         hkl = [
             f'{int(m["h_index"])} {int(m["k_index"])} {int(m["l_index"])}'
@@ -95,6 +90,14 @@ def create():
         )
         scan_table_source.selected.indices = []
         scan_table_source.selected.indices = [0]
+
+    def ccl_file_select_callback(_attr, _old, new):
+        nonlocal det_data
+        with open(new) as file:
+            _, ext = os.path.splitext(new)
+            det_data = pyzebra.parse_1D(file, ext)
+
+        _init_datatable()
 
     ccl_file_select = Select(title="Available .ccl files")
     ccl_file_select.on_change("value", ccl_file_select_callback)
@@ -105,20 +108,7 @@ def create():
             _, ext = os.path.splitext(upload_button.filename)
             det_data = pyzebra.parse_1D(file, ext)
 
-        scan_list = list(det_data["scan"].keys())
-        hkl = [
-            f'{int(m["h_index"])} {int(m["k_index"])} {int(m["l_index"])}'
-            for m in det_data["scan"].values()
-        ]
-        scan_table_source.data.update(
-            scan=scan_list,
-            hkl=hkl,
-            peaks=[0] * len(scan_list),
-            fit=[0] * len(scan_list),
-            export=[True] * len(scan_list),
-        )
-        scan_table_source.selected.indices = []
-        scan_table_source.selected.indices = [0]
+        _init_datatable()
 
     upload_button = FileInput(accept=".ccl")
     upload_button.on_change("value", upload_button_callback)
@@ -133,20 +123,7 @@ def create():
         scan_result = pyzebra.auto(pyzebra.scan_dict(added))
         det_data = pyzebra.merge(added, added, scan_result)
 
-        scan_list = list(det_data["scan"].keys())
-        hkl = [
-            f'{int(m["h_index"])} {int(m["k_index"])} {int(m["l_index"])}'
-            for m in det_data["scan"].values()
-        ]
-        scan_table_source.data.update(
-            scan=scan_list,
-            hkl=hkl,
-            peaks=[0] * len(scan_list),
-            fit=[0] * len(scan_list),
-            export=[True] * len(scan_list),
-        )
-        scan_table_source.selected.indices = []
-        scan_table_source.selected.indices = [0]
+        _init_datatable()
 
     append_upload_button = FileInput(accept=".ccl,.dat")
     append_upload_button.on_change("value", append_upload_button_callback)
