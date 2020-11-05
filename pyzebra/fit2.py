@@ -128,10 +128,9 @@ def fitccl(
         ("intercept", guess[4], bool(vary[4]), constraints_min[4], constraints_max[4], None, None),
     )
     # the weighted fit
+    weights = [np.abs(1 / val) if val != 0 else 1 for val in y_err]
     try:
-        result = mod.fit(
-            y, params, weights=[np.abs(1 / val) for val in y_err], x=x, calc_covar=True,
-        )
+        result = mod.fit(y, params, weights=weights, x=x, calc_covar=True)
     except ValueError:
         print(f"Couldn't fit scan {scan['scan_number']}")
         return
