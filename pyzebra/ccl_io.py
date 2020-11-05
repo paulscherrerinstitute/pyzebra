@@ -64,21 +64,20 @@ CCL_FIRST_LINE = (
     ("l_index", float),
 )
 
-CCL_FIRST_LINE_BI = (
-    *CCL_FIRST_LINE,
-    ("twotheta_angle", float),
-    ("omega_angle", float),
-    ("chi_angle", float),
-    ("phi_angle", float),
-)
-
-CCL_FIRST_LINE_NB = (
-    *CCL_FIRST_LINE,
-    ("gamma_angle", float),
-    ("omega_angle", float),
-    ("nu_angle", float),
-    ("unkwn_angle", float),
-)
+CCL_ANGLES = {
+    "bi": (
+        ("twotheta_angle", float),
+        ("omega_angle", float),
+        ("chi_angle", float),
+        ("phi_angle", float),
+    ),
+    "nb": (
+        ("gamma_angle", float),
+        ("omega_angle", float),
+        ("nu_angle", float),
+        ("unkwn_angle", float),
+    ),
+}
 
 CCL_SECOND_LINE = (
     ("n_points", int),
@@ -132,10 +131,7 @@ def parse_1D(fileobj, data_type):
     # read data
     scan = {}
     if data_type == ".ccl":
-        if metadata["zebra_mode"] == "bi":
-            ccl_first_line = CCL_FIRST_LINE_BI
-        elif metadata["zebra_mode"] == "nb":
-            ccl_first_line = CCL_FIRST_LINE_NB
+        ccl_first_line = (*CCL_FIRST_LINE, *CCL_ANGLES[metadata["zebra_mode"]])
         ccl_second_line = CCL_SECOND_LINE
 
         for line in fileobj:
@@ -228,13 +224,12 @@ def export_comm(data, path, lorentz=False):
 
     """
     zebra_mode = data["meta"]["zebra_mode"]
-    align = ">"
     if data["meta"]["indices"] == "hkl":
         extension = ".comm"
-        padding = [6, 4, 10, 8]
+        padding = [6, 4]
     elif data["meta"]["indices"] == "real":
         extension = ".incomm"
-        padding = [4, 6, 10, 8]
+        padding = [4, 6]
 
     with open(str(path + extension), "w") as out_file:
         for key, scan in data["scan"].items():
@@ -242,20 +237,17 @@ def export_comm(data, path, lorentz=False):
                 print("Scan skipped - no fit value for:", key)
                 continue
 
-            scan_number_str = f"{key:{align}{padding[0]}}"
+            scan_str = f"{key:>{padding[0]}}"
             h_str = f'{int(scan["h_index"]):{padding[1]}}'
             k_str = f'{int(scan["k_index"]):{padding[1]}}'
             l_str = f'{int(scan["l_index"]):{padding[1]}}'
+
             if data["meta"]["area_method"] == "fit":
-                area = float(scan["fit"]["fit_area"].n)
-                sigma_str = (
-                    f'{"{:8.2f}".format(float(scan["fit"]["fit_area"].s)):{align}{padding[2]}}'
-                )
+                area = scan["fit"]["fit_area"].n
+                sigma_str = f'{scan["fit"]["fit_area"].s:>10.2f}'
             elif data["meta"]["area_method"] == "integ":
-                area = float(scan["fit"]["int_area"].n)
-                sigma_str = (
-                    f'{"{:8.2f}".format(float(scan["fit"]["int_area"].s)):{align}{padding[2]}}'
-                )
+                area = scan["fit"]["int_area"].n
+                sigma_str = f'{scan["fit"]["int_area"].s:>10.2f}'
 
             # apply lorentz correction to area
             if lorentz:
@@ -269,30 +261,10 @@ def export_comm(data, path, lorentz=False):
 
                 area = np.abs(area * corr_factor)
 
-            int_str = f'{"{:8.2f}".format(area):{align}{padding[2]}}'
+            area_str = f"{area:>10.2f}"
 
-            if zebra_mode == "bi":
-                angle_str1 = f'{scan["twotheta_angle"]:{padding[3]}}'
-                angle_str2 = f'{scan["omega_angle"]:{padding[3]}}'
-                angle_str3 = f'{scan["chi_angle"]:{padding[3]}}'
-                angle_str4 = f'{scan["phi_angle"]:{padding[3]}}'
-            elif zebra_mode == "nb":
-                angle_str1 = f'{scan["gamma_angle"]:{padding[3]}}'
-                angle_str2 = f'{scan["omega_angle"]:{padding[3]}}'
-                angle_str3 = f'{scan["nu_angle"]:{padding[3]}}'
-                angle_str4 = f'{scan["unkwn_angle"]:{padding[3]}}'
+            ang_str = ""
+            for angle, _ in CCL_ANGLES[zebra_mode]:
+                ang_str = ang_str + f"{scan[angle]:8}"
 
-            line = (
-                scan_number_str
-                + h_str
-                + k_str
-                + l_str
-                + int_str
-                + sigma_str
-                + angle_str1
-                + angle_str2
-                + angle_str3
-                + angle_str4
-                + "\n"
-            )
-            out_file.write(line)
+            out_file.write(scan_str + h_str + k_str + l_str + area_str + sigma_str + ang_str + "\n")
