@@ -224,6 +224,10 @@ def correction(value, lorentz=True, zebra_mode="--", ang1=0, ang2=0):
     if lorentz is False:
         return value
     else:
+        # convert to rad
+        ang1 = ang1 * np.pi / 180
+        ang2 = ang2 * np.pi / 180
+
         if zebra_mode == "bi":
             corr_value = np.abs(value * np.sin(ang1))
             return corr_value
