@@ -220,22 +220,6 @@ def parse_1D(fileobj, data_type):
     return {"meta": metadata, "scan": scan}
 
 
-def correction(value, lorentz=True, zebra_mode="--", ang1=0, ang2=0):
-    if lorentz is False:
-        return value
-    else:
-        # convert to rad
-        ang1 = ang1 * np.pi / 180
-        ang2 = ang2 * np.pi / 180
-
-        if zebra_mode == "bi":
-            corr_value = np.abs(value * np.sin(ang1))
-            return corr_value
-        elif zebra_mode == "nb":
-            corr_value = np.abs(value * np.sin(ang1) * np.cos(ang2))
-            return corr_value
-
-
 def export_comm(data, path, lorentz=False):
     """exports data in the *.comm format
     :param lorentz: perform Lorentz correction
@@ -257,6 +241,7 @@ def export_comm(data, path, lorentz=False):
             if "fit" not in scan:
                 print("Scan skipped - no fit value for:", key)
                 continue
+
             scan_number_str = f"{key:{align}{padding[0]}}"
             h_str = f'{int(scan["h_index"]):{padding[1]}}'
             k_str = f'{int(scan["k_index"]):{padding[1]}}'
@@ -272,16 +257,26 @@ def export_comm(data, path, lorentz=False):
                     f'{"{:8.2f}".format(float(scan["fit"]["int_area"].s)):{align}{padding[2]}}'
                 )
 
+            # apply lorentz correction to area
+            if lorentz:
+                if zebra_mode == "bi":
+                    twotheta_angle = np.deg2rad(scan["twotheta_angle"])
+                    corr_factor = np.sin(twotheta_angle)
+                elif zebra_mode == "nb":
+                    gamma_angle = np.deg2rad(scan["gamma_angle"])
+                    nu_angle = np.deg2rad(scan["nu_angle"])
+                    corr_factor = np.sin(gamma_angle) * np.cos(nu_angle)
+
+                area = np.abs(area * corr_factor)
+
+            int_str = f'{"{:8.2f}".format(area):{align}{padding[2]}}'
+
             if zebra_mode == "bi":
-                area = correction(area, lorentz, zebra_mode, scan["twotheta_angle"])
-                int_str = f'{"{:8.2f}".format(area):{align}{padding[2]}}'
                 angle_str1 = f'{scan["twotheta_angle"]:{padding[3]}}'
                 angle_str2 = f'{scan["omega_angle"]:{padding[3]}}'
                 angle_str3 = f'{scan["chi_angle"]:{padding[3]}}'
                 angle_str4 = f'{scan["phi_angle"]:{padding[3]}}'
             elif zebra_mode == "nb":
-                area = correction(area, lorentz, zebra_mode, scan["gamma_angle"], scan["nu_angle"])
-                int_str = f'{"{:8.2f}".format(area):{align}{padding[2]}}'
                 angle_str1 = f'{scan["gamma_angle"]:{padding[3]}}'
                 angle_str2 = f'{scan["omega_angle"]:{padding[3]}}'
                 angle_str3 = f'{scan["nu_angle"]:{padding[3]}}'
