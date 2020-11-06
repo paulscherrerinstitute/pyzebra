@@ -18,7 +18,7 @@ def main():
     This is a wrapper around a bokeh server that provides an interface to launch the application,
     bundled with the pyzebra package.
     """
-    app_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app", "app.py")
+    app_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app.py")
 
     parser = argparse.ArgumentParser(
         prog="pyzebra", formatter_class=argparse.ArgumentDefaultsHelpFormatter

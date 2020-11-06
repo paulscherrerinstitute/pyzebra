@@ -10,7 +10,7 @@ source:
 build:
   number: 0
   entry_points:
-    - pyzebra = pyzebra.cli:main
+    - pyzebra = pyzebra.app.cli:main
 
 requirements:
   build:

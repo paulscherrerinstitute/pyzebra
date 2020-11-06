@@ -5,7 +5,7 @@
             "name": "pyzebra",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/pyzebra/cli.py",
+            "program": "${workspaceFolder}/pyzebra/app/cli.py",
             "console": "internalConsole",
             "env": {},
         },
