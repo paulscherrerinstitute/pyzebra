@@ -6,4 +6,4 @@ from pyzebra.ccl_io import load_1D, parse_1D, export_comm
 from pyzebra.param_study_moduls import add_dict, auto, merge, scan_dict
 from pyzebra.xtal import *
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
