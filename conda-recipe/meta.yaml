@@ -21,8 +21,10 @@ requirements:
     - python
     - numpy
     - scipy
+    - pandas
     - h5py
     - bokeh
+    - matplotlib
     - numba
     - lmfit
     - uncertainties
