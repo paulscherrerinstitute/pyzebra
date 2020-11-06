@@ -8,6 +8,7 @@ source:
   path: ..
 
 build:
+  noarch: python
   number: 0
   entry_points:
     - pyzebra = pyzebra.app.cli:main
