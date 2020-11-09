@@ -3,9 +3,15 @@
 import argparse
 import os
 import re
+import subprocess
 
 
 def main():
+    branch = subprocess.check_output("git rev-parse --abbrev-ref HEAD", shell=True).decode().strip()
+    if branch != "master":
+        print("Aborting, not on 'master' branch.")
+        return
+
     filepath = "pyzebra/__init__.py"
 
     parser = argparse.ArgumentParser()
