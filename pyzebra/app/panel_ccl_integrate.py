@@ -2,6 +2,7 @@ import base64
 import io
 import os
 import tempfile
+import types
 from copy import deepcopy
 
 import numpy as np
@@ -16,10 +17,13 @@ from bokeh.models import (
     DataRange1d,
     DataTable,
     Div,
+    Dropdown,
     FileInput,
     Grid,
     Line,
     LinearAxis,
+    MultiSelect,
+    NumberEditor,
     Panel,
     PanTool,
     Plot,
@@ -61,6 +65,7 @@ PROPOSAL_PATH = "/afs/psi.ch/project/sinqdata/2020/zebra/"
 
 def create():
     det_data = {}
+    fit_params = {}
     peak_pos_textinput_lock = False
     js_data = ColumnDataSource(data=dict(cont=[], ext=[]))
 
@@ -301,55 +306,110 @@ def create():
     window_size_spinner = Spinner(title="Window size:", value=7, step=2, low=1, default_size=145)
     poly_order_spinner = Spinner(title="Poly order:", value=3, low=0, default_size=145)
 
-    centre_guess = Spinner(default_size=100)
-    centre_vary = Toggle(default_size=100, active=True)
-    centre_min = Spinner(default_size=100)
-    centre_max = Spinner(default_size=100)
-    sigma_guess = Spinner(default_size=100)
-    sigma_vary = Toggle(default_size=100, active=True)
-    sigma_min = Spinner(default_size=100)
-    sigma_max = Spinner(default_size=100)
-    ampl_guess = Spinner(default_size=100)
-    ampl_vary = Toggle(default_size=100, active=True)
-    ampl_min = Spinner(default_size=100)
-    ampl_max = Spinner(default_size=100)
-    slope_guess = Spinner(default_size=100)
-    slope_vary = Toggle(default_size=100, active=True)
-    slope_min = Spinner(default_size=100)
-    slope_max = Spinner(default_size=100)
-    offset_guess = Spinner(default_size=100)
-    offset_vary = Toggle(default_size=100, active=True)
-    offset_min = Spinner(default_size=100)
-    offset_max = Spinner(default_size=100)
     integ_from = Spinner(title="Integrate from:", default_size=145)
     integ_to = Spinner(title="to:", default_size=145)
 
     def fitparam_reset_button_callback():
-        centre_guess.value = None
-        centre_vary.active = True
-        centre_min.value = None
-        centre_max.value = None
-        sigma_guess.value = None
-        sigma_vary.active = True
-        sigma_min.value = None
-        sigma_max.value = None
-        ampl_guess.value = None
-        ampl_vary.active = True
-        ampl_min.value = None
-        ampl_max.value = None
-        slope_guess.value = None
-        slope_vary.active = True
-        slope_min.value = None
-        slope_max.value = None
-        offset_guess.value = None
-        offset_vary.active = True
-        offset_min.value = None
-        offset_max.value = None
-        integ_from.value = None
-        integ_to.value = None
+        ...
 
-    fitparam_reset_button = Button(label="Reset to defaults", default_size=145)
+    fitparam_reset_button = Button(label="Reset to defaults", default_size=145, disabled=True)
     fitparam_reset_button.on_click(fitparam_reset_button_callback)
+
+    def fitparams_add_dropdown_callback(click):
+        new_tag = str(fitparams_select.tags[0])  # bokeh requires (str, str) for MultiSelect options
+        fitparams_select.options.append((new_tag, click.item))
+        fit_params[new_tag] = fitparams_factory(click.item)
+        fitparams_select.tags[0] += 1
+
+    fitparams_add_dropdown = Dropdown(
+        label="Add fit function",
+        menu=[
+            ("Background", "background"),
+            ("Gauss", "gauss"),
+            ("Voigt", "voigt"),
+            ("Pseudo Voigt", "pseudovoigt"),
+            ("Pseudo Voigt1", "pseudovoigt1"),
+        ],
+        default_size=145,
+        disabled=True,
+    )
+    fitparams_add_dropdown.on_click(fitparams_add_dropdown_callback)
+
+    def fitparams_select_callback(_attr, old, new):
+        # Avoid selection of multiple indicies (via Shift+Click or Ctrl+Click)
+        if len(new) > 1:
+            # drop selection to the previous one
+            fitparams_select.value = old
+            return
+
+        if len(old) > 1:
+            # skip unnecessary update caused by selection drop
+            return
+
+        if new:
+            fitparams_table_source.data.update(fit_params[new[0]])
+        else:
+            fitparams_table_source.data.update(dict(param=[], guess=[], vary=[], min=[], max=[]))
+
+    fitparams_select = MultiSelect(options=[], height=120, default_size=145)
+    fitparams_select.tags = [0]
+    fitparams_select.on_change("value", fitparams_select_callback)
+
+    def fitparams_remove_button_callback():
+        if fitparams_select.value:
+            sel_tag = fitparams_select.value[0]
+            del fit_params[sel_tag]
+            for elem in fitparams_select.options:
+                if elem[0] == sel_tag:
+                    fitparams_select.options.remove(elem)
+                    break
+
+            fitparams_select.value = []
+
+    fitparams_remove_button = Button(label="Remove fit function", default_size=145, disabled=True)
+    fitparams_remove_button.on_click(fitparams_remove_button_callback)
+
+    def fitparams_factory(function):
+        if function == "background":
+            params = ["slope", "offset"]
+        elif function == "gauss":
+            params = ["center", "sigma", "amplitude"]
+        elif function == "voigt":
+            params = ["center", "sigma", "amplitude", "gamma"]
+        elif function == "pseudovoigt":
+            params = ["center", "sigma", "amplitude", "fraction"]
+        elif function == "pseudovoigt1":
+            params = ["center", "g_sigma", "l_sigma", "amplitude", "fraction"]
+        else:
+            raise ValueError("Unknown fit function")
+
+        n = len(params)
+        fitparams = dict(
+            param=params, guess=[None] * n, vary=[True] * n, min=[None] * n, max=[None] * n,
+        )
+
+        return fitparams
+
+    fitparams_table_source = ColumnDataSource(dict(param=[], guess=[], vary=[], min=[], max=[]))
+    fitparams_table = DataTable(
+        source=fitparams_table_source,
+        columns=[
+            TableColumn(field="param", title="Parameter"),
+            TableColumn(field="guess", title="Guess", editor=NumberEditor()),
+            TableColumn(field="vary", title="Vary", editor=CheckboxEditor()),
+            TableColumn(field="min", title="Min", editor=NumberEditor()),
+            TableColumn(field="max", title="Max", editor=NumberEditor()),
+        ],
+        height=200,
+        width=350,
+        index_position=None,
+        editable=True,
+        auto_edit=True,
+    )
+
+    # start with `background` and `gauss` fit functions added
+    fitparams_add_dropdown_callback(types.SimpleNamespace(item="background"))
+    fitparams_add_dropdown_callback(types.SimpleNamespace(item="gauss"))
 
     fit_output_textinput = TextAreaInput(title="Fit results:", width=450, height=400)
 
@@ -385,34 +445,10 @@ def create():
 
     def _get_fit_params():
         return dict(
-            guess=[
-                centre_guess.value,
-                sigma_guess.value,
-                ampl_guess.value,
-                slope_guess.value,
-                offset_guess.value,
-            ],
-            vary=[
-                centre_vary.active,
-                sigma_vary.active,
-                ampl_vary.active,
-                slope_vary.active,
-                offset_vary.active,
-            ],
-            constraints_min=[
-                centre_min.value,
-                sigma_min.value,
-                ampl_min.value,
-                slope_min.value,
-                offset_min.value,
-            ],
-            constraints_max=[
-                centre_max.value,
-                sigma_max.value,
-                ampl_max.value,
-                slope_max.value,
-                offset_max.value,
-            ],
+            guess=fit_params["1"]["guess"] + fit_params["0"]["guess"],
+            vary=fit_params["1"]["vary"] + fit_params["0"]["vary"],
+            constraints_min=fit_params["1"]["min"] + fit_params["0"]["min"],
+            constraints_max=fit_params["1"]["max"] + fit_params["0"]["max"],
             numfit_min=integ_from.value,
             numfit_max=integ_to.value,
             binning=bin_size_spinner.value,
@@ -508,31 +544,9 @@ def create():
         row(peakfind_button, peakfind_all_button),
     )
 
-    div_1 = Div(text="Guess:")
-    div_2 = Div(text="Vary:")
-    div_3 = Div(text="Min:")
-    div_4 = Div(text="Max:")
-    div_5 = Div(text="Gauss Centre:", margin=[5, 5, -5, 5])
-    div_6 = Div(text="Gauss Sigma:", margin=[5, 5, -5, 5])
-    div_7 = Div(text="Gauss Ampl.:", margin=[5, 5, -5, 5])
-    div_8 = Div(text="Slope:", margin=[5, 5, -5, 5])
-    div_9 = Div(text="Offset:", margin=[5, 5, -5, 5])
     fitpeak_controls = row(
-        column(
-            Spacer(height=36),
-            div_1,
-            Spacer(height=12),
-            div_2,
-            Spacer(height=12),
-            div_3,
-            Spacer(height=12),
-            div_4,
-        ),
-        column(div_5, centre_guess, centre_vary, centre_min, centre_max),
-        column(div_6, sigma_guess, sigma_vary, sigma_min, sigma_max),
-        column(div_7, ampl_guess, ampl_vary, ampl_min, ampl_max),
-        column(div_8, slope_guess, slope_vary, slope_min, slope_max),
-        column(div_9, offset_guess, offset_vary, offset_min, offset_max),
+        column(fitparams_add_dropdown, fitparams_select, fitparams_remove_button),
+        fitparams_table,
         Spacer(width=20),
         column(
             row(integ_from, integ_to),
