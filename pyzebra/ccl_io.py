@@ -260,6 +260,7 @@ def export_comm(data, path, lorentz=False):
                     corr_factor = np.sin(gamma_angle) * np.cos(nu_angle)
 
                 area_n = np.abs(area_n * corr_factor)
+                area_s = np.abs(area_s * corr_factor)
 
             area_n_str = f"{area_n:>10.2f}"
             area_s_str = f"{area_s:>10.2f}"
