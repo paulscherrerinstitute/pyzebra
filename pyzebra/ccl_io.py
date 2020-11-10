@@ -55,6 +55,7 @@ META_VARS_FLOAT = (
     "s2hr",
     "s2hl",
 )
+
 META_UB_MATRIX = ("ub1j", "ub2j", "ub3j")
 
 CCL_FIRST_LINE = (
@@ -89,6 +90,8 @@ CCL_SECOND_LINE = (
     ("time", str),
     ("scan_type", str),
 )
+
+AREA_METHODS = ("fit_area", "int_area")
 
 
 def load_1D(filepath):
@@ -211,7 +214,7 @@ def parse_1D(fileobj, data_type):
         metadata["indices"] = "real"
 
     metadata["data_type"] = data_type
-    metadata["area_method"] = "fit"
+    metadata["area_method"] = AREA_METHODS[0]
 
     return {"meta": metadata, "scan": scan}
 
@@ -242,12 +245,9 @@ def export_comm(data, path, lorentz=False):
             k_str = f'{int(scan["k_index"]):{padding[1]}}'
             l_str = f'{int(scan["l_index"]):{padding[1]}}'
 
-            if data["meta"]["area_method"] == "fit":
-                area = scan["fit"]["fit_area"].n
-                sigma_str = f'{scan["fit"]["fit_area"].s:>10.2f}'
-            elif data["meta"]["area_method"] == "integ":
-                area = scan["fit"]["int_area"].n
-                sigma_str = f'{scan["fit"]["int_area"].s:>10.2f}'
+            area_method = data["meta"]["area_method"]
+            area_n = scan["fit"][area_method].n
+            area_s = scan["fit"][area_method].s
 
             # apply lorentz correction to area
             if lorentz:
@@ -259,12 +259,15 @@ def export_comm(data, path, lorentz=False):
                     nu_angle = np.deg2rad(scan["nu_angle"])
                     corr_factor = np.sin(gamma_angle) * np.cos(nu_angle)
 
-                area = np.abs(area * corr_factor)
+                area_n = np.abs(area_n * corr_factor)
 
-            area_str = f"{area:>10.2f}"
+            area_n_str = f"{area_n:>10.2f}"
+            area_s_str = f"{area_s:>10.2f}"
 
             ang_str = ""
             for angle, _ in CCL_ANGLES[zebra_mode]:
                 ang_str = ang_str + f"{scan[angle]:8}"
 
-            out_file.write(scan_str + h_str + k_str + l_str + area_str + sigma_str + ang_str + "\n")
+            out_file.write(
+                scan_str + h_str + k_str + l_str + area_n_str + area_s_str + ang_str + "\n"
+            )

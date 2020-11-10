@@ -43,6 +43,7 @@ from bokeh.models import (
 )
 
 import pyzebra
+from pyzebra.ccl_io import AREA_METHODS
 
 
 javaScript = """
@@ -476,10 +477,10 @@ def create():
     fit_button.on_click(fit_button_callback)
 
     def area_method_radiobutton_callback(_attr, _old, new):
-        det_data["meta"]["area_method"] = ("fit", "integ")[new]
+        det_data["meta"]["area_method"] = AREA_METHODS[new]
 
     area_method_radiobutton = RadioButtonGroup(
-        labels=["Fit", "Integral"], active=0, default_size=145
+        labels=["Fit area", "Int area"], active=0, default_size=145
     )
     area_method_radiobutton.on_change("active", area_method_radiobutton_callback)
 
