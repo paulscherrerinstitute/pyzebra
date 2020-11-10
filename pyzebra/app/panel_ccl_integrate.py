@@ -135,7 +135,7 @@ def create():
     append_upload_button.on_change("value", append_upload_button_callback)
 
     def _update_table():
-        num_of_peaks = [scan.get("num_of_peaks", 0) for scan in det_data["scan"].values()]
+        num_of_peaks = [len(scan.get("peak_indexes", [])) for scan in det_data["scan"].values()]
         fit_ok = [(1 if "fit" in scan else 0) for scan in det_data["scan"].values()]
         scan_table_source.data.update(peaks=num_of_peaks, fit=fit_ok)
 
@@ -148,7 +148,7 @@ def create():
 
         plot_scatter_source.data.update(x=x, y=y, y_upper=y + np.sqrt(y), y_lower=y - np.sqrt(y))
 
-        num_of_peaks = scan.get("num_of_peaks")
+        num_of_peaks = len(scan.get("peak_indexes", []))
         if num_of_peaks is not None and num_of_peaks > 0:
             peak_indexes = scan["peak_indexes"]
             if len(peak_indexes) == 1:
@@ -288,7 +288,6 @@ def create():
         if new is not None and not peak_pos_textinput_lock:
             scan = _get_selected_scan()
 
-            scan["num_of_peaks"] = 1
             peak_ind = (np.abs(scan["om"] - float(new))).argmin()
             scan["peak_indexes"] = np.array([peak_ind], dtype=np.int64)
             scan["peak_heights"] = np.array([scan["smooth_peaks"][peak_ind]])

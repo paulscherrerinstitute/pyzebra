@@ -29,11 +29,6 @@ def ccl_findpeaks(
             window_size - window size for savgol filter, must be odd positive integer
 
             poly_order =  order of the polynomial used in savgol filter, must be positive integer smaller than
-            window_size returns: dictionary with following structure:
-                                D{M34{  'num_of_peaks': 1,              #num of peaks
-                                        'peak_indexes': [20],           # index of peaks in omega array
-                                        'peak_heights': [90.],          # height of the peaks (if data vere smoothed
-                                                                        its the heigh of the peaks in smoothed data)
     """
     if not 0 <= int_threshold <= 1:
         int_threshold = 0.8
@@ -75,7 +70,6 @@ def ccl_findpeaks(
     peaks, properties = sc.signal.find_peaks(
         smooth_peaks, height=int_threshold * max(smooth_peaks), prominence=prominence
     )
-    scan["num_of_peaks"] = len(peaks)
     scan["peak_indexes"] = peaks
     scan["peak_heights"] = properties["peak_heights"]
     scan["smooth_peaks"] = smooth_peaks  # smoothed curve
