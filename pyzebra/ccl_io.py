@@ -229,10 +229,8 @@ def export_comm(data, path, lorentz=False):
     zebra_mode = data["meta"]["zebra_mode"]
     if data["meta"]["indices"] == "hkl":
         extension = ".comm"
-        padding = [6, 4]
-    elif data["meta"]["indices"] == "real":
+    else:  # data["meta"]["indices"] == "real":
         extension = ".incomm"
-        padding = [4, 6]
 
     with open(str(path + extension), "w") as out_file:
         for key, scan in data["scan"].items():
@@ -240,10 +238,13 @@ def export_comm(data, path, lorentz=False):
                 print("Scan skipped - no fit value for:", key)
                 continue
 
-            scan_str = f"{key:>{padding[0]}}"
-            h_str = f'{int(scan["h_index"]):{padding[1]}}'
-            k_str = f'{int(scan["k_index"]):{padding[1]}}'
-            l_str = f'{int(scan["l_index"]):{padding[1]}}'
+            scan_str = f"{key:6}"
+
+            h, k, l = scan["h_index"], scan["k_index"], scan["l_index"]
+            if data["meta"]["indices"] == "hkl":
+                hkl_str = f"{int(h):6}{int(k):6}{int(l):6}"
+            else:  # data["meta"]["indices"] == "real"
+                hkl_str = f"{h:6.2f}{k:6.2f}{l:6.2f}"
 
             area_method = data["meta"]["area_method"]
             area_n = scan["fit"][area_method].n
@@ -254,7 +255,7 @@ def export_comm(data, path, lorentz=False):
                 if zebra_mode == "bi":
                     twotheta_angle = np.deg2rad(scan["twotheta_angle"])
                     corr_factor = np.sin(twotheta_angle)
-                elif zebra_mode == "nb":
+                else:  # zebra_mode == "nb":
                     gamma_angle = np.deg2rad(scan["gamma_angle"])
                     nu_angle = np.deg2rad(scan["nu_angle"])
                     corr_factor = np.sin(gamma_angle) * np.cos(nu_angle)
@@ -262,13 +263,10 @@ def export_comm(data, path, lorentz=False):
                 area_n = np.abs(area_n * corr_factor)
                 area_s = np.abs(area_s * corr_factor)
 
-            area_n_str = f"{area_n:>10.2f}"
-            area_s_str = f"{area_s:>10.2f}"
+            area_str = f"{area_n:10.2f}{area_s:10.2f}"
 
             ang_str = ""
             for angle, _ in CCL_ANGLES[zebra_mode]:
                 ang_str = ang_str + f"{scan[angle]:8}"
 
-            out_file.write(
-                scan_str + h_str + k_str + l_str + area_n_str + area_s_str + ang_str + "\n"
-            )
+            out_file.write(scan_str + hkl_str + area_str + ang_str + "\n")
