@@ -126,9 +126,7 @@ def create():
             _, ext = os.path.splitext(append_upload_button.filename)
             append_data = pyzebra.parse_1D(file, ext)
 
-        added = pyzebra.add_dict(det_data, append_data)
-        scan_result = pyzebra.auto(pyzebra.scan_dict(added))
-        det_data = pyzebra.merge(added, added, scan_result)
+        pyzebra.unified_merge(det_data, append_data)
 
         _init_datatable()
 
