@@ -404,7 +404,7 @@ def create():
     colormap.on_change("value", colormap_callback)
     colormap.value = "plasma"
 
-    radio_button_group = RadioButtonGroup(labels=["nb", "nb_bi"], active=0)
+    radio_button_group = RadioButtonGroup(labels=["normal beam", "bisecting"], active=0)
 
     STEP = 1
     # ---- colormap auto toggle button
@@ -506,8 +506,8 @@ def create():
 
     def hkl_button_callback():
         index = index_spinner.value
-        setup_type = "nb_bi" if radio_button_group.active else "nb"
-        h, k, l = calculate_hkl(det_data, index, setup_type)
+        geometry = "bi" if radio_button_group.active else "nb"
+        h, k, l = calculate_hkl(det_data, index, geometry)
         image_source.data.update(h=[h], k=[k], l=[l])
 
     hkl_button = Button(label="Calculate hkl (slow)")
@@ -553,7 +553,8 @@ def create():
             proj_display_min_spinner,
         ),
     )
-    hkl_layout = column(radio_button_group, hkl_button)
+    geometry_div = Div(text="Geometry:", margin=[5, 5, -5, 5])
+    hkl_layout = column(column(geometry_div, radio_button_group), hkl_button)
     params_layout = row(magnetic_field_spinner, temperature_spinner)
 
     layout_controls = row(
@@ -586,7 +587,7 @@ def create():
     return Panel(child=tab_layout, title="hdf viewer")
 
 
-def calculate_hkl(det_data, index, setup_type="nb_bi"):
+def calculate_hkl(det_data, index, geometry):
     h = np.empty(shape=(IMAGE_H, IMAGE_W))
     k = np.empty(shape=(IMAGE_H, IMAGE_W))
     l = np.empty(shape=(IMAGE_H, IMAGE_W))
@@ -598,14 +599,14 @@ def calculate_hkl(det_data, index, setup_type="nb_bi"):
     nud = det_data["tlt_angle"]
     ub = det_data["UB"]
 
-    if setup_type == "nb_bi":
+    if geometry == "bi":
         ch = det_data["chi_angle"][index]
         ph = det_data["phi_angle"][index]
-    elif setup_type == "nb":
+    elif geometry == "nb":
         ch = 0
         ph = 0
     else:
-        raise ValueError(f"Unknown setup type '{setup_type}'")
+        raise ValueError(f"Unknown geometry type '{geometry}'")
 
     for xi in np.arange(IMAGE_W):
         for yi in np.arange(IMAGE_H):
