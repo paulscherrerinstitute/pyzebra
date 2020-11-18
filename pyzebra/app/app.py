@@ -9,6 +9,7 @@ from bokeh.models import Tabs, TextAreaInput
 import panel_ccl_integrate
 import panel_hdf_anatric
 import panel_hdf_viewer
+import panel_param_study
 
 
 doc = curdoc()
@@ -27,10 +28,11 @@ bokeh_log_textareainput = TextAreaInput(title="server output:", height=150)
 tab_hdf_viewer = panel_hdf_viewer.create()
 tab_hdf_anatric = panel_hdf_anatric.create()
 tab_ccl_integrate = panel_ccl_integrate.create()
+tab_param_study = panel_param_study.create()
 
 doc.add_root(
     column(
-        Tabs(tabs=[tab_hdf_viewer, tab_hdf_anatric, tab_ccl_integrate]),
+        Tabs(tabs=[tab_hdf_viewer, tab_hdf_anatric, tab_ccl_integrate, tab_param_study]),
         row(stdout_textareainput, bokeh_log_textareainput, sizing_mode="scale_both"),
     )
 )
