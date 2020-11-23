@@ -199,7 +199,8 @@ def parse_1D(fileobj, data_type):
         data_cols["phi_angle"] = metadata["phi"]
         data_cols["nu_angle"] = metadata["nu"]
 
-        scan[1] = dict(data_cols)
+        data_cols["scan_number"] = 1
+        scan[data_cols["scan_number"]] = dict(data_cols)
 
     else:
         print("Unknown file extention")
