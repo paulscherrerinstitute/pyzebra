@@ -6,4 +6,4 @@ from pyzebra.ccl_io import load_1D, parse_1D, export_comm
 from pyzebra.merge_function import unified_merge
 from pyzebra.xtal import *
 
-__version__ = "0.1.3"
+__version__ = "0.2.0"
