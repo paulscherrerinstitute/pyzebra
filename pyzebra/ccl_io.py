@@ -247,7 +247,7 @@ def export_comm(data, path, lorentz=False):
             if data["meta"]["indices"] == "hkl":
                 hkl_str = f"{int(h):6}{int(k):6}{int(l):6}"
             else:  # data["meta"]["indices"] == "real"
-                hkl_str = f"{h:6.2f}{k:6.2f}{l:6.2f}"
+                hkl_str = f"{h:8.4g}{k:8.4g}{l:8.4g}"
 
             area_method = data["meta"]["area_method"]
             area_n = scan["fit"][area_method].n

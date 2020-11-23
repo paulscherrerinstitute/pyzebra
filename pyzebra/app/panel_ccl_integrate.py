@@ -86,6 +86,8 @@ def create():
         scan_list = list(det_data["scan"].keys())
         hkl = [
             f'{int(m["h_index"])} {int(m["k_index"])} {int(m["l_index"])}'
+            if det_data["meta"]["indices"] == "hkl"
+            else f'{m["h_index"]} {m["k_index"]} {m["l_index"]}'
             for m in det_data["scan"].values()
         ]
         scan_table_source.data.update(
