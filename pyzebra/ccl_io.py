@@ -185,6 +185,8 @@ def parse_1D(fileobj, data_type):
         except (ValueError, IndexError):
             print("seems hkl is not in title")
 
+        data_cols["om"] = np.array(data_cols["om"])
+
         data_cols["temperature"] = metadata["temp"]
         try:
             data_cols["mag_field"] = metadata["mf"]

@@ -76,29 +76,24 @@ def create():
         for file in os.listdir(ccl_path):
             if file.endswith(".ccl"):
                 ccl_file_list.append((os.path.join(ccl_path, file), file))
-        ccl_file_select.options = ccl_file_list
-        ccl_file_select.value = ccl_file_list[0][0]
+        file_select.options = ccl_file_list
+        file_select.value = ccl_file_list[0][0]
 
-    proposal_textinput = TextInput(title="Enter proposal number:", default_size=145)
+    proposal_textinput = TextInput(title="Enter proposal number:", default_size=145, disabled=True)
     proposal_textinput.on_change("value", proposal_textinput_callback)
 
     def _init_datatable():
-        scan_list = list(det_data["scan"].keys())
-        hkl = [
-            f'{int(m["h_index"])} {int(m["k_index"])} {int(m["l_index"])}'
-            for m in det_data["scan"].values()
-        ]
         scan_table_source.data.update(
-            scan=scan_list,
-            hkl=hkl,
-            peaks=[0] * len(scan_list),
-            fit=[0] * len(scan_list),
-            export=[True] * len(scan_list),
+            file=list(det_data.keys()),
+            param=[""] * len(det_data),
+            peaks=[0] * len(det_data),
+            fit=[0] * len(det_data),
+            export=[True] * len(det_data),
         )
         scan_table_source.selected.indices = []
         scan_table_source.selected.indices = [0]
 
-    def ccl_file_select_callback(_attr, _old, new):
+    def file_select_callback(_attr, _old, new):
         nonlocal det_data
         with open(new) as file:
             _, ext = os.path.splitext(new)
@@ -106,38 +101,37 @@ def create():
 
         _init_datatable()
 
-    ccl_file_select = Select(title="Available .ccl files")
-    ccl_file_select.on_change("value", ccl_file_select_callback)
+    file_select = Select(title="Available .dat files", disabled=True)
+    file_select.on_change("value", file_select_callback)
 
     def upload_button_callback(_attr, _old, new):
         nonlocal det_data
-        with io.StringIO(base64.b64decode(new).decode()) as file:
-            _, ext = os.path.splitext(upload_button.filename)
-            det_data = pyzebra.parse_1D(file, ext)
+        det_data = {}
+        for f_str, f_name in zip(new, upload_button.filename):
+            with io.StringIO(base64.b64decode(f_str).decode()) as file:
+                _, ext = os.path.splitext(f_name)
+                det_data[f_name] = pyzebra.parse_1D(file, ext)
 
         _init_datatable()
 
-    upload_button = FileInput(accept=".ccl")
+    upload_button = FileInput(accept=".dat", multiple=True)
     upload_button.on_change("value", upload_button_callback)
 
     def append_upload_button_callback(_attr, _old, new):
         nonlocal det_data
-        with io.StringIO(base64.b64decode(new).decode()) as file:
-            _, ext = os.path.splitext(append_upload_button.filename)
-            append_data = pyzebra.parse_1D(file, ext)
-
-        added = pyzebra.add_dict(det_data, append_data)
-        scan_result = pyzebra.auto(pyzebra.scan_dict(added))
-        det_data = pyzebra.merge(added, added, scan_result)
+        for f_str, f_name in zip(new, append_upload_button.filename):
+            with io.StringIO(base64.b64decode(f_str).decode()) as file:
+                _, ext = os.path.splitext(f_name)
+                det_data[f_name] = pyzebra.parse_1D(file, ext)
 
         _init_datatable()
 
-    append_upload_button = FileInput(accept=".ccl,.dat")
+    append_upload_button = FileInput(accept=".dat", multiple=True)
     append_upload_button.on_change("value", append_upload_button_callback)
 
     def _update_table():
-        num_of_peaks = [len(scan.get("peak_indexes", [])) for scan in det_data["scan"].values()]
-        fit_ok = [(1 if "fit" in scan else 0) for scan in det_data["scan"].values()]
+        num_of_peaks = [len(scan["scan"][1].get("peak_indexes", [])) for scan in det_data.values()]
+        fit_ok = [(1 if "fit" in scan["scan"][1] else 0) for scan in det_data.values()]
         scan_table_source.data.update(peaks=num_of_peaks, fit=fit_ok)
 
     def _update_plot(scan):
@@ -153,11 +147,11 @@ def create():
         if num_of_peaks is not None and num_of_peaks > 0:
             peak_indexes = scan["peak_indexes"]
             if len(peak_indexes) == 1:
-                peak_pos_textinput.value = str(scan["om"][peak_indexes[0]])
+                peak_pos_textinput.value = str(x[peak_indexes[0]])
             else:
-                peak_pos_textinput.value = str([scan["om"][ind] for ind in peak_indexes])
+                peak_pos_textinput.value = str([x[ind] for ind in peak_indexes])
 
-            plot_peak_source.data.update(x=scan["om"][peak_indexes], y=scan["peak_heights"])
+            plot_peak_source.data.update(x=x[peak_indexes], y=scan["peak_heights"])
             plot_line_smooth_source.data.update(x=x, y=scan["smooth_peaks"])
         else:
             peak_pos_textinput.value = None
@@ -261,29 +255,31 @@ def create():
             # skip unnecessary update caused by selection drop
             return
 
-        _update_plot(det_data["scan"][scan_table_source.data["scan"][new[0]]])
+        f_name = scan_table_source.data["file"][new[0]]
+        _update_plot(det_data[f_name]["scan"][1])
 
-    scan_table_source = ColumnDataSource(dict(scan=[], hkl=[], peaks=[], fit=[], export=[]))
+    scan_table_source = ColumnDataSource(dict(file=[], param=[], peaks=[], fit=[], export=[]))
     scan_table = DataTable(
         source=scan_table_source,
         columns=[
-            TableColumn(field="scan", title="scan"),
-            TableColumn(field="hkl", title="hkl"),
-            TableColumn(field="peaks", title="Peaks"),
-            TableColumn(field="fit", title="Fit"),
-            TableColumn(field="export", title="Export", editor=CheckboxEditor()),
+            TableColumn(field="file", title="file", width=150),
+            TableColumn(field="param", title="param", width=50),
+            TableColumn(field="peaks", title="Peaks", width=50),
+            TableColumn(field="fit", title="Fit", width=50),
+            TableColumn(field="export", title="Export", editor=CheckboxEditor(), width=50),
         ],
-        width=250,
+        width=350,
         index_position=None,
         editable=True,
+        fit_columns=False,
     )
 
     scan_table_source.selected.on_change("indices", scan_table_select_callback)
 
     def _get_selected_scan():
         selected_index = scan_table_source.selected.indices[0]
-        selected_scan_id = scan_table_source.data["scan"][selected_index]
-        return det_data["scan"][selected_scan_id]
+        selected_file_name = scan_table_source.data["file"][selected_index]
+        return det_data[selected_file_name]["scan"][1]
 
     def peak_pos_textinput_callback(_attr, _old, new):
         if new is not None and not peak_pos_textinput_lock:
@@ -331,7 +327,6 @@ def create():
             ("Pseudo Voigt1", "pseudovoigt1"),
         ],
         default_size=145,
-        disabled=True,
     )
     fitparams_add_dropdown.on_click(fitparams_add_dropdown_callback)
 
@@ -366,7 +361,7 @@ def create():
 
             fitparams_select.value = []
 
-    fitparams_remove_button = Button(label="Remove fit function", default_size=145, disabled=True)
+    fitparams_remove_button = Button(label="Remove fit function", default_size=145)
     fitparams_remove_button.on_click(fitparams_remove_button_callback)
 
     def fitparams_factory(function):
@@ -424,8 +419,8 @@ def create():
 
     def peakfind_all_button_callback():
         peakfind_params = _get_peakfind_params()
-        for scan in det_data["scan"].values():
-            pyzebra.ccl_findpeaks(scan, **peakfind_params)
+        for dat_file in det_data.values():
+            pyzebra.ccl_findpeaks(dat_file["scan"][1], **peakfind_params)
 
         _update_table()
         _update_plot(_get_selected_scan())
@@ -456,9 +451,9 @@ def create():
 
     def fit_all_button_callback():
         fit_params = _get_fit_params()
-        for scan in det_data["scan"].values():
+        for dat_file in det_data.values():
             # fit_params are updated inplace within `fitccl`
-            pyzebra.fitccl(scan, **deepcopy(fit_params))
+            pyzebra.fitccl(dat_file["scan"][1], **deepcopy(fit_params))
 
         _update_plot(_get_selected_scan())
         _update_table()
@@ -480,15 +475,17 @@ def create():
         det_data["meta"]["area_method"] = AREA_METHODS[new]
 
     area_method_radiobutton = RadioButtonGroup(
-        labels=["Fit area", "Int area"], active=0, default_size=145
+        labels=["Fit area", "Int area"], active=0, default_size=145, disabled=True
     )
     area_method_radiobutton.on_change("active", area_method_radiobutton_callback)
 
     bin_size_spinner = Spinner(title="Bin size:", value=1, low=1, step=1, default_size=145)
 
-    lorentz_toggle = Toggle(label="Lorentz Correction", default_size=145)
+    lorentz_toggle = Toggle(label="Lorentz Correction", default_size=145, disabled=True)
 
-    preview_output_textinput = TextAreaInput(title="Export file preview:", width=450, height=400)
+    preview_output_textinput = TextAreaInput(
+        title="Export file preview:", width=450, height=400, disabled=True
+    )
 
     def preview_output_button_callback():
         if det_data["meta"]["indices"] == "hkl":
@@ -507,7 +504,7 @@ def create():
             with open(f"{temp_file}{ext}") as f:
                 preview_output_textinput.value = f.read()
 
-    preview_output_button = Button(label="Preview file", default_size=220)
+    preview_output_button = Button(label="Preview file", default_size=220, disabled=True)
     preview_output_button.on_click(preview_output_button_callback)
 
     def export_results(det_data):
@@ -533,7 +530,9 @@ def create():
         cont, ext = export_results(det_data)
         js_data.data.update(cont=[cont], ext=[ext])
 
-    save_button = Button(label="Download file", button_type="success", default_size=220)
+    save_button = Button(
+        label="Download file", button_type="success", default_size=220, disabled=True
+    )
     save_button.on_click(save_button_callback)
     save_button.js_on_click(CustomJS(args={"js_data": js_data}, code=javaScript))
 
@@ -558,10 +557,10 @@ def create():
 
     export_layout = column(preview_output_textinput, row(preview_output_button, save_button))
 
-    upload_div = Div(text="Or upload .ccl file:")
-    append_upload_div = Div(text="append extra .ccl/.dat files:")
+    upload_div = Div(text="Or upload .dat files:")
+    append_upload_div = Div(text="append extra .dat files:")
     tab_layout = column(
-        row(proposal_textinput, ccl_file_select),
+        row(proposal_textinput, file_select),
         row(
             column(Spacer(height=5), upload_div),
             upload_button,
