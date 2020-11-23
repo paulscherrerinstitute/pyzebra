@@ -23,7 +23,7 @@ requirements:
     - scipy
     - pandas
     - h5py
-    - bokeh =2.3
+    - bokeh =2.2
     - matplotlib
     - numba
     - lmfit
