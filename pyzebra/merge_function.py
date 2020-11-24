@@ -175,6 +175,9 @@ def merge_dups(dictionary, angles):
 def add_scan(dict1, dict2, scan_to_add):
     max_scan = np.max(list(dict1["scan"]))
     dict1["scan"][max_scan + 1] = dict2["scan"][scan_to_add]
+    if dict1.get("extra_meta") is None:
+        dict1["extra_meta"] = {}
+    dict1["extra_meta"][max_scan + 1] = dict2["meta"]
     del dict2["scan"][scan_to_add]
 
 
@@ -220,7 +223,7 @@ def process(dict1, dict2, angles, precision):
 """
     1. check for bisecting or normal beam geometry in data files; select stt, om, chi, phi for bisecting; select stt, om, nu for normal beam
     2. in the ccl files, check for identical stt, chi and nu within 0.1 degree, and, at the same time, for identical om and phi within 0.05 degree;
-    3. in the dat files, check for identical stt, chi and nu within 0.1 degree, and, at the same time, 
+    3. in the dat files, check for identical stt, chi and nu within 0.1 degree, and, at the same time,
     for identical phi within 0.05 degree, and, at the same time, for identical om within 5 degree."""
 
 

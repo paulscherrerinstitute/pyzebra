@@ -84,9 +84,20 @@ def create():
 
     def _init_datatable():
         scan_list = list(det_data["scan"].keys())
+        file_list = []
+        extra_meta = det_data.get("extra_meta", {})
+        for scan_id in scan_list:
+            if scan_id in extra_meta:
+                f_path = extra_meta[scan_id]["original_filename"]
+            else:
+                f_path = det_data["meta"]["original_filename"]
+
+            _, f_name = os.path.split(f_path)
+            file_list.append(f_name)
+
         scan_table_source.data.update(
-            # file=list(det_data.keys()),
-            file=scan_list,
+            file=file_list,
+            scan=scan_list,
             param=[""] * len(scan_list),
             peaks=[0] * len(scan_list),
             fit=[0] * len(scan_list),
@@ -261,19 +272,20 @@ def create():
             # skip unnecessary update caused by selection drop
             return
 
-        _update_plot(det_data["scan"][scan_table_source.data["file"][new[0]]])
+        _update_plot(det_data["scan"][scan_table_source.data["scan"][new[0]]])
 
-    scan_table_source = ColumnDataSource(dict(file=[], param=[], peaks=[], fit=[], export=[]))
+    scan_table_source = ColumnDataSource(dict(file=[], scan=[], param=[], peaks=[], fit=[], export=[]))
     scan_table = DataTable(
         source=scan_table_source,
         columns=[
             TableColumn(field="file", title="file", width=150),
+            TableColumn(field="scan", title="scan", width=50),
             TableColumn(field="param", title="param", width=50),
             TableColumn(field="peaks", title="Peaks", width=50),
             TableColumn(field="fit", title="Fit", width=50),
             TableColumn(field="export", title="Export", editor=CheckboxEditor(), width=50),
         ],
-        width=350,
+        width=400,
         index_position=None,
         editable=True,
         fit_columns=False,
@@ -283,7 +295,7 @@ def create():
 
     def _get_selected_scan():
         selected_index = scan_table_source.selected.indices[0]
-        selected_scan_id = scan_table_source.data["file"][selected_index]
+        selected_scan_id = scan_table_source.data["scan"][selected_index]
         return det_data["scan"][selected_scan_id]
 
     def peak_pos_textinput_callback(_attr, _old, new):
@@ -499,7 +511,7 @@ def create():
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_file = temp_dir + "/temp"
             export_data = deepcopy(det_data)
-            for s, export in zip(scan_table_source.data["file"], scan_table_source.data["export"]):
+            for s, export in zip(scan_table_source.data["scan"], scan_table_source.data["export"]):
                 if not export:
                     del export_data["scan"][s]
             pyzebra.export_comm(export_data, temp_file, lorentz=lorentz_toggle.active)
@@ -519,7 +531,7 @@ def create():
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_file = temp_dir + "/temp"
             export_data = deepcopy(det_data)
-            for s, export in zip(scan_table_source.data["file"], scan_table_source.data["export"]):
+            for s, export in zip(scan_table_source.data["scan"], scan_table_source.data["export"]):
                 if not export:
                     del export_data["scan"][s]
             pyzebra.export_comm(export_data, temp_file, lorentz=lorentz_toggle.active)
