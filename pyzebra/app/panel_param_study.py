@@ -22,6 +22,7 @@ from bokeh.models import (
     Grid,
     Line,
     LinearAxis,
+    MultiLine,
     MultiSelect,
     NumberEditor,
     Panel,
@@ -256,6 +257,40 @@ def create():
     plot.add_tools(PanTool(), WheelZoomTool(), ResetTool())
     plot.toolbar.logo = None
 
+    # Overview plot
+    ov_plot = Plot(x_range=DataRange1d(), y_range=DataRange1d(), plot_height=400, plot_width=700)
+
+    ov_plot.add_layout(LinearAxis(axis_label="Omega"), place="below")
+
+    ov_plot.add_layout(Grid(dimension=0, ticker=BasicTicker()))
+
+    ov_plot_mline_source = ColumnDataSource(dict(xs=[[0]], ys=[[0]], param=[0]))
+    ov_plot.add_glyph(ov_plot_mline_source, MultiLine(xs="xs", ys="ys"))
+
+    ov_plot.add_tools(PanTool(), WheelZoomTool(), ResetTool())
+    ov_plot.toolbar.logo = None
+
+    def plot_ov_button_callback():
+        xs = []
+        ys = []
+        param = []
+        ind_sort = np.argsort([float(val) if val else 0 for val in scan_table_source.data["param"]])
+        for i, ind in enumerate(ind_sort):
+            p = scan_table_source.data["param"][ind]
+            if p:
+                s = scan_table_source.data["scan"][ind]
+                xs.append(np.array(det_data["scan"][s]["om"]))
+                ys.append(np.array(det_data["scan"][s]["Counts"]) + i * 10)
+                param.append(float(p))
+
+        if xs and ys:
+            ov_plot_mline_source.data.update(xs=xs, ys=ys, param=param)
+        else:
+            ov_plot_mline_source.data.update(xs=[[0]], ys=[[0]], param=[0])
+
+    plot_ov_button = Button(label="Plot overview", default_size=145)
+    plot_ov_button.on_click(plot_ov_button_callback)
+
     # Scan select
     def scan_table_select_callback(_attr, old, new):
         if not new:
@@ -274,7 +309,9 @@ def create():
 
         _update_plot(det_data["scan"][scan_table_source.data["scan"][new[0]]])
 
-    scan_table_source = ColumnDataSource(dict(file=[], scan=[], param=[], peaks=[], fit=[], export=[]))
+    scan_table_source = ColumnDataSource(
+        dict(file=[], scan=[], param=[], peaks=[], fit=[], export=[])
+    )
     scan_table = DataTable(
         source=scan_table_source,
         columns=[
@@ -580,7 +617,14 @@ def create():
             column(Spacer(height=5), append_upload_div),
             append_upload_button,
         ),
-        row(scan_table, plot, Spacer(width=30), fit_output_textinput, export_layout),
+        row(
+            scan_table,
+            plot,
+            column(ov_plot, plot_ov_button),
+            Spacer(width=30),
+            fit_output_textinput,
+            export_layout,
+        ),
         row(findpeak_controls, Spacer(width=30), fitpeak_controls),
     )
 
