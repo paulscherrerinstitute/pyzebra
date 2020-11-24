@@ -502,13 +502,20 @@ def create():
             for s, export in zip(scan_table_source.data["scan"], scan_table_source.data["export"]):
                 if not export:
                     del export_data["scan"][s]
-            pyzebra.export_comm(export_data, temp_file, lorentz=lorentz_toggle.active)
+            pyzebra.export_comm(
+                export_data,
+                temp_file,
+                lorentz=lorentz_toggle.active,
+                hkl_precision=int(hkl_precision_select.value),
+            )
 
             with open(f"{temp_file}{ext}") as f:
                 preview_output_textinput.value = f.read()
 
     preview_output_button = Button(label="Preview file", default_size=220)
     preview_output_button.on_click(preview_output_button_callback)
+
+    hkl_precision_select = Select(options=["2", "3", "4"], value="2", default_size=220)
 
     def export_results(det_data):
         if det_data["meta"]["indices"] == "hkl":
@@ -522,7 +529,12 @@ def create():
             for s, export in zip(scan_table_source.data["scan"], scan_table_source.data["export"]):
                 if not export:
                     del export_data["scan"][s]
-            pyzebra.export_comm(export_data, temp_file, lorentz=lorentz_toggle.active)
+            pyzebra.export_comm(
+                export_data,
+                temp_file,
+                lorentz=lorentz_toggle.active,
+                hkl_precision=int(hkl_precision_select.value),
+            )
 
             with open(f"{temp_file}{ext}") as f:
                 output_content = f.read()
@@ -556,7 +568,10 @@ def create():
         ),
     )
 
-    export_layout = column(preview_output_textinput, row(preview_output_button, save_button))
+    export_layout = column(
+        preview_output_textinput,
+        row(column(preview_output_button, hkl_precision_select), save_button),
+    )
 
     upload_div = Div(text="Or upload .ccl file:")
     append_upload_div = Div(text="append extra .ccl/.dat files:")

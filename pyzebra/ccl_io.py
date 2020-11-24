@@ -222,7 +222,7 @@ def parse_1D(fileobj, data_type):
     return {"meta": metadata, "scan": scan}
 
 
-def export_comm(data, path, lorentz=False):
+def export_comm(data, path, lorentz=False, hkl_precision=2):
     """exports data in the *.comm format
     :param lorentz: perform Lorentz correction
     :param path: path to file + name
@@ -247,7 +247,7 @@ def export_comm(data, path, lorentz=False):
             if data["meta"]["indices"] == "hkl":
                 hkl_str = f"{int(h):6}{int(k):6}{int(l):6}"
             else:  # data["meta"]["indices"] == "real"
-                hkl_str = f"{h:8.4g}{k:8.4g}{l:8.4g}"
+                hkl_str = f"{h:8.{hkl_precision}f}{k:8.{hkl_precision}f}{l:8.{hkl_precision}f}"
 
             area_method = data["meta"]["area_method"]
             area_n = scan["fit"][area_method].n
