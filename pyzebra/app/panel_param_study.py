@@ -83,12 +83,14 @@ def create():
     proposal_textinput.on_change("value", proposal_textinput_callback)
 
     def _init_datatable():
+        scan_list = list(det_data["scan"].keys())
         scan_table_source.data.update(
-            file=list(det_data.keys()),
-            param=[""] * len(det_data),
-            peaks=[0] * len(det_data),
-            fit=[0] * len(det_data),
-            export=[True] * len(det_data),
+            # file=list(det_data.keys()),
+            file=scan_list,
+            param=[""] * len(scan_list),
+            peaks=[0] * len(scan_list),
+            fit=[0] * len(scan_list),
+            export=[True] * len(scan_list),
         )
         scan_table_source.selected.indices = []
         scan_table_source.selected.indices = [0]
@@ -110,7 +112,11 @@ def create():
         for f_str, f_name in zip(new, upload_button.filename):
             with io.StringIO(base64.b64decode(f_str).decode()) as file:
                 _, ext = os.path.splitext(f_name)
-                det_data[f_name] = pyzebra.parse_1D(file, ext)
+                if det_data:
+                    append_data = pyzebra.parse_1D(file, ext)
+                    pyzebra.unified_merge(det_data, append_data)
+                else:
+                    det_data = pyzebra.parse_1D(file, ext)
 
         _init_datatable()
 
@@ -118,11 +124,11 @@ def create():
     upload_button.on_change("value", upload_button_callback)
 
     def append_upload_button_callback(_attr, _old, new):
-        nonlocal det_data
         for f_str, f_name in zip(new, append_upload_button.filename):
             with io.StringIO(base64.b64decode(f_str).decode()) as file:
                 _, ext = os.path.splitext(f_name)
-                det_data[f_name] = pyzebra.parse_1D(file, ext)
+                append_data = pyzebra.parse_1D(file, ext)
+                pyzebra.unified_merge(det_data, append_data)
 
         _init_datatable()
 
@@ -130,8 +136,8 @@ def create():
     append_upload_button.on_change("value", append_upload_button_callback)
 
     def _update_table():
-        num_of_peaks = [len(scan["scan"][1].get("peak_indexes", [])) for scan in det_data.values()]
-        fit_ok = [(1 if "fit" in scan["scan"][1] else 0) for scan in det_data.values()]
+        num_of_peaks = [len(scan.get("peak_indexes", [])) for scan in det_data["scan"].values()]
+        fit_ok = [(1 if "fit" in scan else 0) for scan in det_data["scan"].values()]
         scan_table_source.data.update(peaks=num_of_peaks, fit=fit_ok)
 
     def _update_plot(scan):
@@ -255,8 +261,7 @@ def create():
             # skip unnecessary update caused by selection drop
             return
 
-        f_name = scan_table_source.data["file"][new[0]]
-        _update_plot(det_data[f_name]["scan"][1])
+        _update_plot(det_data["scan"][scan_table_source.data["file"][new[0]]])
 
     scan_table_source = ColumnDataSource(dict(file=[], param=[], peaks=[], fit=[], export=[]))
     scan_table = DataTable(
@@ -278,8 +283,8 @@ def create():
 
     def _get_selected_scan():
         selected_index = scan_table_source.selected.indices[0]
-        selected_file_name = scan_table_source.data["file"][selected_index]
-        return det_data[selected_file_name]["scan"][1]
+        selected_scan_id = scan_table_source.data["file"][selected_index]
+        return det_data["scan"][selected_scan_id]
 
     def peak_pos_textinput_callback(_attr, _old, new):
         if new is not None and not peak_pos_textinput_lock:
@@ -419,8 +424,8 @@ def create():
 
     def peakfind_all_button_callback():
         peakfind_params = _get_peakfind_params()
-        for dat_file in det_data.values():
-            pyzebra.ccl_findpeaks(dat_file["scan"][1], **peakfind_params)
+        for scan in det_data["scan"].values():
+            pyzebra.ccl_findpeaks(scan, **peakfind_params)
 
         _update_table()
         _update_plot(_get_selected_scan())
@@ -451,9 +456,9 @@ def create():
 
     def fit_all_button_callback():
         fit_params = _get_fit_params()
-        for dat_file in det_data.values():
+        for scan in det_data["scan"].values():
             # fit_params are updated inplace within `fitccl`
-            pyzebra.fitccl(dat_file["scan"][1], **deepcopy(fit_params))
+            pyzebra.fitccl(scan, **deepcopy(fit_params))
 
         _update_plot(_get_selected_scan())
         _update_table()
@@ -475,17 +480,15 @@ def create():
         det_data["meta"]["area_method"] = AREA_METHODS[new]
 
     area_method_radiobutton = RadioButtonGroup(
-        labels=["Fit area", "Int area"], active=0, default_size=145, disabled=True
+        labels=["Fit area", "Int area"], active=0, default_size=145,
     )
     area_method_radiobutton.on_change("active", area_method_radiobutton_callback)
 
     bin_size_spinner = Spinner(title="Bin size:", value=1, low=1, step=1, default_size=145)
 
-    lorentz_toggle = Toggle(label="Lorentz Correction", default_size=145, disabled=True)
+    lorentz_toggle = Toggle(label="Lorentz Correction", default_size=145)
 
-    preview_output_textinput = TextAreaInput(
-        title="Export file preview:", width=450, height=400, disabled=True
-    )
+    preview_output_textinput = TextAreaInput(title="Export file preview:", width=450, height=400)
 
     def preview_output_button_callback():
         if det_data["meta"]["indices"] == "hkl":
@@ -496,7 +499,7 @@ def create():
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_file = temp_dir + "/temp"
             export_data = deepcopy(det_data)
-            for s, export in zip(scan_table_source.data["scan"], scan_table_source.data["export"]):
+            for s, export in zip(scan_table_source.data["file"], scan_table_source.data["export"]):
                 if not export:
                     del export_data["scan"][s]
             pyzebra.export_comm(export_data, temp_file, lorentz=lorentz_toggle.active)
@@ -504,7 +507,7 @@ def create():
             with open(f"{temp_file}{ext}") as f:
                 preview_output_textinput.value = f.read()
 
-    preview_output_button = Button(label="Preview file", default_size=220, disabled=True)
+    preview_output_button = Button(label="Preview file", default_size=220)
     preview_output_button.on_click(preview_output_button_callback)
 
     def export_results(det_data):
@@ -516,7 +519,7 @@ def create():
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_file = temp_dir + "/temp"
             export_data = deepcopy(det_data)
-            for s, export in zip(scan_table_source.data["scan"], scan_table_source.data["export"]):
+            for s, export in zip(scan_table_source.data["file"], scan_table_source.data["export"]):
                 if not export:
                     del export_data["scan"][s]
             pyzebra.export_comm(export_data, temp_file, lorentz=lorentz_toggle.active)
@@ -530,9 +533,7 @@ def create():
         cont, ext = export_results(det_data)
         js_data.data.update(cont=[cont], ext=[ext])
 
-    save_button = Button(
-        label="Download file", button_type="success", default_size=220, disabled=True
-    )
+    save_button = Button(label="Download file", button_type="success", default_size=220)
     save_button.on_click(save_button_callback)
     save_button.js_on_click(CustomJS(args={"js_data": js_data}, code=javaScript))
 
