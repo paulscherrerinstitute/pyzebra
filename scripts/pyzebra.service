@@ -1,0 +1,10 @@
+[Unit]
+Description=pyzebra web server
+
+[Service]
+Type=simple
+ExecStart=/bin/bash /usr/local/sbin/pyzebra-start.sh
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
