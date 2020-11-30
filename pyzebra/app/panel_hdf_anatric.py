@@ -401,9 +401,11 @@ def create():
     )
 
     async def update_config():
-        config.save_as("debug.xml")
-        with open("debug.xml") as f_config:
-            output_config.value = f_config.read()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_file = temp_dir + "/debug.xml"
+            config.save_as(temp_file)
+            with open(temp_file) as f_config:
+                output_config.value = f_config.read()
 
     doc.add_periodic_callback(update_config, 1000)
 
