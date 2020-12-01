@@ -64,6 +64,7 @@ setTimeout(function() {
 """
 
 PROPOSAL_PATH = "/afs/psi.ch/project/sinqdata/2020/zebra/"
+PLOT_TYPES = ("single scan", "overview")
 
 
 def color_palette(n_colors):
@@ -158,7 +159,20 @@ def create():
         fit_ok = [(1 if "fit" in scan else 0) for scan in det_data["scan"].values()]
         scan_table_source.data.update(peaks=num_of_peaks, fit=fit_ok)
 
-    def _update_plot(scan):
+    def _update_plot():
+        # change transparency of glyphs according to the plot type selection
+        for plot_type in PLOT_TYPES:
+            visible = plot_type == plot_type_select.value
+            for glyph in plot.select(plot_type):
+                if hasattr(glyph, "visible"):
+                    glyph.visible = visible
+                elif hasattr(glyph, "line_alpha"):
+                    glyph.line_alpha = int(visible)
+
+        _update_single_scan_plot(_get_selected_scan())
+        _update_overview()
+
+    def _update_single_scan_plot(scan):
         nonlocal peak_pos_textinput_lock
         peak_pos_textinput_lock = True
 
@@ -227,6 +241,19 @@ def create():
             numfit_min_span.location = None
             numfit_max_span.location = None
 
+    def _update_overview():
+        xs = []
+        ys = []
+        param = []
+        for ind, p in enumerate(scan_table_source.data["param"]):
+            if p:
+                s = scan_table_source.data["scan"][ind]
+                xs.append(np.array(det_data["scan"][s]["om"]))
+                ys.append(np.array(det_data["scan"][s]["Counts"]))
+                param.append(float(p))
+
+        plot_mline_source.data.update(xs=xs, ys=ys, param=param, color=color_palette(len(xs)))
+
     # Main plot
     plot = Plot(x_range=DataRange1d(), y_range=DataRange1d(), plot_height=400, plot_width=700)
 
@@ -237,67 +264,69 @@ def create():
     plot.add_layout(Grid(dimension=1, ticker=BasicTicker()))
 
     plot_scatter_source = ColumnDataSource(dict(x=[0], y=[0], y_upper=[0], y_lower=[0]))
-    plot.add_glyph(plot_scatter_source, Scatter(x="x", y="y", line_color="steelblue"))
-    plot.add_layout(Whisker(source=plot_scatter_source, base="x", upper="y_upper", lower="y_lower"))
+    plot.add_glyph(
+        plot_scatter_source, Scatter(x="x", y="y", line_color="steelblue", name="single scan")
+    )
+    plot.add_layout(
+        Whisker(
+            source=plot_scatter_source,
+            base="x",
+            upper="y_upper",
+            lower="y_lower",
+            name="single scan",
+        )
+    )
 
     plot_line_smooth_source = ColumnDataSource(dict(x=[0], y=[0]))
     plot.add_glyph(
-        plot_line_smooth_source, Line(x="x", y="y", line_color="steelblue", line_dash="dashed")
+        plot_line_smooth_source,
+        Line(x="x", y="y", line_color="steelblue", line_dash="dashed", name="single scan"),
     )
 
     plot_gauss_source = ColumnDataSource(dict(x=[0], y=[0]))
-    plot.add_glyph(plot_gauss_source, Line(x="x", y="y", line_color="red", line_dash="dashed"))
+    plot.add_glyph(
+        plot_gauss_source,
+        Line(x="x", y="y", line_color="red", line_dash="dashed", name="single scan"),
+    )
 
     plot_bkg_source = ColumnDataSource(dict(x=[0], y=[0]))
-    plot.add_glyph(plot_bkg_source, Line(x="x", y="y", line_color="green", line_dash="dashed"))
+    plot.add_glyph(
+        plot_bkg_source,
+        Line(x="x", y="y", line_color="green", line_dash="dashed", name="single scan"),
+    )
 
     plot_peak_source = ColumnDataSource(dict(x=[], y=[]))
-    plot.add_glyph(plot_peak_source, Asterisk(x="x", y="y", size=10, line_color="red"))
+    plot.add_glyph(
+        plot_peak_source, Asterisk(x="x", y="y", size=10, line_color="red", name="single scan")
+    )
 
-    numfit_min_span = Span(location=None, dimension="height", line_dash="dashed")
+    numfit_min_span = Span(
+        location=None, dimension="height", line_dash="dashed", name="single scan"
+    )
     plot.add_layout(numfit_min_span)
 
-    numfit_max_span = Span(location=None, dimension="height", line_dash="dashed")
+    numfit_max_span = Span(
+        location=None, dimension="height", line_dash="dashed", name="single scan"
+    )
     plot.add_layout(numfit_max_span)
 
     plot.add_tools(PanTool(), WheelZoomTool(), ResetTool())
     plot.toolbar.logo = None
 
-    # Overview plot
-    ov_plot = Plot(x_range=DataRange1d(), y_range=DataRange1d(), plot_height=400, plot_width=700)
+    # Overview multilines
+    plot_mline_source = ColumnDataSource(dict(xs=[], ys=[], param=[], color=[]))
+    plot.add_glyph(
+        plot_mline_source, MultiLine(xs="xs", ys="ys", line_color="color", name="overview")
+    )
 
-    ov_plot.add_layout(LinearAxis(axis_label="Counts"), place="left")
-    ov_plot.add_layout(LinearAxis(axis_label="Omega"), place="below")
+    # Plot type select
+    def plot_type_select_callback(_attr, _old, _new):
+        _update_plot()
 
-    ov_plot.add_layout(Grid(dimension=0, ticker=BasicTicker()))
-    ov_plot.add_layout(Grid(dimension=1, ticker=BasicTicker()))
-
-    ov_plot_mline_source = ColumnDataSource(dict(xs=[[0]], ys=[[0]], param=[0], color=[""]))
-    ov_plot.add_glyph(ov_plot_mline_source, MultiLine(xs="xs", ys="ys", line_color="color"))
-
-    ov_plot.add_tools(PanTool(), WheelZoomTool(), ResetTool())
-    ov_plot.toolbar.logo = None
-
-    def plot_ov_button_callback():
-        xs = []
-        ys = []
-        param = []
-        for ind, p in enumerate(scan_table_source.data["param"]):
-            if p:
-                s = scan_table_source.data["scan"][ind]
-                xs.append(np.array(det_data["scan"][s]["om"]))
-                ys.append(np.array(det_data["scan"][s]["Counts"]))
-                param.append(p)
-
-        if xs and ys:
-            ov_plot_mline_source.data.update(
-                xs=xs, ys=ys, param=param, color=color_palette(len(xs))
-            )
-        else:
-            ov_plot_mline_source.data.update(xs=[[0]], ys=[[0]], param=[0], color=[""])
-
-    plot_ov_button = Button(label="Plot overview", default_size=145)
-    plot_ov_button.on_click(plot_ov_button_callback)
+    plot_type_select = Select(
+        title="Plot type:", options=["single scan", "overview"], value="single scan"
+    )
+    plot_type_select.on_change("value", plot_type_select_callback)
 
     # Scan select
     def scan_table_select_callback(_attr, old, new):
@@ -315,7 +344,7 @@ def create():
             # skip unnecessary update caused by selection drop
             return
 
-        _update_plot(det_data["scan"][scan_table_source.data["scan"][new[0]]])
+        _update_plot()
 
     scan_table_source = ColumnDataSource(
         dict(file=[], scan=[], param=[], peaks=[], fit=[], export=[])
@@ -351,7 +380,7 @@ def create():
             scan["peak_indexes"] = np.array([peak_ind], dtype=np.int64)
             scan["peak_heights"] = np.array([scan["smooth_peaks"][peak_ind]])
             _update_table()
-            _update_plot(scan)
+            _update_plot()
 
     peak_pos_textinput = TextInput(title="Peak position:", default_size=145)
     peak_pos_textinput.on_change("value", peak_pos_textinput_callback)
@@ -485,7 +514,7 @@ def create():
             pyzebra.ccl_findpeaks(scan, **peakfind_params)
 
         _update_table()
-        _update_plot(_get_selected_scan())
+        _update_plot()
 
     peakfind_all_button = Button(label="Peak Find All", button_type="primary", default_size=145)
     peakfind_all_button.on_click(peakfind_all_button_callback)
@@ -495,7 +524,7 @@ def create():
         pyzebra.ccl_findpeaks(scan, **_get_peakfind_params())
 
         _update_table()
-        _update_plot(scan)
+        _update_plot()
 
     peakfind_button = Button(label="Peak Find Current", default_size=145)
     peakfind_button.on_click(peakfind_button_callback)
@@ -517,7 +546,7 @@ def create():
             # fit_params are updated inplace within `fitccl`
             pyzebra.fitccl(scan, **deepcopy(fit_params))
 
-        _update_plot(_get_selected_scan())
+        _update_plot()
         _update_table()
 
     fit_all_button = Button(label="Fit All", button_type="primary", default_size=145)
@@ -527,7 +556,7 @@ def create():
         scan = _get_selected_scan()
         pyzebra.fitccl(scan, **_get_fit_params())
 
-        _update_plot(scan)
+        _update_plot()
         _update_table()
 
     fit_button = Button(label="Fit Current", default_size=145)
@@ -627,8 +656,7 @@ def create():
         ),
         row(
             scan_table,
-            plot,
-            column(ov_plot, plot_ov_button),
+            column(row(plot_type_select), plot),
             Spacer(width=30),
             fit_output_textinput,
             export_layout,
