@@ -79,15 +79,15 @@ def create():
     js_data = ColumnDataSource(data=dict(cont=[], ext=[]))
 
     def proposal_textinput_callback(_attr, _old, new):
-        ccl_path = os.path.join(PROPOSAL_PATH, new.strip())
-        ccl_file_list = []
-        for file in os.listdir(ccl_path):
-            if file.endswith(".ccl"):
-                ccl_file_list.append((os.path.join(ccl_path, file), file))
-        file_select.options = ccl_file_list
-        file_select.value = ccl_file_list[0][0]
+        full_proposal_path = os.path.join(PROPOSAL_PATH, new.strip())
+        dat_file_list = []
+        for file in os.listdir(full_proposal_path):
+            if file.endswith(".dat"):
+                dat_file_list.append((os.path.join(full_proposal_path, file), file))
+        file_select.options = dat_file_list
+        file_select.value = dat_file_list[0][0]
 
-    proposal_textinput = TextInput(title="Enter proposal number:", default_size=145, disabled=True)
+    proposal_textinput = TextInput(title="Enter proposal number:", default_size=145)
     proposal_textinput.on_change("value", proposal_textinput_callback)
 
     def _init_datatable():
@@ -114,16 +114,33 @@ def create():
         scan_table_source.selected.indices = []
         scan_table_source.selected.indices = [0]
 
-    def file_select_callback(_attr, _old, new):
+    def file_select_callback(_attr, _old, _new):
+        pass
+
+    file_select = Select(title="Available .dat files")
+    file_select.on_change("value", file_select_callback)
+
+    def file_open_button_callback():
         nonlocal det_data
-        with open(new) as file:
-            _, ext = os.path.splitext(new)
+        with open(file_select.value) as file:
+            _, ext = os.path.splitext(file_select.value)
             det_data = pyzebra.parse_1D(file, ext)
 
         _init_datatable()
 
-    file_select = Select(title="Available .dat files", disabled=True)
-    file_select.on_change("value", file_select_callback)
+    file_open_button = Button(label="Open", default_size=100)
+    file_open_button.on_click(file_open_button_callback)
+
+    def file_append_button_callback():
+        with open(file_select.value) as file:
+            _, ext = os.path.splitext(file_select.value)
+            append_data = pyzebra.parse_1D(file, ext)
+            pyzebra.add_dict(det_data, append_data)
+
+        _init_datatable()
+
+    file_append_button = Button(label="Append", default_size=100)
+    file_append_button.on_click(file_append_button_callback)
 
     def upload_button_callback(_attr, _old, new):
         nonlocal det_data
@@ -647,7 +664,11 @@ def create():
     upload_div = Div(text="Or upload .dat files:")
     append_upload_div = Div(text="append extra .dat files:")
     tab_layout = column(
-        row(proposal_textinput, file_select),
+        row(
+            proposal_textinput,
+            file_select,
+            column(Spacer(height=19), row(file_open_button, file_append_button)),
+        ),
         row(
             column(Spacer(height=5), upload_div),
             upload_button,
