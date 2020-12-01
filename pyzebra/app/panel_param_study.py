@@ -1,5 +1,6 @@
 import base64
 import io
+import itertools
 import os
 import tempfile
 import types
@@ -42,10 +43,10 @@ from bokeh.models import (
     WheelZoomTool,
     Whisker,
 )
+from bokeh.palettes import Category10
 
 import pyzebra
 from pyzebra.ccl_io import AREA_METHODS
-
 
 javaScript = """
 setTimeout(function() {
@@ -63,6 +64,11 @@ setTimeout(function() {
 """
 
 PROPOSAL_PATH = "/afs/psi.ch/project/sinqdata/2020/zebra/"
+
+
+def color_palette(n_colors):
+    palette = itertools.cycle(Category10[10])
+    return list(itertools.islice(palette, n_colors))
 
 
 def create():
@@ -260,12 +266,14 @@ def create():
     # Overview plot
     ov_plot = Plot(x_range=DataRange1d(), y_range=DataRange1d(), plot_height=400, plot_width=700)
 
+    ov_plot.add_layout(LinearAxis(axis_label="Counts"), place="left")
     ov_plot.add_layout(LinearAxis(axis_label="Omega"), place="below")
 
     ov_plot.add_layout(Grid(dimension=0, ticker=BasicTicker()))
+    ov_plot.add_layout(Grid(dimension=1, ticker=BasicTicker()))
 
-    ov_plot_mline_source = ColumnDataSource(dict(xs=[[0]], ys=[[0]], param=[0]))
-    ov_plot.add_glyph(ov_plot_mline_source, MultiLine(xs="xs", ys="ys"))
+    ov_plot_mline_source = ColumnDataSource(dict(xs=[[0]], ys=[[0]], param=[0], color=[""]))
+    ov_plot.add_glyph(ov_plot_mline_source, MultiLine(xs="xs", ys="ys", line_color="color"))
 
     ov_plot.add_tools(PanTool(), WheelZoomTool(), ResetTool())
     ov_plot.toolbar.logo = None
@@ -274,19 +282,19 @@ def create():
         xs = []
         ys = []
         param = []
-        ind_sort = np.argsort([float(val) if val else 0 for val in scan_table_source.data["param"]])
-        for i, ind in enumerate(ind_sort):
-            p = scan_table_source.data["param"][ind]
+        for ind, p in enumerate(scan_table_source.data["param"]):
             if p:
                 s = scan_table_source.data["scan"][ind]
                 xs.append(np.array(det_data["scan"][s]["om"]))
-                ys.append(np.array(det_data["scan"][s]["Counts"]) + i * 10)
-                param.append(float(p))
+                ys.append(np.array(det_data["scan"][s]["Counts"]))
+                param.append(p)
 
         if xs and ys:
-            ov_plot_mline_source.data.update(xs=xs, ys=ys, param=param)
+            ov_plot_mline_source.data.update(
+                xs=xs, ys=ys, param=param, color=color_palette(len(xs))
+            )
         else:
-            ov_plot_mline_source.data.update(xs=[[0]], ys=[[0]], param=[0])
+            ov_plot_mline_source.data.update(xs=[[0]], ys=[[0]], param=[0], color=[""])
 
     plot_ov_button = Button(label="Plot overview", default_size=145)
     plot_ov_button.on_click(plot_ov_button_callback)
