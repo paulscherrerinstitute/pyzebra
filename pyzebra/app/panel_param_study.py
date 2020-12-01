@@ -132,7 +132,7 @@ def create():
                 _, ext = os.path.splitext(f_name)
                 if det_data:
                     append_data = pyzebra.parse_1D(file, ext)
-                    pyzebra.unified_merge(det_data, append_data)
+                    pyzebra.add_dict(det_data, append_data)
                 else:
                     det_data = pyzebra.parse_1D(file, ext)
 
@@ -146,7 +146,7 @@ def create():
             with io.StringIO(base64.b64decode(f_str).decode()) as file:
                 _, ext = os.path.splitext(f_name)
                 append_data = pyzebra.parse_1D(file, ext)
-                pyzebra.unified_merge(det_data, append_data)
+                pyzebra.add_dict(det_data, append_data)
 
         _init_datatable()
 

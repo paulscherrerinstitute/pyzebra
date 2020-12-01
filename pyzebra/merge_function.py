@@ -280,11 +280,16 @@ def add_dict(dict1, dict2):
     new_filenames = np.arange(
         max_measurement_dict1 + 1, max_measurement_dict1 + 1 + len(dict2["scan"])
     )
+
+    if dict1.get("extra_meta") is None:
+        dict1["extra_meta"] = {}
+
     new_meta_name = "meta" + str(dict2["meta"]["original_filename"])
     if new_meta_name not in dict1:
         for keys, name in zip(dict2["scan"], new_filenames):
             dict2["scan"][keys]["file_of_origin"] = str(dict2["meta"]["original_filename"])
             dict1["scan"][name] = dict2["scan"][keys]
+            dict1["extra_meta"][name] = dict2["meta"]
 
         dict1[new_meta_name] = dict2["meta"]
     else:
