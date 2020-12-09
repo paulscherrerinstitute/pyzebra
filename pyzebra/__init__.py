@@ -6,4 +6,4 @@ from pyzebra.h5 import *
 from pyzebra.merge_function import add_dict, unified_merge
 from pyzebra.xtal import *
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
