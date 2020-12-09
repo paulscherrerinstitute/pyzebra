@@ -37,6 +37,7 @@ from bokeh.models import (
     Span,
     Spinner,
     TableColumn,
+    Tabs,
     TextAreaInput,
     TextInput,
     Toggle,
@@ -177,15 +178,6 @@ def create():
         scan_table_source.data.update(peaks=num_of_peaks, fit=fit_ok)
 
     def _update_plot():
-        # change transparency of glyphs according to the plot type selection
-        for plot_type in PLOT_TYPES:
-            visible = plot_type == plot_type_select.value
-            for glyph in plot.select(plot_type):
-                if hasattr(glyph, "visible"):
-                    glyph.visible = visible
-                elif hasattr(glyph, "line_alpha"):
-                    glyph.line_alpha = int(visible)
-
         _update_single_scan_plot(_get_selected_scan())
         _update_overview()
 
@@ -269,7 +261,7 @@ def create():
                 ys.append(np.array(det_data["scan"][s]["Counts"]))
                 param.append(float(p))
 
-        plot_mline_source.data.update(xs=xs, ys=ys, param=param, color=color_palette(len(xs)))
+        ov_plot_mline_source.data.update(xs=xs, ys=ys, param=param, color=color_palette(len(xs)))
 
     # Main plot
     plot = Plot(x_range=DataRange1d(), y_range=DataRange1d(), plot_height=400, plot_width=700)
@@ -330,20 +322,27 @@ def create():
     plot.add_tools(PanTool(), WheelZoomTool(), ResetTool())
     plot.toolbar.logo = None
 
-    # Overview multilines
-    plot_mline_source = ColumnDataSource(dict(xs=[], ys=[], param=[], color=[]))
-    plot.add_glyph(
-        plot_mline_source, MultiLine(xs="xs", ys="ys", line_color="color", name="overview")
+    # Overview multilines plot
+    ov_plot = Plot(x_range=DataRange1d(), y_range=DataRange1d(), plot_height=400, plot_width=700)
+
+    ov_plot.add_layout(LinearAxis(axis_label="Counts"), place="left")
+    ov_plot.add_layout(LinearAxis(axis_label="Omega"), place="below")
+
+    ov_plot.add_layout(Grid(dimension=0, ticker=BasicTicker()))
+    ov_plot.add_layout(Grid(dimension=1, ticker=BasicTicker()))
+
+    ov_plot_mline_source = ColumnDataSource(dict(xs=[], ys=[], param=[], color=[]))
+    ov_plot.add_glyph(
+        ov_plot_mline_source, MultiLine(xs="xs", ys="ys", line_color="color", name="overview")
     )
 
-    # Plot type select
-    def plot_type_select_callback(_attr, _old, _new):
-        _update_plot()
+    ov_plot.add_tools(PanTool(), WheelZoomTool(), ResetTool())
+    ov_plot.toolbar.logo = None
 
-    plot_type_select = Select(
-        title="Plot type:", options=["single scan", "overview"], value="single scan"
+    # Plot tabs
+    plots = Tabs(
+        tabs=[Panel(child=plot, title="single scan"), Panel(child=ov_plot, title="overview")]
     )
-    plot_type_select.on_change("value", plot_type_select_callback)
 
     # Scan select
     def scan_table_select_callback(_attr, old, new):
@@ -382,7 +381,12 @@ def create():
         fit_columns=False,
     )
 
+    def scan_table_source_callback(_attr, _old, _new):
+        if scan_table_source.selected.indices:
+            _update_plot()
+
     scan_table_source.selected.on_change("indices", scan_table_select_callback)
+    scan_table_source.on_change("data", scan_table_source_callback)
 
     def _get_selected_scan():
         selected_index = scan_table_source.selected.indices[0]
@@ -675,13 +679,7 @@ def create():
             column(Spacer(height=5), append_upload_div),
             append_upload_button,
         ),
-        row(
-            scan_table,
-            column(row(plot_type_select), plot),
-            Spacer(width=30),
-            fit_output_textinput,
-            export_layout,
-        ),
+        row(scan_table, plots, Spacer(width=30), fit_output_textinput, export_layout),
         row(findpeak_controls, Spacer(width=30), fitpeak_controls),
     )
 
