@@ -42,10 +42,23 @@ import pyzebra
 IMAGE_W = 256
 IMAGE_H = 128
 
+PROPOSAL_PATH = "/afs/psi.ch/project/sinqdata/2020/zebra/"
 
 def create():
     det_data = {}
     roi_selection = {}
+
+    def proposal_textinput_callback(_attr, _old, new):
+        full_proposal_path = os.path.join(PROPOSAL_PATH, new.strip())
+        file_list = []
+        for file in os.listdir(full_proposal_path):
+            if file.endswith(".hdf"):
+                file_list.append((os.path.join(full_proposal_path, file), file))
+        filelist.options = file_list
+        filelist.value = file_list[0][0]
+
+    proposal_textinput = TextInput(title="Enter proposal number:", default_size=145)
+    proposal_textinput.on_change("value", proposal_textinput_callback)
 
     def upload_button_callback(_attr, _old, new):
         with io.StringIO(base64.b64decode(new).decode()) as file:
@@ -148,7 +161,7 @@ def create():
         update_image(0)
         update_overview_plot()
 
-    filelist = Select()
+    filelist = Select(title="Available .hdf files:")
     filelist.on_change("value", filelist_callback)
 
     def index_spinner_callback(_attr, _old, new):
@@ -575,10 +588,11 @@ def create():
         ),
     )
 
-    upload_div = Div(text="Upload .cami file:")
+    upload_div = Div(text="Or upload .cami file:")
     tab_layout = row(
         column(
-            row(column(Spacer(height=5), upload_div), upload_button, filelist),
+            row(proposal_textinput, filelist),
+            row(column(Spacer(height=5), upload_div), upload_button),
             layout_overview,
             layout_controls,
         ),
