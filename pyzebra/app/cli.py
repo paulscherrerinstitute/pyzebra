@@ -40,7 +40,7 @@ def main():
     parser.add_argument(
         "--anatric-path",
         type=str,
-        default="/afs/psi.ch/project/sinq/rhel7/bin/anatric",
+        default=None,
         help="path to anatric executable",
     )
 
