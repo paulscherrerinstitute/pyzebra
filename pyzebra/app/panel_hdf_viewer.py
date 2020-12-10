@@ -94,7 +94,7 @@ def create():
             temperature_spinner.value = None
 
         gamma, nu = calculate_pol(det_data, index)
-        omega = np.ones((IMAGE_H, IMAGE_W)) * det_data["rot_angle"][index]
+        omega = np.ones((IMAGE_H, IMAGE_W)) * det_data["variable"][index]
         image_source.data.update(gamma=[gamma], nu=[nu], omega=[omega])
 
     def update_overview_plot():
@@ -126,10 +126,10 @@ def create():
             overview_plot_y_image_source.data.update(y=[0], dh=[n_im])
 
         elif frame_button_group.active == 1:  # Omega
-            overview_plot_x.axis[1].axis_label = "Omega"
-            overview_plot_y.axis[1].axis_label = "Omega"
+            overview_plot_x.axis[1].axis_label = det_data["variable_name"]
+            overview_plot_y.axis[1].axis_label = det_data["variable_name"]
 
-            om = det_data["rot_angle"]
+            om = det_data["variable"]
             om_start = om[0]
             om_end = (om[-1] - om[0]) * n_im / (n_im - 1)
             overview_plot_x_image_source.data.update(y=[om_start], dh=[om_end])
@@ -363,7 +363,7 @@ def create():
     def frame_button_group_callback(_active):
         update_overview_plot()
 
-    frame_button_group = RadioButtonGroup(labels=["Frames", "Omega"], active=0)
+    frame_button_group = RadioButtonGroup(labels=["Frames", "Variable Angle"], active=0)
     frame_button_group.on_click(frame_button_group_callback)
 
     roi_avg_plot = Plot(
