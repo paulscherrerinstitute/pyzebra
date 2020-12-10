@@ -58,7 +58,7 @@ setTimeout(function() {
     link.click();
     window.URL.revokeObjectURL(url);
     document.body.removeChild(link);
-}, 500);
+}, 3000);
 """
 
 PROPOSAL_PATH = "/afs/psi.ch/project/sinqdata/2020/zebra/"
