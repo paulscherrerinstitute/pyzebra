@@ -30,6 +30,7 @@ from bokeh.models import (
     Spacer,
     Spinner,
     TextAreaInput,
+    TextInput,
     Title,
     Toggle,
     WheelZoomTool,
@@ -141,6 +142,9 @@ def create():
 
         index_spinner.value = 0
         index_spinner.high = det_data["data"].shape[0] - 1
+
+        geometry_textinput.value = det_data["zebra_mode"]
+
         update_image(0)
         update_overview_plot()
 
@@ -404,8 +408,6 @@ def create():
     colormap.on_change("value", colormap_callback)
     colormap.value = "plasma"
 
-    radio_button_group = RadioButtonGroup(labels=["normal beam", "bisecting"], active=0)
-
     STEP = 1
     # ---- colormap auto toggle button
     def auto_toggle_callback(state):
@@ -506,8 +508,7 @@ def create():
 
     def hkl_button_callback():
         index = index_spinner.value
-        geometry = "bi" if radio_button_group.active else "nb"
-        h, k, l = calculate_hkl(det_data, index, geometry)
+        h, k, l = calculate_hkl(det_data, index)
         image_source.data.update(h=[h], k=[k], l=[l])
 
     hkl_button = Button(label="Calculate hkl (slow)")
@@ -541,6 +542,7 @@ def create():
         title="Magnetic field:", format="0.00", width=145, disabled=True
     )
     temperature_spinner = Spinner(title="Temperature:", format="0.00", width=145, disabled=True)
+    geometry_textinput = TextInput(title="Geometry:", disabled=True)
 
     # Final layout
     layout_image = column(gridplot([[proj_v, None], [plot, proj_h]], merge_tools=False))
@@ -553,8 +555,7 @@ def create():
             proj_display_min_spinner,
         ),
     )
-    geometry_div = Div(text="Geometry:", margin=[5, 5, -5, 5])
-    hkl_layout = column(column(geometry_div, radio_button_group), hkl_button)
+    hkl_layout = column(geometry_textinput, hkl_button)
     params_layout = row(magnetic_field_spinner, temperature_spinner)
 
     layout_controls = row(
@@ -587,7 +588,7 @@ def create():
     return Panel(child=tab_layout, title="hdf viewer")
 
 
-def calculate_hkl(det_data, index, geometry):
+def calculate_hkl(det_data, index):
     h = np.empty(shape=(IMAGE_H, IMAGE_W))
     k = np.empty(shape=(IMAGE_H, IMAGE_W))
     l = np.empty(shape=(IMAGE_H, IMAGE_W))
@@ -598,11 +599,12 @@ def calculate_hkl(det_data, index, geometry):
     om = det_data["rot_angle"][index]
     nud = det_data["tlt_angle"]
     ub = det_data["UB"]
+    geometry = det_data["zebra_mode"]
 
-    if geometry == "bi":
+    if geometry == "bisecting":
         ch = det_data["chi_angle"][index]
         ph = det_data["phi_angle"][index]
-    elif geometry == "nb":
+    elif geometry == "normal beam":
         ch = 0
         ph = 0
     else:
