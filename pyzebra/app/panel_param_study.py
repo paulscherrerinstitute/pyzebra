@@ -44,7 +44,8 @@ from bokeh.models import (
     WheelZoomTool,
     Whisker,
 )
-from bokeh.palettes import Category10
+from bokeh.palettes import Category10, Turbo256
+from bokeh.transform import linear_cmap
 
 import pyzebra
 from pyzebra.ccl_io import AREA_METHODS
@@ -253,14 +254,21 @@ def create():
         xs = []
         ys = []
         param = []
+        x = []
+        y = []
+        par = []
         for ind, p in enumerate(scan_table_source.data["param"]):
             if p:
                 s = scan_table_source.data["scan"][ind]
                 xs.append(np.array(det_data["scan"][s]["om"]))
+                x.extend(det_data["scan"][s]["om"])
                 ys.append(np.array(det_data["scan"][s]["Counts"]))
+                y.extend([float(p)] * len(det_data["scan"][s]["om"]))
                 param.append(float(p))
+                par.extend(det_data["scan"][s]["Counts"])
 
         ov_plot_mline_source.data.update(xs=xs, ys=ys, param=param, color=color_palette(len(xs)))
+        ov_param_plot_scatter_source.data.update(x=x, y=y, param=par)
 
     # Main plot
     plot = Plot(x_range=DataRange1d(), y_range=DataRange1d(), plot_height=400, plot_width=700)
@@ -273,9 +281,7 @@ def create():
 
     plot_scatter_source = ColumnDataSource(dict(x=[0], y=[0], y_upper=[0], y_lower=[0]))
     plot.add_glyph(plot_scatter_source, Scatter(x="x", y="y", line_color="steelblue"))
-    plot.add_layout(
-        Whisker(source=plot_scatter_source, base="x", upper="y_upper", lower="y_lower")
-    )
+    plot.add_layout(Whisker(source=plot_scatter_source, base="x", upper="y_upper", lower="y_lower"))
 
     plot_line_smooth_source = ColumnDataSource(dict(x=[0], y=[0]))
     plot.add_glyph(
@@ -319,9 +325,34 @@ def create():
     ov_plot.add_tools(PanTool(), WheelZoomTool(), ResetTool())
     ov_plot.toolbar.logo = None
 
+    # Overview perams plot
+    ov_param_plot = Plot(
+        x_range=DataRange1d(), y_range=DataRange1d(), plot_height=400, plot_width=700
+    )
+
+    ov_param_plot.add_layout(LinearAxis(axis_label="Param"), place="left")
+    ov_param_plot.add_layout(LinearAxis(axis_label="Omega"), place="below")
+
+    ov_param_plot.add_layout(Grid(dimension=0, ticker=BasicTicker()))
+    ov_param_plot.add_layout(Grid(dimension=1, ticker=BasicTicker()))
+
+    ov_param_plot_scatter_source = ColumnDataSource(dict(x=[], y=[], param=[]))
+    mapper = linear_cmap(field_name="param", palette=Turbo256, low=0, high=50)
+    ov_param_plot.add_glyph(
+        ov_param_plot_scatter_source,
+        Scatter(x="x", y="y", line_color=mapper, fill_color=mapper, size=10),
+    )
+
+    ov_param_plot.add_tools(PanTool(), WheelZoomTool(), ResetTool())
+    ov_param_plot.toolbar.logo = None
+
     # Plot tabs
     plots = Tabs(
-        tabs=[Panel(child=plot, title="single scan"), Panel(child=ov_plot, title="overview")]
+        tabs=[
+            Panel(child=plot, title="single scan"),
+            Panel(child=ov_plot, title="overview"),
+            Panel(child=ov_param_plot, title="overview map"),
+        ]
     )
 
     # Scan select
