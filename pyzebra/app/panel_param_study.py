@@ -65,7 +65,6 @@ setTimeout(function() {
 """
 
 PROPOSAL_PATH = "/afs/psi.ch/project/sinqdata/2020/zebra/"
-PLOT_TYPES = ("single scan", "overview")
 
 
 def color_palette(n_colors):
@@ -273,50 +272,33 @@ def create():
     plot.add_layout(Grid(dimension=1, ticker=BasicTicker()))
 
     plot_scatter_source = ColumnDataSource(dict(x=[0], y=[0], y_upper=[0], y_lower=[0]))
-    plot.add_glyph(
-        plot_scatter_source, Scatter(x="x", y="y", line_color="steelblue", name="single scan")
-    )
+    plot.add_glyph(plot_scatter_source, Scatter(x="x", y="y", line_color="steelblue"))
     plot.add_layout(
-        Whisker(
-            source=plot_scatter_source,
-            base="x",
-            upper="y_upper",
-            lower="y_lower",
-            name="single scan",
-        )
+        Whisker(source=plot_scatter_source, base="x", upper="y_upper", lower="y_lower")
     )
 
     plot_line_smooth_source = ColumnDataSource(dict(x=[0], y=[0]))
     plot.add_glyph(
-        plot_line_smooth_source,
-        Line(x="x", y="y", line_color="steelblue", line_dash="dashed", name="single scan"),
+        plot_line_smooth_source, Line(x="x", y="y", line_color="steelblue", line_dash="dashed"),
     )
 
     plot_gauss_source = ColumnDataSource(dict(x=[0], y=[0]))
     plot.add_glyph(
-        plot_gauss_source,
-        Line(x="x", y="y", line_color="red", line_dash="dashed", name="single scan"),
+        plot_gauss_source, Line(x="x", y="y", line_color="red", line_dash="dashed"),
     )
 
     plot_bkg_source = ColumnDataSource(dict(x=[0], y=[0]))
     plot.add_glyph(
-        plot_bkg_source,
-        Line(x="x", y="y", line_color="green", line_dash="dashed", name="single scan"),
+        plot_bkg_source, Line(x="x", y="y", line_color="green", line_dash="dashed"),
     )
 
     plot_peak_source = ColumnDataSource(dict(x=[], y=[]))
-    plot.add_glyph(
-        plot_peak_source, Asterisk(x="x", y="y", size=10, line_color="red", name="single scan")
-    )
+    plot.add_glyph(plot_peak_source, Asterisk(x="x", y="y", size=10, line_color="red"))
 
-    numfit_min_span = Span(
-        location=None, dimension="height", line_dash="dashed", name="single scan"
-    )
+    numfit_min_span = Span(location=None, dimension="height", line_dash="dashed")
     plot.add_layout(numfit_min_span)
 
-    numfit_max_span = Span(
-        location=None, dimension="height", line_dash="dashed", name="single scan"
-    )
+    numfit_max_span = Span(location=None, dimension="height", line_dash="dashed")
     plot.add_layout(numfit_max_span)
 
     plot.add_tools(PanTool(), WheelZoomTool(), ResetTool())
@@ -332,9 +314,7 @@ def create():
     ov_plot.add_layout(Grid(dimension=1, ticker=BasicTicker()))
 
     ov_plot_mline_source = ColumnDataSource(dict(xs=[], ys=[], param=[], color=[]))
-    ov_plot.add_glyph(
-        ov_plot_mline_source, MultiLine(xs="xs", ys="ys", line_color="color", name="overview")
-    )
+    ov_plot.add_glyph(ov_plot_mline_source, MultiLine(xs="xs", ys="ys", line_color="color"))
 
     ov_plot.add_tools(PanTool(), WheelZoomTool(), ResetTool())
     ov_plot.toolbar.logo = None
