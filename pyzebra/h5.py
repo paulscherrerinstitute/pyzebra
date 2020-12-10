@@ -52,7 +52,10 @@ def read_detector_data(filepath):
 
         det_data = {"data": data}
 
-        det_data["zebra_mode"] = h5f.get("/entry1/zebra_mode", "nb")
+        if "/entry1/zebra_mode" in h5f:
+            det_data["zebra_mode"] = h5f["/entry1/zebra_mode"][0].decode()
+        else:
+            det_data["zebra_mode"] = "nb"
 
         # om, sometimes ph
         if det_data["zebra_mode"] == "nb":
