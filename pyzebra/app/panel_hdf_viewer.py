@@ -94,7 +94,7 @@ def create():
             temperature_spinner.value = None
 
         gamma, nu = calculate_pol(det_data, index)
-        omega = np.ones((IMAGE_H, IMAGE_W)) * det_data["variable"][index]
+        omega = np.ones((IMAGE_H, IMAGE_W)) * det_data["rot_angle"][index]
         image_source.data.update(gamma=[gamma], nu=[nu], omega=[omega])
 
     def update_overview_plot():
@@ -125,15 +125,15 @@ def create():
             overview_plot_x_image_source.data.update(y=[0], dh=[n_im])
             overview_plot_y_image_source.data.update(y=[0], dh=[n_im])
 
-        elif frame_button_group.active == 1:  # Omega
+        elif frame_button_group.active == 1:  # Variable angle
             overview_plot_x.axis[1].axis_label = det_data["variable_name"]
             overview_plot_y.axis[1].axis_label = det_data["variable_name"]
 
-            om = det_data["variable"]
-            om_start = om[0]
-            om_end = (om[-1] - om[0]) * n_im / (n_im - 1)
-            overview_plot_x_image_source.data.update(y=[om_start], dh=[om_end])
-            overview_plot_y_image_source.data.update(y=[om_start], dh=[om_end])
+            var = det_data["variable"]
+            var_start = var[0]
+            var_end = (var[-1] - var[0]) * n_im / (n_im - 1)
+            overview_plot_x_image_source.data.update(y=[var_start], dh=[var_end])
+            overview_plot_y_image_source.data.update(y=[var_start], dh=[var_end])
 
     def filelist_callback(_attr, _old, new):
         nonlocal det_data
