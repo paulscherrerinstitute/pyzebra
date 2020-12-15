@@ -73,8 +73,11 @@ def create():
                 check=True,
             )
 
-            with open(os.path.join(temp_dir, "spind.txt")) as f_out:
-                output_textarea.value = f_out.readlines()
+            try:
+                with open(os.path.join(temp_dir, "spind.txt")) as f_out:
+                    output_textarea.value = f_out.readlines()
+            except FileNotFoundError:
+                print("No results from spind")
 
     process_button = Button(label="Process", button_type="primary")
     process_button.on_click(process_button_callback)
