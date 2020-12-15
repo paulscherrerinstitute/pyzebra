@@ -75,7 +75,11 @@ def create():
 
             try:
                 with open(os.path.join(temp_dir, "spind.txt")) as f_out:
-                    output_textarea.value = f_out.readlines()
+                    full_out = ""
+                    for line in f_out:
+                        ub_matrix = np.inv(np.transpose(list(map(float, line.split()[-9:]))))
+                        full_out = full_out + str(ub_matrix)
+                    output_textarea.value = full_out
             except FileNotFoundError:
                 print("No results from spind")
 
