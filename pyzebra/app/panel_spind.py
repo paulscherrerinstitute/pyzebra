@@ -118,7 +118,7 @@ def prepare_event_file(export_filename, roi_dict, path_prefix=""):
     maxfev = 100000
     with open(export_filename, "w") as f:
         for file, rois in roi_dict.items():
-            dat = pyzebra.read_detector_data(path_prefix + file)
+            dat = pyzebra.read_detector_data(path_prefix + file + ".hdf")
 
             # here is assumed that only omega_angle can vary
             sttC = dat["pol_angle"][0]
