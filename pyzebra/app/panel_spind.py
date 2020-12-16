@@ -1,4 +1,4 @@
-import json
+import ast
 import math
 import os
 import subprocess
@@ -30,7 +30,7 @@ def create():
             os.mkdir(temp_peak_list_dir)
             temp_event_file = os.path.join(temp_peak_list_dir, "event-0.txt")
             temp_hkl_file = os.path.join(temp_dir, "hkl.h5")
-            roi_dict = json.loads(selection_list.value)
+            roi_dict = ast.literal_eval(selection_list.value)
 
             subprocess.run(
                 [
