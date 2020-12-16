@@ -127,17 +127,22 @@ def prepare_event_file(export_filename, roi_dict, path_prefix=""):
         for file, rois in roi_dict.items():
             dat = pyzebra.read_detector_data(path_prefix + file + ".hdf")
 
-            # here is assumed that only omega_angle can vary
-            sttC = dat["pol_angle"][0]
-            om = dat["rot_angle"]
-            nuC = dat["tlt_angle"][0]
+            wave = dat["wave"]
             ddist = dat["ddist"]
+
+            pol_angle = dat["pol_angle"][0]
+            rot_angle = dat["rot_angle"][0]
+            tlt_angle = dat["tlt_angle"][0]
+            chi_angle = dat["chi_angle"][0]
+            phi_angle = dat["phi_angle"][0]
+
+            var_angle = dat["variable"]
+            var_angle_name = dat["variable_name"]
 
             for roi in rois:
                 x0, xN, y0, yN, fr0, frN = roi
                 data_roi = dat["data"][fr0:frN, y0:yN, x0:xN]
 
-                # omega fit Here one should change to any rot_angle, i.e. phi
                 cnts = np.sum(data_roi, axis=(1, 2))
                 coeff, _ = curve_fit(gauss, range(len(cnts)), cnts, p0=p0, maxfev=maxfev)
 
@@ -146,30 +151,36 @@ def prepare_event_file(export_filename, roi_dict, path_prefix=""):
                 snr_cnts = np.where(sd == 0, 0, m / sd)
 
                 frC = fr0 + coeff[1]
-                omF = om[math.floor(frC)]
-                omC = om[math.ceil(frC)]
+                var_F = var_angle[math.floor(frC)]
+                var_C = var_angle[math.ceil(frC)]
                 frStep = frC - math.floor(frC)
-                omStep = omC - omF
-                omP = omF + omStep * frStep
-                Int = coeff[1] * abs(coeff[2] * omStep) * math.sqrt(2) * math.sqrt(np.pi)
+                var_step = var_C - var_F
+                var_p = var_F + var_step * frStep
 
-                # gamma fit
+                if var_angle_name == "pol_angle":
+                    pol_angle = var_p
+                elif var_angle_name == "rot_angle":
+                    rot_angle = var_p
+                elif var_angle_name == "tlt_angle":
+                    tlt_angle = var_p
+                elif var_angle_name == "chi_angle":
+                    chi_angle = var_p
+                elif var_angle_name == "phi_angle":
+                    phi_angle = var_p
+
+                intensity = coeff[1] * abs(coeff[2] * var_step) * math.sqrt(2) * math.sqrt(np.pi)
+
                 projX = np.sum(data_roi, axis=(0, 1))
                 coeff, _ = curve_fit(gauss, range(len(projX)), projX, p0=p0, maxfev=maxfev)
-                x = x0 + coeff[1]
-                x_pos = x0 + round(coeff[1])
+                x_pos = x0 + coeff[1]
 
-                # nu fit
                 projY = np.sum(data_roi, axis=(0, 2))
                 coeff, _ = curve_fit(gauss, range(len(projY)), projY, p0=p0, maxfev=maxfev)
-                y = y0 + coeff[1]
-                y_pos = y0 + round(coeff[1])
+                y_pos = y0 + coeff[1]
 
-                ga, nu = pyzebra.det2pol(ddist, sttC, nuC, x, y)
-                diff_vector = pyzebra.z1frmd(
-                    dat["wave"], ga, omP, dat["chi_angle"][0], dat["phi_angle"][0], nu[0]
-                )
-                d_spacing = float(pyzebra.dandth(dat["wave"], diff_vector)[0])
+                ga, nu = pyzebra.det2pol(ddist, pol_angle, tlt_angle, x_pos, y_pos)
+                diff_vector = pyzebra.z1frmd(wave, ga, rot_angle, chi_angle, phi_angle, nu)
+                d_spacing = float(pyzebra.dandth(wave, diff_vector)[0])
                 dv1, dv2, dv3 = diff_vector.flatten() * 1e10
 
-                f.write(f"{x_pos} {y_pos} {Int} {snr_cnts} {dv1} {dv2} {dv3} {d_spacing}\n")
+                f.write(f"{x_pos} {y_pos} {intensity} {snr_cnts} {dv1} {dv2} {dv3} {d_spacing}\n")
