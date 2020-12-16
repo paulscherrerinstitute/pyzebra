@@ -60,7 +60,7 @@ def create():
                     temp_peak_list_dir,
                     temp_hkl_file,
                     "-o",
-                    "temp_dir",
+                    temp_dir,
                     "--seed-pool-size",
                     str(seed_pool_size_spinner.value),
                     "--seed-len-tol",
