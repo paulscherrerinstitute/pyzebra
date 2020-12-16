@@ -77,7 +77,10 @@ def create():
                 with open(os.path.join(temp_dir, "spind.txt")) as f_out:
                     full_out = ""
                     for line in f_out:
-                        ub_matrix = np.inv(np.transpose(list(map(float, line.split()[-9:]))))
+                        # last 9 digits are spind UB matrix
+                        vals = list(map(float, line.split()[-9:]))
+                        ub_matrix_spind = np.array(vals).reshape(3, 3)
+                        ub_matrix = np.linalg.inv(np.transpose(ub_matrix_spind))
                         full_out = full_out + str(ub_matrix)
                     output_textarea.value = full_out
             except FileNotFoundError:
