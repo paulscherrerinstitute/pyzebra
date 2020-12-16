@@ -80,7 +80,7 @@ def create():
                         # last 9 digits are spind UB matrix
                         vals = list(map(float, line.split()[-9:]))
                         ub_matrix_spind = np.array(vals).reshape(3, 3)
-                        ub_matrix = np.linalg.inv(np.transpose(ub_matrix_spind))
+                        ub_matrix = np.linalg.inv(np.transpose(ub_matrix_spind)) * 1e10
                         full_out = full_out + str(ub_matrix)
                     output_textarea.value = full_out
             except FileNotFoundError:
