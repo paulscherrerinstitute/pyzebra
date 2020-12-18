@@ -22,7 +22,7 @@ def normalize(scan, monitor):
 
     counts = np.array(scan["Counts"])
     sigma = np.sqrt(counts) if "sigma" not in scan else scan["sigma"]
-    monitor_ratio = monitor / scan["monitor"]
+    monitor_ratio = scan["monitor"] / monitor
     scaled_counts = counts * monitor_ratio
     scaled_sigma = np.array(sigma) * monitor_ratio
 
@@ -68,7 +68,7 @@ def merge(scan1, scan2, keep=True, monitor=100000):
                 sigma1, sigma2 = sorted_t[i][2], sorted_t[i + 1][2]
                 count_err1 = u.ufloat(counts1, sigma1)
                 count_err2 = u.ufloat(counts2, sigma2)
-                avg = (count_err1 + count_err2) / 2
+                avg = (count_err1 + count_err2) / ((scan1["monitor"] + scan2["monitor"])/monitor)
                 Counts = np.append(Counts, avg.n)
                 sigma = np.append(sigma, avg.s)
                 seen.append(sorted_t[i][0])
