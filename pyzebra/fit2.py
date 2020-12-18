@@ -190,7 +190,9 @@ def fitccl(
             print("Maximal integration value lower than minimal")
         else:
             pass
-
+              
+        numfit_min = 0
+        numfit_max = len(x)
         count_errors = create_uncertanities(y, y_err)
         # create error vector for numerical integration propagation
         num_int_area = simps(count_errors[numfit_min:numfit_max], x[numfit_min:numfit_max])
