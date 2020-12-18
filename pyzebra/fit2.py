@@ -155,8 +155,10 @@ def fitccl(
         gauss_3sigmamax = find_nearest(
             x, result.params["g_cen"].value + 3 * result.params["g_width"].value
         )
-        numfit_min = gauss_3sigmamin if numfit_min is None else find_nearest(x, numfit_min)
-        numfit_max = gauss_3sigmamax if numfit_max is None else find_nearest(x, numfit_max)
+        # numfit_min = gauss_3sigmamin if numfit_min is None else find_nearest(x, numfit_min)
+        # numfit_max = gauss_3sigmamax if numfit_max is None else find_nearest(x, numfit_max)
+        numfit_min = 0 if numfit_min is None else find_nearest(x, numfit_min)
+        numfit_max = len(x)-1 if numfit_max is None else find_nearest(x, numfit_max)
 
         it = -1
         while abs(numfit_max - numfit_min) < 3:
@@ -191,8 +193,7 @@ def fitccl(
         else:
             pass
               
-        numfit_min = 0
-        numfit_max = len(x)
+
         count_errors = create_uncertanities(y, y_err)
         # create error vector for numerical integration propagation
         num_int_area = simps(count_errors[numfit_min:numfit_max], x[numfit_min:numfit_max])
