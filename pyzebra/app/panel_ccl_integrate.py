@@ -103,7 +103,7 @@ def create():
     def ccl_file_select_callback(_attr, _old, _new):
         pass
 
-    file_select = Select(title="Available files:")
+    file_select = Select(title="Available .ccl/.dat files:")
     file_select.on_change("value", ccl_file_select_callback)
 
     def file_open_button_callback():
@@ -137,6 +137,7 @@ def create():
 
         _init_datatable()
 
+    upload_div = Div(text="or upload .ccl/.dat file:", margin=(5, 5, 0, 5))
     upload_button = FileInput(accept=".ccl,.dat")
     upload_button.on_change("value", upload_button_callback)
 
@@ -150,6 +151,7 @@ def create():
 
         _init_datatable()
 
+    append_upload_div = Div(text="append extra file:", margin=(5, 5, 0, 5))
     append_upload_button = FileInput(accept=".ccl,.dat")
     append_upload_button.on_change("value", append_upload_button_callback)
 
@@ -595,19 +597,14 @@ def create():
         ),
     )
 
-    upload_div = Div(text="or upload file:")
-    append_upload_div = Div(text="append extra files:")
     tab_layout = column(
         row(
             proposal_textinput,
             file_select,
             column(Spacer(height=19), row(file_open_button, file_append_button)),
-        ),
-        row(
-            column(Spacer(height=5), upload_div),
-            upload_button,
-            column(Spacer(height=5), append_upload_div),
-            append_upload_button,
+            Spacer(width=100),
+            column(upload_div, upload_button),
+            column(append_upload_div, append_upload_button),
         ),
         row(scan_table, plot, Spacer(width=30), fit_output_textinput, export_layout),
         row(findpeak_controls, Spacer(width=30), fitpeak_controls),

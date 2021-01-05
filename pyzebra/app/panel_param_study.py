@@ -157,6 +157,7 @@ def create():
 
         _init_datatable()
 
+    upload_div = Div(text="or upload .dat files:", margin=(5, 5, 0, 5))
     upload_button = FileInput(accept=".dat", multiple=True)
     upload_button.on_change("value", upload_button_callback)
 
@@ -169,6 +170,7 @@ def create():
 
         _init_datatable()
 
+    append_upload_div = Div(text="append extra files:", margin=(5, 5, 0, 5))
     append_upload_button = FileInput(accept=".dat", multiple=True)
     append_upload_button.on_change("value", append_upload_button_callback)
 
@@ -677,19 +679,14 @@ def create():
 
     export_layout = column(preview_output_textinput, row(preview_output_button, save_button))
 
-    upload_div = Div(text="Or upload .dat files:")
-    append_upload_div = Div(text="append extra .dat files:")
     tab_layout = column(
         row(
             proposal_textinput,
             file_select,
             column(Spacer(height=19), row(file_open_button, file_append_button)),
-        ),
-        row(
-            column(Spacer(height=5), upload_div),
-            upload_button,
-            column(Spacer(height=5), append_upload_div),
-            append_upload_button,
+            Spacer(width=100),
+            column(upload_div, upload_button),
+            column(append_upload_div, append_upload_button),
         ),
         row(scan_table, plots, Spacer(width=30), fit_output_textinput, export_layout),
         row(findpeak_controls, Spacer(width=30), fitpeak_controls),

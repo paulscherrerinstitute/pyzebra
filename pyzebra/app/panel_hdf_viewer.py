@@ -44,6 +44,7 @@ IMAGE_H = 128
 
 PROPOSAL_PATH = "/afs/psi.ch/project/sinqdata/2020/zebra/"
 
+
 def create():
     det_data = {}
     roi_selection = {}
@@ -67,6 +68,7 @@ def create():
             filelist.options = [(entry, os.path.basename(entry)) for entry in file_list]
             filelist.value = file_list[0]
 
+    upload_div = Div(text="or upload .cami file:", margin=(5, 5, 0, 5))
     upload_button = FileInput(accept=".cami")
     upload_button.on_change("value", upload_button_callback)
 
@@ -588,11 +590,11 @@ def create():
         ),
     )
 
-    upload_div = Div(text="Or upload .cami file:")
     tab_layout = row(
         column(
-            row(proposal_textinput, filelist),
-            row(column(Spacer(height=5), upload_div), upload_button),
+            row(
+                proposal_textinput, filelist, Spacer(width=100), column(upload_div, upload_button),
+            ),
             layout_overview,
             layout_controls,
         ),

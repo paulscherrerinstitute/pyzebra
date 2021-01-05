@@ -12,6 +12,7 @@ from bokeh.models import (
     Panel,
     RadioButtonGroup,
     Select,
+    Spacer,
     TextAreaInput,
     TextInput,
 )
@@ -98,12 +99,11 @@ def create():
         minPeakCount_textinput.disabled = disable_adaptivedynamic
         displacementCurve_textinput.disabled = disable_adaptivedynamic
 
-    upload_div = Div(text="Open XML configuration file:")
-
     def upload_button_callback(_attr, _old, new):
         with io.BytesIO(base64.b64decode(new)) as file:
             _load_config_file(file)
 
+    upload_div = Div(text="Open XML configuration file:")
     upload_button = FileInput(accept=".xml")
     upload_button.on_change("value", upload_button_callback)
 
@@ -362,8 +362,7 @@ def create():
 
     tab_layout = row(
         column(
-            upload_div,
-            upload_button,
+            row(column(Spacer(height=2), upload_div), upload_button),
             row(logfile_textinput, logfile_verbosity_select),
             row(filelist_type, filelist_format_textinput),
             filelist_datapath_textinput,
