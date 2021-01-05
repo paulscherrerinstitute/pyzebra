@@ -138,37 +138,37 @@ def parse_1D(fileobj, data_type):
         ccl_second_line = CCL_SECOND_LINE
 
         for line in fileobj:
-            d = {}
+            s = {}
 
             # first line
             for param, (param_name, param_type) in zip(line.split(), ccl_first_line):
-                d[param_name] = param_type(param)
+                s[param_name] = param_type(param)
 
             # second line
             next_line = next(fileobj)
             for param, (param_name, param_type) in zip(next_line.split(), ccl_second_line):
-                d[param_name] = param_type(param)
+                s[param_name] = param_type(param)
 
-            d["om"] = np.linspace(
-                d["omega_angle"] - (d["n_points"] / 2) * d["angle_step"],
-                d["omega_angle"] + (d["n_points"] / 2) * d["angle_step"],
-                d["n_points"],
+            s["om"] = np.linspace(
+                s["omega_angle"] - (s["n_points"] / 2) * s["angle_step"],
+                s["omega_angle"] + (s["n_points"] / 2) * s["angle_step"],
+                s["n_points"],
             )
 
             # subsequent lines with counts
             counts = []
-            while len(counts) < d["n_points"]:
+            while len(counts) < s["n_points"]:
                 counts.extend(map(int, next(fileobj).split()))
-            d["Counts"] = counts
+            s["Counts"] = counts
 
-            scan[d["scan_number"]] = d
+            scan[s["scan_number"]] = s
 
     elif data_type == ".dat":
         # skip the first 2 rows, the third row contans the column names
         next(fileobj)
         next(fileobj)
         col_names = next(fileobj).split()
-        data_cols = defaultdict(list)
+        s = defaultdict(list)
 
         for line in fileobj:
             if "END-OF-DATA" in line:
@@ -176,33 +176,33 @@ def parse_1D(fileobj, data_type):
                 break
 
             for name, val in zip(col_names, line.split()):
-                data_cols[name].append(float(val))
+                s[name].append(float(val))
 
         try:
-            data_cols["h_index"] = float(metadata["title"].split()[-3])
-            data_cols["k_index"] = float(metadata["title"].split()[-2])
-            data_cols["l_index"] = float(metadata["title"].split()[-1])
+            s["h_index"] = float(metadata["title"].split()[-3])
+            s["k_index"] = float(metadata["title"].split()[-2])
+            s["l_index"] = float(metadata["title"].split()[-1])
         except (ValueError, IndexError):
             print("seems hkl is not in title")
 
-        data_cols["om"] = np.array(data_cols["om"])
+        s["om"] = np.array(s["om"])
 
-        data_cols["temperature"] = metadata["temp"]
+        s["temperature"] = metadata["temp"]
         try:
-            data_cols["mag_field"] = metadata["mf"]
+            s["mag_field"] = metadata["mf"]
         except KeyError:
             print("Mag_field not present in dat file")
 
-        data_cols["omega_angle"] = metadata["omega"]
-        data_cols["n_points"] = len(data_cols["om"])
-        data_cols["monitor"] = data_cols["Monitor1"][0]
-        data_cols["twotheta_angle"] = metadata["2-theta"]
-        data_cols["chi_angle"] = metadata["chi"]
-        data_cols["phi_angle"] = metadata["phi"]
-        data_cols["nu_angle"] = metadata["nu"]
+        s["omega_angle"] = metadata["omega"]
+        s["n_points"] = len(s["om"])
+        s["monitor"] = s["Monitor1"][0]
+        s["twotheta_angle"] = metadata["2-theta"]
+        s["chi_angle"] = metadata["chi"]
+        s["phi_angle"] = metadata["phi"]
+        s["nu_angle"] = metadata["nu"]
 
-        data_cols["scan_number"] = 1
-        scan[data_cols["scan_number"]] = dict(data_cols)
+        s["scan_number"] = 1
+        scan[s["scan_number"]] = dict(s)
 
     else:
         print("Unknown file extention")
