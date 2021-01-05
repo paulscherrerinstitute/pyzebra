@@ -488,7 +488,7 @@ def create():
 
     lorentz_toggle = Toggle(label="Lorentz Correction", default_size=145)
 
-    preview_output_textinput = TextAreaInput(title="Export file preview:", width=450, height=400)
+    preview_output_textinput = TextAreaInput(title="Export file preview:", width=500, height=400)
 
     def preview_output_button_callback():
         if det_data["meta"]["indices"] == "hkl":
@@ -512,10 +512,12 @@ def create():
             with open(f"{temp_file}{ext}") as f:
                 preview_output_textinput.value = f.read()
 
-    preview_output_button = Button(label="Preview file", default_size=220)
+    preview_output_button = Button(label="Preview file", default_size=200)
     preview_output_button.on_click(preview_output_button_callback)
 
-    hkl_precision_select = Select(options=["2", "3", "4"], value="2", default_size=220)
+    hkl_precision_select = Select(
+        title="hkl precision:", options=["2", "3", "4"], value="2", default_size=80
+    )
 
     def export_results(det_data):
         if det_data["meta"]["indices"] == "hkl":
@@ -545,7 +547,7 @@ def create():
         cont, ext = export_results(det_data)
         js_data.data.update(cont=[cont], ext=[ext])
 
-    save_button = Button(label="Download file", button_type="success", default_size=220)
+    save_button = Button(label="Download file", button_type="success", default_size=200)
     save_button.on_click(save_button_callback)
     save_button.js_on_click(CustomJS(args={"js_data": js_data}, code=javaScript))
 
@@ -570,7 +572,9 @@ def create():
 
     export_layout = column(
         preview_output_textinput,
-        row(column(preview_output_button, hkl_precision_select), save_button),
+        row(
+            hkl_precision_select, column(Spacer(height=19), row(preview_output_button, save_button))
+        ),
     )
 
     upload_div = Div(text="Or upload .ccl file:")
