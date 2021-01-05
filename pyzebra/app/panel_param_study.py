@@ -52,8 +52,9 @@ from pyzebra.ccl_io import AREA_METHODS
 
 javaScript = """
 setTimeout(function() {
-    const filename = 'output' + js_data.data['ext']
-    const blob = new Blob([js_data.data['cont']], {type: 'text/plain'})
+    if (js_data.data['cont'][0] === "") return 0;
+    const filename = 'output' + js_data.data['ext'][0]
+    const blob = new Blob([js_data.data['cont'][0]], {type: 'text/plain'})
     const link = document.createElement('a');
     document.body.appendChild(link);
     const url = window.URL.createObjectURL(blob);
