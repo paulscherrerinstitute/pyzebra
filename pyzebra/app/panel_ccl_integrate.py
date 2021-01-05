@@ -68,7 +68,10 @@ def create():
     det_data = {}
     fit_params = {}
     peak_pos_textinput_lock = False
-    js_data = ColumnDataSource(data=dict(cont=[], ext=[]))
+    js_data = {
+        ".comm": ColumnDataSource(data=dict(cont=[], ext=[])),
+        ".incomm": ColumnDataSource(data=dict(cont=[], ext=[])),
+    }
 
     def proposal_textinput_callback(_attr, _old, new):
         ccl_path = os.path.join(PROPOSAL_PATH, new.strip())
@@ -84,12 +87,7 @@ def create():
 
     def _init_datatable():
         scan_list = list(det_data["scan"].keys())
-        hkl = [
-            f'{int(m["h_index"])} {int(m["k_index"])} {int(m["l_index"])}'
-            if det_data["meta"]["indices"] == "hkl"
-            else f'{m["h_index"]} {m["k_index"]} {m["l_index"]}'
-            for m in det_data["scan"].values()
-        ]
+        hkl = [f'{m["h_index"]} {m["k_index"]} {m["l_index"]}' for m in det_data["scan"].values()]
         scan_table_source.data.update(
             scan=scan_list,
             hkl=hkl,
@@ -511,26 +509,28 @@ def create():
     preview_output_textinput = TextAreaInput(title="Export file preview:", width=500, height=400)
 
     def preview_output_button_callback():
-        if det_data["meta"]["indices"] == "hkl":
-            ext = ".comm"
-        elif det_data["meta"]["indices"] == "real":
-            ext = ".incomm"
-
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_file = temp_dir + "/temp"
             export_data = deepcopy(det_data)
             for s, export in zip(scan_table_source.data["scan"], scan_table_source.data["export"]):
                 if not export:
                     del export_data["scan"][s]
-            pyzebra.export_comm(
+
+            pyzebra.export_1D(
                 export_data,
                 temp_file,
                 lorentz=lorentz_toggle.active,
                 hkl_precision=int(hkl_precision_select.value),
             )
 
-            with open(f"{temp_file}{ext}") as f:
-                preview_output_textinput.value = f.read()
+            exported_content = ""
+            for ext in (".comm", ".incomm"):
+                fname = temp_file + ext
+                if os.path.isfile(fname):
+                    with open(fname) as f:
+                        exported_content += f"{ext} file:\n" + f.read()
+
+            preview_output_textinput.value = exported_content
 
     preview_output_button = Button(label="Preview file", default_size=200)
     preview_output_button.on_click(preview_output_button_callback)
@@ -539,37 +539,29 @@ def create():
         title="hkl precision:", options=["2", "3", "4"], value="2", default_size=80
     )
 
-    def export_results(det_data):
-        if det_data["meta"]["indices"] == "hkl":
-            ext = ".comm"
-        elif det_data["meta"]["indices"] == "real":
-            ext = ".incomm"
-
+    def save_button_callback():
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_file = temp_dir + "/temp"
             export_data = deepcopy(det_data)
             for s, export in zip(scan_table_source.data["scan"], scan_table_source.data["export"]):
                 if not export:
                     del export_data["scan"][s]
-            pyzebra.export_comm(
-                export_data,
-                temp_file,
-                lorentz=lorentz_toggle.active,
-                hkl_precision=int(hkl_precision_select.value),
-            )
 
-            with open(f"{temp_file}{ext}") as f:
-                output_content = f.read()
+            pyzebra.export_1D(export_data, temp_file, lorentz=lorentz_toggle.active)
 
-        return output_content, ext
-
-    def save_button_callback():
-        cont, ext = export_results(det_data)
-        js_data.data.update(cont=[cont], ext=[ext])
+            for ext in (".comm", ".incomm"):
+                fname = temp_file + ext
+                if os.path.isfile(fname):
+                    with open(fname) as f:
+                        cont = f.read()
+                else:
+                    cont = ""
+                js_data[ext].data.update(cont=[cont], ext=[ext])
 
     save_button = Button(label="Download file", button_type="success", default_size=200)
     save_button.on_click(save_button_callback)
-    save_button.js_on_click(CustomJS(args={"js_data": js_data}, code=javaScript))
+    save_button.js_on_click(CustomJS(args={"js_data": js_data[".comm"]}, code=javaScript))
+    save_button.js_on_click(CustomJS(args={"js_data": js_data[".incomm"]}, code=javaScript))
 
     findpeak_controls = column(
         row(peak_pos_textinput, column(Spacer(height=19), smooth_toggle)),

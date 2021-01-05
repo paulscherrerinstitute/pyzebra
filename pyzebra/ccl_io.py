@@ -208,13 +208,15 @@ def parse_1D(fileobj, data_type):
         print("Unknown file extention")
 
     # utility information
-    if all(
-        s["h_index"].is_integer() and s["k_index"].is_integer() and s["l_index"].is_integer()
-        for s in scan.values()
-    ):
-        metadata["indices"] = "hkl"
-    else:
-        metadata["indices"] = "real"
+    metadata["indices"] = []
+    for s in scan.values():
+        if s["h_index"].is_integer() and s["k_index"].is_integer() and s["l_index"].is_integer():
+            s["h_index"] = int(s["h_index"])
+            s["k_index"] = int(s["k_index"])
+            s["l_index"] = int(s["l_index"])
+            metadata["indices"].append("hkl")
+        else:
+            metadata["indices"].append("real")
 
     metadata["data_type"] = data_type
     metadata["area_method"] = AREA_METHODS[0]
@@ -222,54 +224,55 @@ def parse_1D(fileobj, data_type):
     return {"meta": metadata, "scan": scan}
 
 
-def export_comm(data, path, lorentz=False, hkl_precision=2):
-    """exports data in the *.comm format
-    :param lorentz: perform Lorentz correction
-    :param path: path to file + name
-    :arg data - data to export, is dict after peak fitting
+def export_1D(data, path, lorentz=False, hkl_precision=2):
+    """Exports data in the .comm/.incomm format
 
+    Scans with integer/real hkl values are saved in .comm/.incomm files correspondingly. If no scans
+    are present for a particular output format, that file won't be created.
     """
     zebra_mode = data["meta"]["zebra_mode"]
-    if data["meta"]["indices"] == "hkl":
-        extension = ".comm"
-    else:  # data["meta"]["indices"] == "real":
-        extension = ".incomm"
+    file_content = {".comm": [], ".incomm": []}
 
-    with open(str(path + extension), "w") as out_file:
-        for key, scan in data["scan"].items():
-            if "fit" not in scan:
-                print("Scan skipped - no fit value for:", key)
-                continue
+    for (key, scan), indices in zip(data["scan"].items(), data["meta"]["indices"]):
+        if "fit" not in scan:
+            print("Scan skipped - no fit value for:", key)
+            continue
 
-            scan_str = f"{key:6}"
+        scan_str = f"{key:6}"
 
-            h, k, l = scan["h_index"], scan["k_index"], scan["l_index"]
-            if data["meta"]["indices"] == "hkl":
-                hkl_str = f"{int(h):6}{int(k):6}{int(l):6}"
-            else:  # data["meta"]["indices"] == "real"
-                hkl_str = f"{h:8.{hkl_precision}f}{k:8.{hkl_precision}f}{l:8.{hkl_precision}f}"
+        h, k, l = scan["h_index"], scan["k_index"], scan["l_index"]
+        if indices == "hkl":
+            hkl_str = f"{h:6}{k:6}{l:6}"
+        else:  # indices == "real"
+            hkl_str = f"{h:8.{hkl_precision}f}{k:8.{hkl_precision}f}{l:8.{hkl_precision}f}"
 
-            area_method = data["meta"]["area_method"]
-            area_n = scan["fit"][area_method].n
-            area_s = scan["fit"][area_method].s
+        area_method = data["meta"]["area_method"]
+        area_n = scan["fit"][area_method].n
+        area_s = scan["fit"][area_method].s
 
-            # apply lorentz correction to area
-            if lorentz:
-                if zebra_mode == "bi":
-                    twotheta_angle = np.deg2rad(scan["twotheta_angle"])
-                    corr_factor = np.sin(twotheta_angle)
-                else:  # zebra_mode == "nb":
-                    gamma_angle = np.deg2rad(scan["gamma_angle"])
-                    nu_angle = np.deg2rad(scan["nu_angle"])
-                    corr_factor = np.sin(gamma_angle) * np.cos(nu_angle)
+        # apply lorentz correction to area
+        if lorentz:
+            if zebra_mode == "bi":
+                twotheta_angle = np.deg2rad(scan["twotheta_angle"])
+                corr_factor = np.sin(twotheta_angle)
+            else:  # zebra_mode == "nb":
+                gamma_angle = np.deg2rad(scan["gamma_angle"])
+                nu_angle = np.deg2rad(scan["nu_angle"])
+                corr_factor = np.sin(gamma_angle) * np.cos(nu_angle)
 
-                area_n = np.abs(area_n * corr_factor)
-                area_s = np.abs(area_s * corr_factor)
+            area_n = np.abs(area_n * corr_factor)
+            area_s = np.abs(area_s * corr_factor)
 
-            area_str = f"{area_n:10.2f}{area_s:10.2f}"
+        area_str = f"{area_n:10.2f}{area_s:10.2f}"
 
-            ang_str = ""
-            for angle, _ in CCL_ANGLES[zebra_mode]:
-                ang_str = ang_str + f"{scan[angle]:8}"
+        ang_str = ""
+        for angle, _ in CCL_ANGLES[zebra_mode]:
+            ang_str = ang_str + f"{scan[angle]:8}"
 
-            out_file.write(scan_str + hkl_str + area_str + ang_str + "\n")
+        file_content_ref = file_content[".comm"] if indices == "hkl" else file_content[".incomm"]
+        file_content_ref.append(scan_str + hkl_str + area_str + ang_str + "\n")
+
+    for ext, content in file_content.items():
+        if content:
+            with open(path + ext, "w") as out_file:
+                out_file.writelines(content)
