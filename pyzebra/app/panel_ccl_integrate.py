@@ -548,7 +548,12 @@ def create():
                 if not export:
                     del export_data["scan"][s]
 
-            pyzebra.export_1D(export_data, temp_file, lorentz=lorentz_toggle.active)
+            pyzebra.export_1D(
+                export_data,
+                temp_file,
+                lorentz=lorentz_toggle.active,
+                hkl_precision=int(hkl_precision_select.value),
+            )
 
             for ext in (".comm", ".incomm"):
                 fname = temp_file + ext
