@@ -207,16 +207,14 @@ def parse_1D(fileobj, data_type):
     else:
         print("Unknown file extention")
 
-    # utility information
-    metadata["indices"] = []
     for s in scan.values():
         if s["h_index"].is_integer() and s["k_index"].is_integer() and s["l_index"].is_integer():
             s["h_index"] = int(s["h_index"])
             s["k_index"] = int(s["k_index"])
             s["l_index"] = int(s["l_index"])
-            metadata["indices"].append("hkl")
+            s["indices"] = "hkl"
         else:
-            metadata["indices"].append("real")
+            s["indices"] = "real"
 
     metadata["data_type"] = data_type
     metadata["area_method"] = AREA_METHODS[0]
@@ -233,7 +231,7 @@ def export_1D(data, path, lorentz=False, hkl_precision=2):
     zebra_mode = data["meta"]["zebra_mode"]
     file_content = {".comm": [], ".incomm": []}
 
-    for (key, scan), indices in zip(data["scan"].items(), data["meta"]["indices"]):
+    for key, scan in data["scan"].items():
         if "fit" not in scan:
             print("Scan skipped - no fit value for:", key)
             continue
@@ -241,9 +239,9 @@ def export_1D(data, path, lorentz=False, hkl_precision=2):
         scan_str = f"{key:6}"
 
         h, k, l = scan["h_index"], scan["k_index"], scan["l_index"]
-        if indices == "hkl":
+        if scan["indices"] == "hkl":
             hkl_str = f"{h:6}{k:6}{l:6}"
-        else:  # indices == "real"
+        else:  # scan["indices"] == "real"
             hkl_str = f"{h:8.{hkl_precision}f}{k:8.{hkl_precision}f}{l:8.{hkl_precision}f}"
 
         area_method = data["meta"]["area_method"]
@@ -269,8 +267,8 @@ def export_1D(data, path, lorentz=False, hkl_precision=2):
         for angle, _ in CCL_ANGLES[zebra_mode]:
             ang_str = ang_str + f"{scan[angle]:8}"
 
-        file_content_ref = file_content[".comm"] if indices == "hkl" else file_content[".incomm"]
-        file_content_ref.append(scan_str + hkl_str + area_str + ang_str + "\n")
+        ref = file_content[".comm"] if scan["indices"] == "hkl" else file_content[".incomm"]
+        ref.append(scan_str + hkl_str + area_str + ang_str + "\n")
 
     for ext, content in file_content.items():
         if content:
