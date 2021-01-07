@@ -218,12 +218,11 @@ def parse_1D(fileobj, data_type):
             s["indices"] = "real"
 
     metadata["data_type"] = data_type
-    metadata["area_method"] = AREA_METHODS[0]
 
     return {"meta": metadata, "scan": scan}
 
 
-def export_1D(data, path, lorentz=False, hkl_precision=2):
+def export_1D(data, path, area_method=AREA_METHODS[0], lorentz=False, hkl_precision=2):
     """Exports data in the .comm/.incomm format
 
     Scans with integer/real hkl values are saved in .comm/.incomm files correspondingly. If no scans
@@ -245,7 +244,6 @@ def export_1D(data, path, lorentz=False, hkl_precision=2):
         else:  # scan["indices"] == "real"
             hkl_str = f"{h:8.{hkl_precision}f}{k:8.{hkl_precision}f}{l:8.{hkl_precision}f}"
 
-        area_method = data["meta"]["area_method"]
         area_n = scan["fit"][area_method].n
         area_s = scan["fit"][area_method].s
 

@@ -601,13 +601,9 @@ def create():
     fit_button = Button(label="Fit Current", default_size=145)
     fit_button.on_click(fit_button_callback)
 
-    def area_method_radiobutton_callback(_attr, _old, new):
-        det_data["meta"]["area_method"] = AREA_METHODS[new]
-
     area_method_radiobutton = RadioButtonGroup(
         labels=["Fit area", "Int area"], active=0, default_size=145,
     )
-    area_method_radiobutton.on_change("active", area_method_radiobutton_callback)
 
     bin_size_spinner = Spinner(title="Bin size:", value=1, low=1, step=1, default_size=145)
 
@@ -623,7 +619,12 @@ def create():
                 if not export:
                     del export_data["scan"][s]
 
-            pyzebra.export_1D(export_data, temp_file, lorentz=lorentz_toggle.active)
+            pyzebra.export_1D(
+                export_data,
+                temp_file,
+                area_method=AREA_METHODS[int(area_method_radiobutton.active)],
+                lorentz=lorentz_toggle.active,
+            )
 
             exported_content = ""
             for ext in (".comm", ".incomm"):
@@ -645,7 +646,12 @@ def create():
                 if not export:
                     del export_data["scan"][s]
 
-            pyzebra.export_1D(export_data, temp_file, lorentz=lorentz_toggle.active)
+            pyzebra.export_1D(
+                export_data,
+                temp_file,
+                area_method=AREA_METHODS[int(area_method_radiobutton.active)],
+                lorentz=lorentz_toggle.active,
+            )
 
             for ext in (".comm", ".incomm"):
                 fname = temp_file + ext
