@@ -120,12 +120,13 @@ def parse_1D(fileobj, data_type):
         if "=" in line:
             variable, value = line.split("=")
             variable = variable.strip()
+            value = value.strip()
             if variable in META_VARS_FLOAT:
                 metadata[variable] = float(value)
             elif variable in META_VARS_STR:
-                metadata[variable] = str(value)[:-1].strip()
+                metadata[variable] = value
             elif variable in META_UB_MATRIX:
-                metadata[variable] = re.findall(r"[-+]?\d*\.\d+|\d+", str(value))
+                metadata[variable] = re.findall(r"[-+]?\d*\.\d+|\d+", value)
 
         if "#data" in line:
             # this is the end of metadata and the start of data section
