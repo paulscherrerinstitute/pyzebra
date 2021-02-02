@@ -183,6 +183,9 @@ def merge_dups(dictionary):
 def add_scan(dict1, dict2, scan_to_add):
     max_scan = np.max(list(dict1["scan"]))
     dict1["scan"][max_scan + 1] = dict2["scan"][scan_to_add]
+    if dict1.get("extra_meta") is None:
+        dict1["extra_meta"] = {}
+    dict1["extra_meta"][max_scan + 1] = dict2["meta"]
     del dict2["scan"][scan_to_add]
 
 
@@ -227,7 +230,7 @@ def process(dict1, dict2, angles, precision):
 """
     1. check for bisecting or normal beam geometry in data files; select stt, om, chi, phi for bisecting; select stt, om, nu for normal beam
     2. in the ccl files, check for identical stt, chi and nu within 0.1 degree, and, at the same time, for identical om and phi within 0.05 degree;
-    3. in the dat files, check for identical stt, chi and nu within 0.1 degree, and, at the same time, 
+    3. in the dat files, check for identical stt, chi and nu within 0.1 degree, and, at the same time,
     for identical phi within 0.05 degree, and, at the same time, for identical om within 5 degree."""
 
 
@@ -277,11 +280,16 @@ def add_dict(dict1, dict2):
     new_filenames = np.arange(
         max_measurement_dict1 + 1, max_measurement_dict1 + 1 + len(dict2["scan"])
     )
+
+    if dict1.get("extra_meta") is None:
+        dict1["extra_meta"] = {}
+
     new_meta_name = "meta" + str(dict2["meta"]["original_filename"])
     if new_meta_name not in dict1:
         for keys, name in zip(dict2["scan"], new_filenames):
             dict2["scan"][keys]["file_of_origin"] = str(dict2["meta"]["original_filename"])
             dict1["scan"][name] = dict2["scan"][keys]
+            dict1["extra_meta"][name] = dict2["meta"]
 
         dict1[new_meta_name] = dict2["meta"]
     else:
