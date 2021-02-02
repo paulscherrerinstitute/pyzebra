@@ -3,10 +3,20 @@ import math
 import os
 import subprocess
 import tempfile
+from collections import defaultdict
 
 import numpy as np
 from bokeh.layouts import column, row
-from bokeh.models import Button, Panel, Spinner, TextAreaInput, TextInput
+from bokeh.models import (
+    Button,
+    ColumnDataSource,
+    DataTable,
+    Panel,
+    Spinner,
+    TableColumn,
+    TextAreaInput,
+    TextInput,
+)
 from scipy.optimize import curve_fit
 
 import pyzebra
@@ -75,21 +85,45 @@ def create():
 
             try:
                 with open(os.path.join(temp_dir, "spind.txt")) as f_out:
-                    full_out = ""
+                    spind_res = defaultdict(list)
                     for line in f_out:
-                        # last 9 digits are spind UB matrix
-                        vals = list(map(float, line.split()[-9:]))
+                        c1, c2, c3, c4, c5, *c_rest = line.split()
+                        spind_res["label"].append(c1)
+                        spind_res["crystal_id"].append(c2)
+                        spind_res["match_rate"].append(c3)
+                        spind_res["matched_peaks"].append(c4)
+                        spind_res["column_5"].append(c5)
+
+                        # last digits are spind UB matrix
+                        vals = list(map(float, c_rest))
                         ub_matrix_spind = np.array(vals).reshape(3, 3)
                         ub_matrix = np.linalg.inv(np.transpose(ub_matrix_spind)) * 1e10
-                        full_out = full_out + str(ub_matrix)
-                    output_textarea.value = full_out
+                        spind_res["ub_matrix"].append(str(ub_matrix))
+
+                    results_table_source.data.update(spind_res)
+
             except FileNotFoundError:
                 print("No results from spind")
 
     process_button = Button(label="Process", button_type="primary")
     process_button.on_click(process_button_callback)
 
-    output_textarea = TextAreaInput(title="Output UB matrix:", rows=7)
+    results_table_source = ColumnDataSource(dict())
+    results_table = DataTable(
+        source=results_table_source,
+        columns=[
+            TableColumn(field="label", title="Label", width=50),
+            TableColumn(field="crystal_id", title="Crystal ID", width=100),
+            TableColumn(field="match_rate", title="Match Rate", width=100),
+            TableColumn(field="matched_peaks", title="Matched Peaks", width=100),
+            TableColumn(field="column_5", title="", width=100),
+            TableColumn(field="ub_matrix", title="UB Matrix", width=250),
+        ],
+        height=300,
+        width=700,
+        fit_columns=False,
+        index_position=None,
+    )
 
     tab_layout = row(
         column(
@@ -103,7 +137,7 @@ def create():
             eval_hkl_tol_spinner,
             process_button,
         ),
-        output_textarea,
+        results_table,
     )
 
     return Panel(child=tab_layout, title="spind")
