@@ -132,7 +132,7 @@ def fitccl(
     try:
         result = mod.fit(y, params, weights=weights, x=x, calc_covar=True)
     except ValueError:
-        print(f"Couldn't fit scan {scan['scan_number']}")
+        print(f"Couldn't fit scan {scan['idx']}")
         return
 
     if result.params["g_amp"].stderr is None:
@@ -192,7 +192,7 @@ def fitccl(
             print("Maximal integration value lower than minimal")
         else:
             pass
-              
+
 
         count_errors = create_uncertanities(y, y_err)
         # create error vector for numerical integration propagation
@@ -217,7 +217,7 @@ def fitccl(
     for pars in result.params:
         d[str(pars)] = (result.params[str(pars)].value, result.params[str(pars)].vary)
 
-    print("Scan", scan["scan_number"])
+    print("Scan", scan["idx"])
     print(result.fit_report())
 
     d["ratio"] = (result.params["g_amp"].value - int_area.n) / result.params["g_amp"].value

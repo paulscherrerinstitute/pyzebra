@@ -71,9 +71,9 @@ def merge(scan1, scan2):
     scan1["Counts"] = Counts
     scan1["sigma"] = sigma
     if "history" not in scan1:
-        scan1["history"] = str("Merged with scan %d" % scan2["scan_number"])
+        scan1["history"] = str("Merged with scan %d" % scan2["idx"])
     else:
-        scan1["history"] = scan1["history"] + str(", merged with scan %d" % scan2["scan_number"])
+        scan1["history"] = scan1["history"] + str(", merged with scan %d" % scan2["idx"])
     print("merging done")
 
 

@@ -87,8 +87,8 @@ def create():
     proposal_textinput.on_change("value", proposal_textinput_callback)
 
     def _init_datatable():
-        scan_list = list(range(len(det_data["scan"])))
-        hkl = [f'{m["h_index"]} {m["k_index"]} {m["l_index"]}' for m in det_data["scan"]]
+        scan_list = [s["idx"] for s in det_data["scan"]]
+        hkl = [f'{s["h_index"]} {s["k_index"]} {s["l_index"]}' for s in det_data["scan"]]
         scan_table_source.data.update(
             scan=scan_list,
             hkl=hkl,
@@ -290,14 +290,13 @@ def create():
     scan_table = DataTable(
         source=scan_table_source,
         columns=[
-            TableColumn(field="scan", title="scan"),
+            TableColumn(field="scan", title="Scan"),
             TableColumn(field="hkl", title="hkl"),
             TableColumn(field="peaks", title="Peaks"),
             TableColumn(field="fit", title="Fit"),
             TableColumn(field="export", title="Export", editor=CheckboxEditor()),
         ],
         width=250,
-        index_position=None,
         editable=True,
     )
 

@@ -59,7 +59,7 @@ META_VARS_FLOAT = (
 META_UB_MATRIX = ("ub1j", "ub2j", "ub3j")
 
 CCL_FIRST_LINE = (
-    ("scan_number", int),
+    ("idx", int),
     ("h_index", float),
     ("k_index", float),
     ("l_index", float),
@@ -202,7 +202,7 @@ def parse_1D(fileobj, data_type):
         s["phi_angle"] = metadata["phi"]
         s["nu_angle"] = metadata["nu"]
 
-        s["scan_number"] = 1
+        s["idx"] = 1
         scan.append(dict(s))
 
     else:
@@ -231,11 +231,11 @@ def export_1D(data, path, area_method=AREA_METHODS[0], lorentz=False, hkl_precis
     zebra_mode = data["meta"]["zebra_mode"]
     file_content = {".comm": [], ".incomm": []}
 
-    for ind, scan in enumerate(data["scan"]):
+    for scan in data["scan"]:
         if "fit" not in scan:
             continue
 
-        ind_str = f"{ind:6}"
+        idx_str = f"{scan['idx']:6}"
 
         h, k, l = scan["h_index"], scan["k_index"], scan["l_index"]
         if scan["indices"] == "hkl":
@@ -266,7 +266,7 @@ def export_1D(data, path, area_method=AREA_METHODS[0], lorentz=False, hkl_precis
             ang_str = ang_str + f"{scan[angle]:8}"
 
         ref = file_content[".comm"] if scan["indices"] == "hkl" else file_content[".incomm"]
-        ref.append(ind_str + hkl_str + area_str + ang_str + "\n")
+        ref.append(idx_str + hkl_str + area_str + ang_str + "\n")
 
     for ext, content in file_content.items():
         if content:

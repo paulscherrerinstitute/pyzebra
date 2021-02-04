@@ -96,7 +96,7 @@ def create():
     proposal_textinput.on_change("value", proposal_textinput_callback)
 
     def _init_datatable():
-        scan_list = list(range(len(det_data["scan"])))
+        scan_list = [s["idx"] for s in det_data["scan"]]
         file_list = []
         extra_meta = det_data.get("extra_meta", {})
         for scan_id in scan_list:
@@ -398,7 +398,6 @@ def create():
             TableColumn(field="export", title="Export", editor=CheckboxEditor(), width=50),
         ],
         width=400,
-        index_position=None,
         editable=True,
         fit_columns=False,
     )
