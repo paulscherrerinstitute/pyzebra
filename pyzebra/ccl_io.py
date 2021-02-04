@@ -133,7 +133,7 @@ def parse_1D(fileobj, data_type):
             break
 
     # read data
-    scan = {}
+    scan = []
     if data_type == ".ccl":
         ccl_first_line = (*CCL_FIRST_LINE, *CCL_ANGLES[metadata["zebra_mode"]])
         ccl_second_line = CCL_SECOND_LINE
@@ -162,7 +162,7 @@ def parse_1D(fileobj, data_type):
                 counts.extend(map(int, next(fileobj).split()))
             s["Counts"] = counts
 
-            scan[s["scan_number"]] = s
+            scan.append(s)
 
     elif data_type == ".dat":
         # skip the first 2 rows, the third row contans the column names
@@ -203,12 +203,12 @@ def parse_1D(fileobj, data_type):
         s["nu_angle"] = metadata["nu"]
 
         s["scan_number"] = 1
-        scan[s["scan_number"]] = dict(s)
+        scan.append(dict(s))
 
     else:
         print("Unknown file extention")
 
-    for s in scan.values():
+    for s in scan:
         if s["h_index"].is_integer() and s["k_index"].is_integer() and s["l_index"].is_integer():
             s["h_index"] = int(s["h_index"])
             s["k_index"] = int(s["k_index"])
@@ -231,12 +231,11 @@ def export_1D(data, path, area_method=AREA_METHODS[0], lorentz=False, hkl_precis
     zebra_mode = data["meta"]["zebra_mode"]
     file_content = {".comm": [], ".incomm": []}
 
-    for key, scan in data["scan"].items():
+    for ind, scan in enumerate(data["scan"]):
         if "fit" not in scan:
-            print("Scan skipped - no fit value for:", key)
             continue
 
-        scan_str = f"{key:6}"
+        ind_str = f"{ind:6}"
 
         h, k, l = scan["h_index"], scan["k_index"], scan["l_index"]
         if scan["indices"] == "hkl":
@@ -267,7 +266,7 @@ def export_1D(data, path, area_method=AREA_METHODS[0], lorentz=False, hkl_precis
             ang_str = ang_str + f"{scan[angle]:8}"
 
         ref = file_content[".comm"] if scan["indices"] == "hkl" else file_content[".incomm"]
-        ref.append(scan_str + hkl_str + area_str + ang_str + "\n")
+        ref.append(ind_str + hkl_str + area_str + ang_str + "\n")
 
     for ext, content in file_content.items():
         if content:

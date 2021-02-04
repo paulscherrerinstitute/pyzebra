@@ -13,8 +13,7 @@ def create_tuples(x, y, y_err):
 
 
 def normalize_all(dictionary, monitor=100000):
-    for keys in dictionary["scan"]:
-        scan = dictionary["scan"][keys]
+    for scan in dictionary["scan"]:
         counts = np.array(scan["Counts"])
         sigma = np.sqrt(counts) if "sigma" not in scan else scan["sigma"]
         monitor_ratio = monitor / scan["monitor"]
@@ -161,8 +160,8 @@ def merge_dups(dictionary):
         "gamma_angle": 0.05,
     }
 
-    for i in list(dictionary["scan"]):
-        for j in list(dictionary["scan"]):
+    for i in range(len(dictionary["scan"])):
+        for j in range(len(dictionary["scan"])):
             if i == j:
                 continue
             else:
@@ -181,8 +180,8 @@ def merge_dups(dictionary):
 
 
 def add_scan(dict1, dict2, scan_to_add):
-    max_scan = np.max(list(dict1["scan"]))
-    dict1["scan"][max_scan + 1] = dict2["scan"][scan_to_add]
+    max_scan = len(dict1["scan"])
+    dict1["scan"].append(dict2["scan"][scan_to_add])
     if dict1.get("extra_meta") is None:
         dict1["extra_meta"] = {}
     dict1["extra_meta"][max_scan + 1] = dict2["meta"]
@@ -196,8 +195,8 @@ def process(dict1, dict2, angles, precision):
         # check UB matrixes
         if check_UB(dict1, dict2):
             # iterate over second dict and check for matches
-            for i in list(dict2["scan"]):
-                for j in list(dict1["scan"]):
+            for i in range(len(dict2["scan"])):
+                for j in range(len(dict1["scan"])):
                     if check_angles(dict1["scan"][j], dict2["scan"][i], angles, precision):
                         # angles good, see the mag and temp
                         if check_temp_mag(dict1["scan"][j], dict2["scan"][i]):
@@ -276,7 +275,7 @@ def add_dict(dict1, dict2):
     # this is for the qscan case
     except KeyError:
         print("Zebra mode not specified")
-    max_measurement_dict1 = max([keys for keys in dict1["scan"]])
+    max_measurement_dict1 = len(dict1["scan"])
     new_filenames = np.arange(
         max_measurement_dict1 + 1, max_measurement_dict1 + 1 + len(dict2["scan"])
     )
@@ -286,9 +285,9 @@ def add_dict(dict1, dict2):
 
     new_meta_name = "meta" + str(dict2["meta"]["original_filename"])
     if new_meta_name not in dict1:
-        for keys, name in zip(dict2["scan"], new_filenames):
+        for keys, name in zip(range(len(dict2["scan"])), new_filenames):
             dict2["scan"][keys]["file_of_origin"] = str(dict2["meta"]["original_filename"])
-            dict1["scan"][name] = dict2["scan"][keys]
+            dict1["scan"].append(dict2["scan"][keys])
             dict1["extra_meta"][name] = dict2["meta"]
 
         dict1[new_meta_name] = dict2["meta"]

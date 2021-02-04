@@ -51,7 +51,7 @@ def load_dats(filepath):
             else:
 
                 dict1 = add_dict(dict1, load_1D(file_list[i]))
-        dict1["scan"][i + 1]["params"] = {}
+        dict1["scan"].append({})
         if data_type == "txt":
             for x in range(len(col_names) - 1):
                 dict1["scan"][i + 1]["params"][col_names[x + 1]] = float(file_list[i][x + 1])
@@ -76,7 +76,7 @@ def create_dataframe(dict1, variables):
         print(keys)
 
     # populate the dict
-    for keys in dict1["scan"]:
+    for keys in range(len(dict1["scan"])):
         if "file_of_origin" in dict1["scan"][keys]:
             pull_dict["filenames"].append(dict1["scan"][keys]["file_of_origin"].split("/")[-1])
         else:
@@ -298,7 +298,7 @@ def add_dict(dict1, dict2):
     # this is for the qscan case
     except KeyError:
         print("Zebra mode not specified")
-    max_measurement_dict1 = max([keys for keys in dict1["scan"]])
+    max_measurement_dict1 = len(dict1["scan"])
     new_filenames = np.arange(
         max_measurement_dict1 + 1, max_measurement_dict1 + 1 + len(dict2["scan"])
     )
@@ -352,8 +352,8 @@ def scan_dict(dict, precision=0.5):
         return
 
     d = {}
-    for i in dict["scan"]:
-        for j in dict["scan"]:
+    for i in range(len(dict["scan"])):
+        for j in range(len(dict["scan"])):
             if dict["scan"][i] != dict["scan"][j]:
                 itup = list()
                 for k in angles:
@@ -399,7 +399,7 @@ def variables(dictionary):
     # find all variables that are in all scans
     stdev_precision = 0.05
     all_vars = list()
-    for keys in dictionary["scan"]:
+    for keys in range(len(dictionary["scan"])):
         all_vars.append([key for key in dictionary["scan"][keys] if key != "params"])
         if dictionary["scan"][keys]["params"]:
             all_vars.append(key for key in dictionary["scan"][keys]["params"])
@@ -432,7 +432,7 @@ def variables(dictionary):
     # check for primary variable, needs to be list, we dont suspect the
     # primary variable be as a parameter (be in scan[params])
     primary_candidates = list()
-    for key in dictionary["scan"]:
+    for key in range(len(dictionary["scan"])):
         for i in inall_red:
             if isinstance(_finditem(dictionary["scan"][key], i), list):
                 if np.std(_finditem(dictionary["scan"][key], i)) > stdev_precision:
@@ -454,7 +454,7 @@ def variables(dictionary):
     # print("secondary candidates", secondary_candidates)
     # select arrays and floats and ints
     second_round_secondary_candidates = list()
-    for key in dictionary["scan"]:
+    for key in range(len(dictionary["scan"])):
         for i in secondary_candidates:
             if isinstance(_finditem(dictionary["scan"][key], i), float):
                 second_round_secondary_candidates.append(i)
@@ -475,7 +475,7 @@ def variables(dictionary):
     third_round_sec_candidates = list()
     for i in second_round_secondary_candidates:
         check_array = list()
-        for keys in dictionary["scan"]:
+        for keys in range(len(dictionary["scan"])):
             check_array.append(np.average(_finditem(dictionary["scan"][keys], i)))
         # print(i, check_array, np.std(check_array))
         if np.std(check_array) > stdev_precision:

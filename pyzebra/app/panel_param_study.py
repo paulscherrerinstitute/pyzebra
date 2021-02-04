@@ -96,7 +96,7 @@ def create():
     proposal_textinput.on_change("value", proposal_textinput_callback)
 
     def _init_datatable():
-        scan_list = list(det_data["scan"].keys())
+        scan_list = list(range(len(det_data["scan"])))
         file_list = []
         extra_meta = det_data.get("extra_meta", {})
         for scan_id in scan_list:
@@ -184,8 +184,8 @@ def create():
     append_upload_button.on_change("value", append_upload_button_callback)
 
     def _update_table():
-        num_of_peaks = [len(scan.get("peak_indexes", [])) for scan in det_data["scan"].values()]
-        fit_ok = [(1 if "fit" in scan else 0) for scan in det_data["scan"].values()]
+        num_of_peaks = [len(scan.get("peak_indexes", [])) for scan in det_data["scan"]]
+        fit_ok = [(1 if "fit" in scan else 0) for scan in det_data["scan"]]
         scan_table_source.data.update(peaks=num_of_peaks, fit=fit_ok)
 
     def _update_plot():
@@ -554,7 +554,7 @@ def create():
 
     def peakfind_all_button_callback():
         peakfind_params = _get_peakfind_params()
-        for scan in det_data["scan"].values():
+        for scan in det_data["scan"]:
             pyzebra.ccl_findpeaks(scan, **peakfind_params)
 
         _update_table()
@@ -586,7 +586,7 @@ def create():
 
     def fit_all_button_callback():
         fit_params = _get_fit_params()
-        for scan in det_data["scan"].values():
+        for scan in det_data["scan"]:
             # fit_params are updated inplace within `fitccl`
             pyzebra.fitccl(scan, **deepcopy(fit_params))
 
@@ -649,7 +649,8 @@ def create():
             export_data = deepcopy(det_data)
             for s, export in zip(scan_table_source.data["scan"], scan_table_source.data["export"]):
                 if not export:
-                    del export_data["scan"][s]
+                    if "fit" in export_data["scan"][s]:
+                        del export_data["scan"][s]["fit"]
 
             pyzebra.export_1D(
                 export_data,
