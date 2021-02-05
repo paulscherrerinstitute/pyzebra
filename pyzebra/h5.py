@@ -41,7 +41,7 @@ def read_detector_data(filepath):
         filepath (str): File path of an h5 file.
 
     Returns:
-        ndarray: A 3D array of data, rot_angle, pol_angle, tilt_angle.
+        ndarray: A 3D array of data, omega, gamma, nu.
     """
     with h5py.File(filepath, "r") as h5f:
         data = h5f["/entry1/area_detector2/data"][:]
@@ -63,19 +63,19 @@ def read_detector_data(filepath):
 
         # om, sometimes ph
         if det_data["zebra_mode"] == "nb":
-            det_data["rot_angle"] = h5f["/entry1/area_detector2/rotation_angle"][:]
-        else: # bi
-            det_data["rot_angle"] = h5f["/entry1/sample/rotation_angle"][:]
+            det_data["omega"] = h5f["/entry1/area_detector2/rotation_angle"][:]
+        else:  # bi
+            det_data["omega"] = h5f["/entry1/sample/rotation_angle"][:]
 
-        det_data["pol_angle"] = h5f["/entry1/ZEBRA/area_detector2/polar_angle"][:]  # gammad
-        det_data["tlt_angle"] = h5f["/entry1/ZEBRA/area_detector2/tilt_angle"][:]  # nud
+        det_data["gamma"] = h5f["/entry1/ZEBRA/area_detector2/polar_angle"][:]  # gammad
+        det_data["nu"] = h5f["/entry1/ZEBRA/area_detector2/tilt_angle"][:]  # nud
         det_data["ddist"] = h5f["/entry1/ZEBRA/area_detector2/distance"][:]
         det_data["wave"] = h5f["/entry1/ZEBRA/monochromator/wavelength"][:]
-        det_data["chi_angle"] = h5f["/entry1/sample/chi"][:]  # ch
-        det_data["phi_angle"] = h5f["/entry1/sample/phi"][:]  # ph
+        det_data["chi"] = h5f["/entry1/sample/chi"][:]  # ch
+        det_data["phi"] = h5f["/entry1/sample/phi"][:]  # ph
         det_data["UB"] = h5f["/entry1/sample/UB"][:].reshape(3, 3)
 
-        for var in ("rot_angle", "pol_angle", "tlt_angle", "chi_angle", "phi_angle"):
+        for var in ("omega", "gamma", "nu", "chi", "phi"):
             if abs(det_data[var][0] - det_data[var][-1]) > 0.1:
                 det_data["variable"] = det_data[var]
                 det_data["variable_name"] = var

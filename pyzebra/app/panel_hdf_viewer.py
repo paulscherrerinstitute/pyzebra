@@ -110,7 +110,7 @@ def create():
             temperature_spinner.value = None
 
         gamma, nu = calculate_pol(det_data, index)
-        omega = np.ones((IMAGE_H, IMAGE_W)) * det_data["rot_angle"][index]
+        omega = np.ones((IMAGE_H, IMAGE_W)) * det_data["omega"][index]
         image_source.data.update(gamma=[gamma], nu=[nu], omega=[omega])
 
     def update_overview_plot():
@@ -611,25 +611,25 @@ def calculate_hkl(det_data, index):
 
     wave = det_data["wave"]
     ddist = det_data["ddist"]
-    gammad = det_data["pol_angle"][index]
-    om = det_data["rot_angle"][index]
-    nud = det_data["tlt_angle"]
+    gammad = det_data["gamma"][index]
+    om = det_data["omega"][index]
+    nud = det_data["nu"]
     ub = det_data["UB"]
     geometry = det_data["zebra_mode"]
 
     if geometry == "bisecting":
-        ch = det_data["chi_angle"][index]
-        ph = det_data["phi_angle"][index]
+        chi = det_data["chi"][index]
+        phi = det_data["phi"][index]
     elif geometry == "normal beam":
-        ch = 0
-        ph = 0
+        chi = 0
+        phi = 0
     else:
         raise ValueError(f"Unknown geometry type '{geometry}'")
 
     for xi in np.arange(IMAGE_W):
         for yi in np.arange(IMAGE_H):
             h[yi, xi], k[yi, xi], l[yi, xi] = pyzebra.ang2hkl(
-                wave, ddist, gammad, om, ch, ph, nud, ub, xi, yi
+                wave, ddist, gammad, om, chi, phi, nud, ub, xi, yi
             )
 
     return h, k, l
@@ -640,8 +640,8 @@ def calculate_pol(det_data, index):
     nu = np.empty(shape=(IMAGE_H, IMAGE_W))
 
     ddist = det_data["ddist"]
-    gammad = det_data["pol_angle"][index]
-    nud = det_data["tlt_angle"]
+    gammad = det_data["gamma"][index]
+    nud = det_data["nu"]
 
     for xi in np.arange(IMAGE_W):
         for yi in np.arange(IMAGE_H):

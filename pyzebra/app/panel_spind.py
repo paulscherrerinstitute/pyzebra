@@ -183,11 +183,11 @@ def prepare_event_file(export_filename, roi_dict, path_prefix=""):
             wave = dat["wave"]
             ddist = dat["ddist"]
 
-            pol_angle = dat["pol_angle"][0]
-            rot_angle = dat["rot_angle"][0]
-            tlt_angle = dat["tlt_angle"][0]
-            chi_angle = dat["chi_angle"][0]
-            phi_angle = dat["phi_angle"][0]
+            gamma = dat["gamma"][0]
+            omega = dat["omega"][0]
+            nu = dat["nu"][0]
+            chi = dat["chi"][0]
+            phi = dat["phi"][0]
 
             var_angle = dat["variable"]
             var_angle_name = dat["variable_name"]
@@ -210,16 +210,16 @@ def prepare_event_file(export_filename, roi_dict, path_prefix=""):
                 var_step = var_C - var_F
                 var_p = var_F + var_step * frStep
 
-                if var_angle_name == "pol_angle":
-                    pol_angle = var_p
-                elif var_angle_name == "rot_angle":
-                    rot_angle = var_p
-                elif var_angle_name == "tlt_angle":
-                    tlt_angle = var_p
-                elif var_angle_name == "chi_angle":
-                    chi_angle = var_p
-                elif var_angle_name == "phi_angle":
-                    phi_angle = var_p
+                if var_angle_name == "gamma":
+                    gamma = var_p
+                elif var_angle_name == "omega":
+                    omega = var_p
+                elif var_angle_name == "nu":
+                    nu = var_p
+                elif var_angle_name == "chi":
+                    chi = var_p
+                elif var_angle_name == "phi":
+                    phi = var_p
 
                 intensity = coeff[1] * abs(coeff[2] * var_step) * math.sqrt(2) * math.sqrt(np.pi)
 
@@ -231,8 +231,8 @@ def prepare_event_file(export_filename, roi_dict, path_prefix=""):
                 coeff, _ = curve_fit(gauss, range(len(projY)), projY, p0=p0, maxfev=maxfev)
                 y_pos = y0 + coeff[1]
 
-                ga, nu = pyzebra.det2pol(ddist, pol_angle, tlt_angle, x_pos, y_pos)
-                diff_vector = pyzebra.z1frmd(wave, ga, rot_angle, chi_angle, phi_angle, nu)
+                ga, nu = pyzebra.det2pol(ddist, gamma, nu, x_pos, y_pos)
+                diff_vector = pyzebra.z1frmd(wave, ga, omega, chi, phi, nu)
                 d_spacing = float(pyzebra.dandth(wave, diff_vector)[0])
                 dv1, dv2, dv3 = diff_vector.flatten() * 1e10
 

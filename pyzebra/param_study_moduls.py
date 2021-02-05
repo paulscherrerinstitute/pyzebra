@@ -11,6 +11,7 @@ import collections
 
 from .ccl_io import load_1D
 
+
 def create_tuples(x, y, y_err):
     """creates tuples for sorting and merginng of the data
     Counts need to be normalized to monitor before"""
@@ -344,9 +345,9 @@ def scan_dict(dict, precision=0.5):
     """
 
     if dict["meta"]["zebra_mode"] == "bi":
-        angles = ["twotheta_angle", "omega_angle", "chi_angle", "phi_angle"]
+        angles = ["twotheta", "omega", "chi", "phi"]
     elif dict["meta"]["zebra_mode"] == "nb":
-        angles = ["gamma_angle", "omega_angle", "nu_angle"]
+        angles = ["gamma", "omega", "nu"]
     else:
         print("Unknown zebra mode")
         return
@@ -421,11 +422,11 @@ def variables(dictionary):
         "n_points",
         "monitor",
         "Time",
-        "omega_angle",
-        "twotheta_angle",
-        "chi_angle",
-        "phi_angle",
-        "nu_angle",
+        "omega",
+        "twotheta",
+        "chi",
+        "phi",
+        "nu",
     ]
     inall_red = [i for i in inall if i not in wrong]
 

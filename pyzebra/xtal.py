@@ -407,24 +407,24 @@ def box_int(file, box):
 
     dat = pyzebra.read_detector_data(file)
 
-    sttC = dat["pol_angle"][0]
-    om = dat["rot_angle"]
-    nuC = dat["tlt_angle"][0]
+    sttC = dat["gamma"][0]
+    om = dat["omega"]
+    nuC = dat["nu"][0]
     ddist = dat["ddist"]
 
     # defining indices
     x0, xN, y0, yN, fr0, frN = box
 
     # omega fit
-    om = dat["rot_angle"][fr0:frN]
+    om = dat["omega"][fr0:frN]
     cnts = np.sum(dat["data"][fr0:frN, y0:yN, x0:xN], axis=(1, 2))
 
     p0 = [1.0, 0.0, 1.0]
     coeff, var_matrix = curve_fit(gauss, range(len(cnts)), cnts, p0=p0)
 
     frC = fr0 + coeff[1]
-    omF = dat["rot_angle"][math.floor(frC)]
-    omC = dat["rot_angle"][math.ceil(frC)]
+    omF = dat["omega"][math.floor(frC)]
+    omC = dat["omega"][math.ceil(frC)]
     frStep = frC - math.floor(frC)
     omStep = omC - omF
     omP = omF + omStep * frStep

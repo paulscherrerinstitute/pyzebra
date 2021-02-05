@@ -35,7 +35,6 @@ def merge(scan1, scan2):
     note: dict1 and dict2 can be same dict
     :return dict1 with merged scan"""
 
-
     # load om and Counts
     x1, x2 = scan1["om"], scan2["om"]
     # print(scan1["om"])
@@ -134,7 +133,6 @@ def check_temp_mag(scan1, scan2):
     except KeyError:
         print("temperature missing")
 
-
     if all(truth_list):
         return True
     else:
@@ -147,17 +145,17 @@ def merge_dups(dictionary):
         return
 
     if dictionary["meta"]["zebra_mode"] == "bi":
-        angles = ["twotheta_angle", "omega_angle", "chi_angle", "phi_angle"]
+        angles = ["twotheta", "omega", "chi", "phi"]
     elif dictionary["meta"]["zebra_mode"] == "nb":
-        angles = ["gamma_angle", "omega_angle", "nu_angle"]
+        angles = ["gamma", "omega", "nu"]
 
     precision = {
-        "twotheta_angle": 0.1,
-        "chi_angle": 0.1,
-        "nu_angle": 0.1,
-        "phi_angle": 0.05,
-        "omega_angle": 5,
-        "gamma_angle": 0.05,
+        "twotheta": 0.1,
+        "chi": 0.1,
+        "nu": 0.1,
+        "phi": 0.05,
+        "omega": 5,
+        "gamma": 0.05,
     }
 
     for i in range(len(dictionary["scan"])):
@@ -166,8 +164,9 @@ def merge_dups(dictionary):
                 continue
             else:
                 # print(i, j)
-                if check_angles(dictionary["scan"][i], dictionary["scan"][j], angles, precision) \
-                        and check_temp_mag(dictionary["scan"][i], dictionary["scan"][j]):
+                if check_angles(
+                    dictionary["scan"][i], dictionary["scan"][j], angles, precision
+                ) and check_temp_mag(dictionary["scan"][i], dictionary["scan"][j]):
                     merge(dictionary["scan"][i], dictionary["scan"][j])
                     print("merged %d with %d within the dictionary" % (i, j))
 
@@ -240,22 +239,21 @@ def unified_merge(dict1, dict2):
 
     # decide angles
     if dict1["meta"]["zebra_mode"] == "bi":
-        angles = ["twotheta_angle", "omega_angle", "chi_angle", "phi_angle"]
+        angles = ["twotheta", "omega", "chi", "phi"]
     elif dict1["meta"]["zebra_mode"] == "nb":
-        angles = ["gamma_angle", "omega_angle", "nu_angle"]
+        angles = ["gamma", "omega", "nu"]
 
     # precision of angles to check
     precision = {
-        "twotheta_angle": 0.1,
-        "chi_angle": 0.1,
-        "nu_angle": 0.1,
-        "phi_angle": 0.05,
-        "omega_angle": 5,
-        "gamma_angle": 0.1,
+        "twotheta": 0.1,
+        "chi": 0.1,
+        "nu": 0.1,
+        "phi": 0.05,
+        "omega": 5,
+        "gamma": 0.1,
     }
     if (dict1["meta"]["data_type"] == "ccl") and (dict2["meta"]["data_type"] == "ccl"):
-        precision["omega_angle"] = 0.05
-
+        precision["omega"] = 0.05
 
     process(dict1, dict2, angles, precision)
 

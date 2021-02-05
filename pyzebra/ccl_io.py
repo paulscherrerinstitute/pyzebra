@@ -66,18 +66,8 @@ CCL_FIRST_LINE = (
 )
 
 CCL_ANGLES = {
-    "bi": (
-        ("twotheta_angle", float),
-        ("omega_angle", float),
-        ("chi_angle", float),
-        ("phi_angle", float),
-    ),
-    "nb": (
-        ("gamma_angle", float),
-        ("omega_angle", float),
-        ("nu_angle", float),
-        ("unkwn_angle", float),
-    ),
+    "bi": (("twotheta", float), ("omega", float), ("chi", float), ("phi", float)),
+    "nb": (("gamma", float), ("omega", float), ("nu", float), ("unkwn_angle", float)),
 }
 
 CCL_SECOND_LINE = (
@@ -122,6 +112,8 @@ def parse_1D(fileobj, data_type):
             variable = variable.strip()
             value = value.strip()
             if variable in META_VARS_FLOAT:
+                if variable == "2-theta":  # fix that angle name not to be an expression
+                    variable = "twotheta"
                 metadata[variable] = float(value)
             elif variable in META_VARS_STR:
                 metadata[variable] = value
@@ -151,8 +143,8 @@ def parse_1D(fileobj, data_type):
                 s[param_name] = param_type(param)
 
             s["om"] = np.linspace(
-                s["omega_angle"] - (s["n_points"] / 2) * s["angle_step"],
-                s["omega_angle"] + (s["n_points"] / 2) * s["angle_step"],
+                s["omega"] - (s["n_points"] / 2) * s["angle_step"],
+                s["omega"] + (s["n_points"] / 2) * s["angle_step"],
                 s["n_points"],
             )
 
@@ -194,13 +186,13 @@ def parse_1D(fileobj, data_type):
         except KeyError:
             print("Mag_field not present in dat file")
 
-        s["omega_angle"] = metadata["omega"]
+        s["omega"] = metadata["omega"]
         s["n_points"] = len(s["om"])
         s["monitor"] = s["Monitor1"][0]
-        s["twotheta_angle"] = metadata["2-theta"]
-        s["chi_angle"] = metadata["chi"]
-        s["phi_angle"] = metadata["phi"]
-        s["nu_angle"] = metadata["nu"]
+        s["twotheta"] = metadata["twotheta"]
+        s["chi"] = metadata["chi"]
+        s["phi"] = metadata["phi"]
+        s["nu"] = metadata["nu"]
 
         s["idx"] = 1
         scan.append(dict(s))
@@ -249,12 +241,12 @@ def export_1D(data, path, area_method=AREA_METHODS[0], lorentz=False, hkl_precis
         # apply lorentz correction to area
         if lorentz:
             if zebra_mode == "bi":
-                twotheta_angle = np.deg2rad(scan["twotheta_angle"])
-                corr_factor = np.sin(twotheta_angle)
+                twotheta = np.deg2rad(scan["twotheta"])
+                corr_factor = np.sin(twotheta)
             else:  # zebra_mode == "nb":
-                gamma_angle = np.deg2rad(scan["gamma_angle"])
-                nu_angle = np.deg2rad(scan["nu_angle"])
-                corr_factor = np.sin(gamma_angle) * np.cos(nu_angle)
+                gamma = np.deg2rad(scan["gamma"])
+                nu = np.deg2rad(scan["nu"])
+                corr_factor = np.sin(gamma) * np.cos(nu)
 
             area_n = np.abs(area_n * corr_factor)
             area_s = np.abs(area_s * corr_factor)
