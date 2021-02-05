@@ -74,8 +74,8 @@ CCL_SECOND_LINE = (
     ("n_points", int),
     ("angle_step", float),
     ("monitor", float),
-    ("temperature", float),
-    ("mag_field", float),
+    ("temp", float),
+    ("mf", float),
     ("date", str),
     ("time", str),
     ("scan_type", str),
@@ -180,11 +180,11 @@ def parse_1D(fileobj, data_type):
 
         s["om"] = np.array(s["om"])
 
-        s["temperature"] = metadata["temp"]
+        s["temp"] = metadata["temp"]
         try:
-            s["mag_field"] = metadata["mf"]
+            s["mf"] = metadata["mf"]
         except KeyError:
-            print("Mag_field not present in dat file")
+            print("Magnetic field is not present in dat file")
 
         s["omega"] = metadata["omega"]
         s["n_points"] = len(s["om"])

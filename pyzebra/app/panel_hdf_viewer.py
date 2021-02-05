@@ -99,15 +99,15 @@ def create():
             image_glyph.color_mapper.low = im_min
             image_glyph.color_mapper.high = im_max
 
-        if "magnetic_field" in det_data:
-            magnetic_field_spinner.value = det_data["magnetic_field"][index]
+        if "mf" in det_data:
+            mf_spinner.value = det_data["mf"][index]
         else:
-            magnetic_field_spinner.value = None
+            mf_spinner.value = None
 
-        if "temperature" in det_data:
-            temperature_spinner.value = det_data["temperature"][index]
+        if "temp" in det_data:
+            temp_spinner.value = det_data["temp"][index]
         else:
-            temperature_spinner.value = None
+            temp_spinner.value = None
 
         gamma, nu = calculate_pol(det_data, index)
         omega = np.ones((IMAGE_H, IMAGE_W)) * det_data["omega"][index]
@@ -158,7 +158,11 @@ def create():
         index_spinner.value = 0
         index_spinner.high = det_data["data"].shape[0] - 1
 
-        geometry_textinput.value = det_data["zebra_mode"]
+        zebra_mode = det_data["zebra_mode"]
+        if zebra_mode == "nb":
+            geometry_textinput.value = "normal beam"
+        else:  # zebra_mode == "bi"
+            geometry_textinput.value = "bisecting"
 
         update_image(0)
         update_overview_plot()
@@ -553,10 +557,10 @@ def create():
     selection_button = Button(label="Add selection")
     selection_button.on_click(selection_button_callback)
 
-    magnetic_field_spinner = Spinner(
+    mf_spinner = Spinner(
         title="Magnetic field:", format="0.00", width=145, disabled=True
     )
-    temperature_spinner = Spinner(title="Temperature:", format="0.00", width=145, disabled=True)
+    temp_spinner = Spinner(title="Temperature:", format="0.00", width=145, disabled=True)
     geometry_textinput = TextInput(title="Geometry:", disabled=True)
 
     # Final layout
@@ -571,7 +575,7 @@ def create():
         ),
     )
     hkl_layout = column(geometry_textinput, hkl_button)
-    params_layout = row(magnetic_field_spinner, temperature_spinner)
+    params_layout = row(mf_spinner, temp_spinner)
 
     layout_controls = row(
         column(selection_button, selection_list),
@@ -617,10 +621,10 @@ def calculate_hkl(det_data, index):
     ub = det_data["UB"]
     geometry = det_data["zebra_mode"]
 
-    if geometry == "bisecting":
+    if geometry == "bi":
         chi = det_data["chi"][index]
         phi = det_data["phi"][index]
-    elif geometry == "normal beam":
+    elif geometry == "nb":
         chi = 0
         phi = 0
     else:

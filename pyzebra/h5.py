@@ -53,13 +53,9 @@ def read_detector_data(filepath):
         det_data = {"data": data}
 
         if "/entry1/zebra_mode" in h5f:
-            zebra_mode = h5f["/entry1/zebra_mode"][0].decode()
-            if zebra_mode == "nb":
-                det_data["zebra_mode"] = "normal beam"
-            else:
-                det_data["zebra_mode"] = "bisecting"
+            det_data["zebra_mode"] = h5f["/entry1/zebra_mode"][0].decode()
         else:
-            det_data["zebra_mode"] = "normal beam"
+            det_data["zebra_mode"] = "nb"
 
         # om, sometimes ph
         if det_data["zebra_mode"] == "nb":
@@ -85,9 +81,9 @@ def read_detector_data(filepath):
 
         # optional parameters
         if "/entry1/sample/magnetic_field" in h5f:
-            det_data["magnetic_field"] = h5f["/entry1/sample/magnetic_field"][:]
+            det_data["mf"] = h5f["/entry1/sample/magnetic_field"][:]
 
         if "/entry1/sample/temperature" in h5f:
-            det_data["temperature"] = h5f["/entry1/sample/temperature"][:]
+            det_data["temp"] = h5f["/entry1/sample/temperature"][:]
 
     return det_data

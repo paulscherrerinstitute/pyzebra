@@ -118,15 +118,15 @@ def check_temp_mag(scan1, scan2):
     mag_diff = 0.001
     truth_list = list()
     try:
-        if abs(abs(scan1["mag_field"]) - abs(scan2["mag_field"])) <= mag_diff:
+        if abs(abs(scan1["mf"]) - abs(scan2["mf"])) <= mag_diff:
             truth_list.append(True)
         else:
             truth_list.append(False)
     except KeyError:
-        print("mag_field missing")
+        print("Magnetic field is missing")
 
     try:
-        if abs(abs(scan1["temperature"]) - abs(scan2["temperature"])) <= temp_diff:
+        if abs(abs(scan1["temp"]) - abs(scan2["temp"])) <= temp_diff:
             truth_list.append(True)
         else:
             truth_list.append(False)
