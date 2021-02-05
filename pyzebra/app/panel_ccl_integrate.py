@@ -88,7 +88,7 @@ def create():
 
     def _init_datatable():
         scan_list = [s["idx"] for s in det_data["scan"]]
-        hkl = [f'{s["h_index"]} {s["k_index"]} {s["l_index"]}' for s in det_data["scan"]]
+        hkl = [f'{s["h"]} {s["k"]} {s["l"]}' for s in det_data["scan"]]
         scan_table_source.data.update(
             scan=scan_list,
             hkl=hkl,

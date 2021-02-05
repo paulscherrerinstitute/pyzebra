@@ -69,7 +69,7 @@ def read_detector_data(filepath):
         det_data["wave"] = h5f["/entry1/ZEBRA/monochromator/wavelength"][:]
         det_data["chi"] = h5f["/entry1/sample/chi"][:]  # ch
         det_data["phi"] = h5f["/entry1/sample/phi"][:]  # ph
-        det_data["UB"] = h5f["/entry1/sample/UB"][:].reshape(3, 3)
+        det_data["ub"] = h5f["/entry1/sample/UB"][:].reshape(3, 3)
 
         for var in ("omega", "gamma", "nu", "chi", "phi"):
             if abs(det_data[var][0] - det_data[var][-1]) > 0.1:

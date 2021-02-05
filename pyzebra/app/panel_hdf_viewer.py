@@ -618,7 +618,7 @@ def calculate_hkl(det_data, index):
     gammad = det_data["gamma"][index]
     om = det_data["omega"][index]
     nud = det_data["nu"]
-    ub = det_data["UB"]
+    ub = det_data["ub"]
     geometry = det_data["zebra_mode"]
 
     if geometry == "bi":

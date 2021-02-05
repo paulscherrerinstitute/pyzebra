@@ -1,5 +1,4 @@
 import os
-import re
 from collections import defaultdict
 
 import numpy as np
@@ -58,12 +57,7 @@ META_VARS_FLOAT = (
 
 META_UB_MATRIX = ("ub1j", "ub2j", "ub3j")
 
-CCL_FIRST_LINE = (
-    ("idx", int),
-    ("h_index", float),
-    ("k_index", float),
-    ("l_index", float),
-)
+CCL_FIRST_LINE = (("idx", int), ("h", float), ("k", float), ("l", float))
 
 CCL_ANGLES = {
     "bi": (("twotheta", float), ("omega", float), ("chi", float), ("phi", float)),
@@ -111,14 +105,20 @@ def parse_1D(fileobj, data_type):
             variable, value = line.split("=")
             variable = variable.strip()
             value = value.strip()
-            if variable in META_VARS_FLOAT:
+
+            if variable in META_VARS_STR:
+                metadata[variable] = value
+
+            elif variable in META_VARS_FLOAT:
                 if variable == "2-theta":  # fix that angle name not to be an expression
                     variable = "twotheta"
                 metadata[variable] = float(value)
-            elif variable in META_VARS_STR:
-                metadata[variable] = value
+
             elif variable in META_UB_MATRIX:
-                metadata[variable] = re.findall(r"[-+]?\d*\.\d+|\d+", value)
+                if "ub" not in metadata:
+                    metadata["ub"] = np.zeros((3, 3))
+                row = int(variable[-2]) - 1
+                metadata["ub"][row, :] = list(map(float, value.split()))
 
         if "#data" in line:
             # this is the end of metadata and the start of data section
@@ -172,10 +172,9 @@ def parse_1D(fileobj, data_type):
                 s[name].append(float(val))
 
         try:
-            s["h_index"] = float(metadata["title"].split()[-3])
-            s["k_index"] = float(metadata["title"].split()[-2])
-            s["l_index"] = float(metadata["title"].split()[-1])
+            s["h"], s["k"], s["l"] = map(float, metadata["title"].split()[-3:])
         except (ValueError, IndexError):
+            s["h"] = s["k"] = s["l"] = float("nan")
             print("seems hkl is not in title")
 
         s["om"] = np.array(s["om"])
@@ -201,10 +200,8 @@ def parse_1D(fileobj, data_type):
         print("Unknown file extention")
 
     for s in scan:
-        if s["h_index"].is_integer() and s["k_index"].is_integer() and s["l_index"].is_integer():
-            s["h_index"] = int(s["h_index"])
-            s["k_index"] = int(s["k_index"])
-            s["l_index"] = int(s["l_index"])
+        if s["h"].is_integer() and s["k"].is_integer() and s["l"].is_integer():
+            s["h"], s["k"], s["l"] = map(int, (s["h"], s["k"], s["l"]))
             s["indices"] = "hkl"
         else:
             s["indices"] = "real"
@@ -229,7 +226,7 @@ def export_1D(data, path, area_method=AREA_METHODS[0], lorentz=False, hkl_precis
 
         idx_str = f"{scan['idx']:6}"
 
-        h, k, l = scan["h_index"], scan["k_index"], scan["l_index"]
+        h, k, l = scan["h"], scan["k"], scan["l"]
         if scan["indices"] == "hkl":
             hkl_str = f"{h:6}{k:6}{l:6}"
         else:  # scan["indices"] == "real"

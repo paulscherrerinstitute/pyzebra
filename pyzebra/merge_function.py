@@ -77,20 +77,7 @@ def merge(scan1, scan2):
 
 
 def check_UB(dict1, dict2, precision=0.01):
-    truth_list = list()
-    for i in ["ub1j", "ub2j", "ub3j"]:
-        for j in range(3):
-            if abs(abs(float(dict1["meta"][i][j])) - abs(float(dict2["meta"][i][j]))) < precision:
-
-                truth_list.append(True)
-            else:
-                truth_list.append(False)
-
-    # print(truth_list)
-    if all(truth_list):
-        return True
-    else:
-        return False
+    return np.max(np.abs(dict1["meta"]["ub"] - dict2["meta"]["ub"])) < precision
 
 
 def check_zebramode(dict1, dict2):
