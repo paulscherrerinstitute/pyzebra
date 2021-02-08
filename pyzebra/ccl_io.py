@@ -183,8 +183,9 @@ def parse_1D(fileobj, data_type):
 
         s["om"] = np.array(s["om"])
 
-        if "mf" not in metadata:
-            print("Magnetic field is not present in dat file")
+        for param in ("mf", "temp"):
+            if param not in metadata:
+                s[param] = 0
 
         s["n_points"] = len(s["om"])
         s["monitor"] = s["Monitor1"][0]
