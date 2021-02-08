@@ -96,16 +96,10 @@ def create():
     proposal_textinput.on_change("value", proposal_textinput_callback)
 
     def _init_datatable():
-        scan_list = [s["idx"] for s in det_data["scan"]]
+        scan_list = [s["idx"] for s in det_data]
         file_list = []
-        extra_meta = det_data.get("extra_meta", {})
         for scan_id in scan_list:
-            if scan_id in extra_meta:
-                f_path = extra_meta[scan_id]["original_filename"]
-            else:
-                f_path = det_data["meta"]["original_filename"]
-
-            _, f_name = os.path.split(f_path)
+            _, f_name = os.path.split(det_data[scan_id]["meta"]["original_filename"])
             file_list.append(f_name)
 
         scan_table_source.data.update(
@@ -184,8 +178,8 @@ def create():
     append_upload_button.on_change("value", append_upload_button_callback)
 
     def _update_table():
-        num_of_peaks = [len(scan.get("peak_indexes", [])) for scan in det_data["scan"]]
-        fit_ok = [(1 if "fit" in scan else 0) for scan in det_data["scan"]]
+        num_of_peaks = [len(scan.get("peak_indexes", [])) for scan in det_data]
+        fit_ok = [(1 if "fit" in scan else 0) for scan in det_data]
         scan_table_source.data.update(peaks=num_of_peaks, fit=fit_ok)
 
     def _update_plot():
@@ -271,12 +265,12 @@ def create():
         for ind, p in enumerate(scan_table_source.data["param"]):
             if p:
                 s = scan_table_source.data["scan"][ind]
-                xs.append(np.array(det_data["scan"][s]["om"]))
-                x.extend(det_data["scan"][s]["om"])
-                ys.append(np.array(det_data["scan"][s]["Counts"]))
-                y.extend([float(p)] * len(det_data["scan"][s]["om"]))
+                xs.append(np.array(det_data[s]["om"]))
+                x.extend(det_data[s]["om"])
+                ys.append(np.array(det_data[s]["Counts"]))
+                y.extend([float(p)] * len(det_data[s]["om"]))
                 param.append(float(p))
-                par.extend(det_data["scan"][s]["Counts"])
+                par.extend(det_data[s]["Counts"])
 
         ov_plot_mline_source.data.update(xs=xs, ys=ys, param=param, color=color_palette(len(xs)))
         ov_param_plot_scatter_source.data.update(x=x, y=y, param=par)
@@ -412,7 +406,7 @@ def create():
     def _get_selected_scan():
         selected_index = scan_table_source.selected.indices[0]
         selected_scan_id = scan_table_source.data["scan"][selected_index]
-        return det_data["scan"][selected_scan_id]
+        return det_data[selected_scan_id]
 
     def peak_pos_textinput_callback(_attr, _old, new):
         if new is not None and not peak_pos_textinput_lock:
@@ -553,7 +547,7 @@ def create():
 
     def peakfind_all_button_callback():
         peakfind_params = _get_peakfind_params()
-        for scan in det_data["scan"]:
+        for scan in det_data:
             pyzebra.ccl_findpeaks(scan, **peakfind_params)
 
         _update_table()
@@ -585,7 +579,7 @@ def create():
 
     def fit_all_button_callback():
         fit_params = _get_fit_params()
-        for scan in det_data["scan"]:
+        for scan in det_data:
             # fit_params are updated inplace within `fitccl`
             pyzebra.fitccl(scan, **deepcopy(fit_params))
 
@@ -621,7 +615,7 @@ def create():
             export_data = deepcopy(det_data)
             for s, export in zip(scan_table_source.data["scan"], scan_table_source.data["export"]):
                 if not export:
-                    del export_data["scan"][s]
+                    del export_data[s]
 
             pyzebra.export_1D(
                 export_data,
@@ -648,8 +642,8 @@ def create():
             export_data = deepcopy(det_data)
             for s, export in zip(scan_table_source.data["scan"], scan_table_source.data["export"]):
                 if not export:
-                    if "fit" in export_data["scan"][s]:
-                        del export_data["scan"][s]["fit"]
+                    if "fit" in export_data[s]:
+                        del export_data[s]["fit"]
 
             pyzebra.export_1D(
                 export_data,

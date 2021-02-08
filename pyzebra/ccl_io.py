@@ -98,8 +98,9 @@ def load_1D(filepath):
 
 
 def parse_1D(fileobj, data_type):
+    metadata = {"data_type": data_type}
+
     # read metadata
-    metadata = {}
     for line in fileobj:
         if "=" in line:
             variable, value = line.split("=")
@@ -154,6 +155,9 @@ def parse_1D(fileobj, data_type):
                 counts.extend(map(int, next(fileobj).split()))
             s["Counts"] = counts
 
+            # add metadata to each scan
+            s["meta"] = metadata
+
             scan.append(s)
 
     elif data_type == ".dat":
@@ -179,21 +183,17 @@ def parse_1D(fileobj, data_type):
 
         s["om"] = np.array(s["om"])
 
-        s["temp"] = metadata["temp"]
-        try:
-            s["mf"] = metadata["mf"]
-        except KeyError:
+        if "mf" not in metadata:
             print("Magnetic field is not present in dat file")
 
-        s["omega"] = metadata["omega"]
         s["n_points"] = len(s["om"])
         s["monitor"] = s["Monitor1"][0]
-        s["twotheta"] = metadata["twotheta"]
-        s["chi"] = metadata["chi"]
-        s["phi"] = metadata["phi"]
-        s["nu"] = metadata["nu"]
 
         s["idx"] = 1
+
+        # add metadata to the scan
+        s["meta"] = metadata
+
         scan.append(dict(s))
 
     else:
@@ -206,9 +206,7 @@ def parse_1D(fileobj, data_type):
         else:
             s["indices"] = "real"
 
-    metadata["data_type"] = data_type
-
-    return {"meta": metadata, "scan": scan}
+    return scan
 
 
 def export_1D(data, path, area_method=AREA_METHODS[0], lorentz=False, hkl_precision=2):
@@ -217,10 +215,10 @@ def export_1D(data, path, area_method=AREA_METHODS[0], lorentz=False, hkl_precis
     Scans with integer/real hkl values are saved in .comm/.incomm files correspondingly. If no scans
     are present for a particular output format, that file won't be created.
     """
-    zebra_mode = data["meta"]["zebra_mode"]
+    zebra_mode = data[0]["meta"]["zebra_mode"]
     file_content = {".comm": [], ".incomm": []}
 
-    for scan in data["scan"]:
+    for scan in data:
         if "fit" not in scan:
             continue
 

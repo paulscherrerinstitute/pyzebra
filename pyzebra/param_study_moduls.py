@@ -10,6 +10,7 @@ from mpl_toolkits.mplot3d import Axes3D  # dont delete, otherwise waterfall wont
 import collections
 
 from .ccl_io import load_1D
+from .merge_function import add_dict
 
 
 def create_tuples(x, y, y_err):
@@ -52,10 +53,10 @@ def load_dats(filepath):
             else:
 
                 dict1 = add_dict(dict1, load_1D(file_list[i]))
-        dict1["scan"].append({})
+        dict1.append({})
         if data_type == "txt":
             for x in range(len(col_names) - 1):
-                dict1["scan"][i + 1]["params"][col_names[x + 1]] = float(file_list[i][x + 1])
+                dict1[i + 1]["params"][col_names[x + 1]] = float(file_list[i][x + 1])
     return dict1
 
 
@@ -77,18 +78,15 @@ def create_dataframe(dict1, variables):
         print(keys)
 
     # populate the dict
-    for keys in range(len(dict1["scan"])):
-        if "file_of_origin" in dict1["scan"][keys]:
-            pull_dict["filenames"].append(dict1["scan"][keys]["file_of_origin"].split("/")[-1])
-        else:
-            pull_dict["filenames"].append(dict1["meta"]["original_filename"].split("/")[-1])
+    for keys in range(len(dict1)):
+        pull_dict["filenames"].append(dict1[0]["meta"]["original_filename"].split("/")[-1])
 
-        pull_dict["fit_area"].append(dict1["scan"][keys]["fit"]["fit_area"])
-        pull_dict["int_area"].append(dict1["scan"][keys]["fit"]["int_area"])
-        pull_dict["Counts"].append(dict1["scan"][keys]["Counts"])
+        pull_dict["fit_area"].append(dict1[keys]["fit"]["fit_area"])
+        pull_dict["int_area"].append(dict1[keys]["fit"]["int_area"])
+        pull_dict["Counts"].append(dict1[keys]["Counts"])
         for key in variables:
             for i in variables[key]:
-                pull_dict[i].append(_finditem(dict1["scan"][keys], i))
+                pull_dict[i].append(_finditem(dict1[keys], i))
 
     return pd.DataFrame(data=pull_dict)
 
@@ -284,42 +282,6 @@ def merge(scan1, scan2, keep=True, monitor=100000):
     print("merging done")
 
 
-def add_dict(dict1, dict2):
-    """adds two dictionaries, meta of the new is saved as meata+original_filename and
-    measurements are shifted to continue with numbering of first dict
-    :arg dict1 : dictionarry to add to
-    :arg dict2 : dictionarry from which to take the measurements
-    :return dict1 : combined dictionary
-    Note: dict1 must be made from ccl, otherwise we would have to change the structure of loaded
-    dat file"""
-    try:
-        if dict1["meta"]["zebra_mode"] != dict2["meta"]["zebra_mode"]:
-            print("You are trying to add scans measured with different zebra modes")
-            return
-    # this is for the qscan case
-    except KeyError:
-        print("Zebra mode not specified")
-    max_measurement_dict1 = len(dict1["scan"])
-    new_filenames = np.arange(
-        max_measurement_dict1 + 1, max_measurement_dict1 + 1 + len(dict2["scan"])
-    )
-    new_meta_name = "meta" + str(dict2["meta"]["original_filename"])
-    if new_meta_name not in dict1:
-        for keys, name in zip(dict2["scan"], new_filenames):
-            dict2["scan"][keys]["file_of_origin"] = str(dict2["meta"]["original_filename"])
-            dict1["scan"][name] = dict2["scan"][keys]
-
-        dict1[new_meta_name] = dict2["meta"]
-    else:
-        raise KeyError(
-            str(
-                "The file %s has alredy been added to %s"
-                % (dict2["meta"]["original_filename"], dict1["meta"]["original_filename"])
-            )
-        )
-    return dict1
-
-
 def auto(dict):
     """takes just unique tuples from all tuples in dictionary returend by scan_dict
     intendet for automatic merge if you doesent want to specify what scans to merge together
@@ -344,31 +306,31 @@ def scan_dict(dict, precision=0.5):
     note: can be checked by "not d", true if empty
     """
 
-    if dict["meta"]["zebra_mode"] == "bi":
+    if dict[0]["meta"]["zebra_mode"] == "bi":
         angles = ["twotheta", "omega", "chi", "phi"]
-    elif dict["meta"]["zebra_mode"] == "nb":
+    elif dict[0]["meta"]["zebra_mode"] == "nb":
         angles = ["gamma", "omega", "nu"]
     else:
         print("Unknown zebra mode")
         return
 
     d = {}
-    for i in range(len(dict["scan"])):
-        for j in range(len(dict["scan"])):
-            if dict["scan"][i] != dict["scan"][j]:
+    for i in range(len(dict)):
+        for j in range(len(dict)):
+            if dict[i] != dict[j]:
                 itup = list()
                 for k in angles:
-                    itup.append(abs(abs(dict["scan"][i][k]) - abs(dict["scan"][j][k])))
+                    itup.append(abs(abs(dict[i][k]) - abs(dict[j][k])))
 
                 if all(i <= precision for i in itup):
                     print(itup)
-                    print([dict["scan"][i][k] for k in angles])
-                    print([dict["scan"][j][k] for k in angles])
-                    if str([np.around(dict["scan"][i][k], 0) for k in angles]) not in d:
-                        d[str([np.around(dict["scan"][i][k], 0) for k in angles])] = list()
-                        d[str([np.around(dict["scan"][i][k], 0) for k in angles])].append((i, j))
+                    print([dict[i][k] for k in angles])
+                    print([dict[j][k] for k in angles])
+                    if str([np.around(dict[i][k], 0) for k in angles]) not in d:
+                        d[str([np.around(dict[i][k], 0) for k in angles])] = list()
+                        d[str([np.around(dict[i][k], 0) for k in angles])].append((i, j))
                     else:
-                        d[str([np.around(dict["scan"][i][k], 0) for k in angles])].append((i, j))
+                        d[str([np.around(dict[i][k], 0) for k in angles])].append((i, j))
 
                 else:
                     pass
@@ -400,15 +362,15 @@ def variables(dictionary):
     # find all variables that are in all scans
     stdev_precision = 0.05
     all_vars = list()
-    for keys in range(len(dictionary["scan"])):
-        all_vars.append([key for key in dictionary["scan"][keys] if key != "params"])
-        if dictionary["scan"][keys]["params"]:
-            all_vars.append(key for key in dictionary["scan"][keys]["params"])
+    for keys in range(len(dictionary)):
+        all_vars.append([key for key in dictionary[keys] if key != "params"])
+        if dictionary[keys]["params"]:
+            all_vars.append(key for key in dictionary[keys]["params"])
 
     all_vars = [i for sublist in all_vars for i in sublist]
     # get the ones that are in all scans
     b = collections.Counter(all_vars)
-    inall = [key for key in b if b[key] == len(dictionary["scan"])]
+    inall = [key for key in b if b[key] == len(dictionary)]
     # delete those that are obviously wrong
     wrong = [
         "NP",
@@ -433,15 +395,15 @@ def variables(dictionary):
     # check for primary variable, needs to be list, we dont suspect the
     # primary variable be as a parameter (be in scan[params])
     primary_candidates = list()
-    for key in range(len(dictionary["scan"])):
+    for key in range(len(dictionary)):
         for i in inall_red:
-            if isinstance(_finditem(dictionary["scan"][key], i), list):
-                if np.std(_finditem(dictionary["scan"][key], i)) > stdev_precision:
+            if isinstance(_finditem(dictionary[key], i), list):
+                if np.std(_finditem(dictionary[key], i)) > stdev_precision:
                     primary_candidates.append(i)
     # check which of the primary are in every scan
     primary_candidates = collections.Counter(primary_candidates)
     second_round_primary_candidates = [
-        key for key in primary_candidates if primary_candidates[key] == len(dictionary["scan"])
+        key for key in primary_candidates if primary_candidates[key] == len(dictionary)
     ]
 
     if len(second_round_primary_candidates) == 1:
@@ -455,29 +417,29 @@ def variables(dictionary):
     # print("secondary candidates", secondary_candidates)
     # select arrays and floats and ints
     second_round_secondary_candidates = list()
-    for key in range(len(dictionary["scan"])):
+    for key in range(len(dictionary)):
         for i in secondary_candidates:
-            if isinstance(_finditem(dictionary["scan"][key], i), float):
+            if isinstance(_finditem(dictionary[key], i), float):
                 second_round_secondary_candidates.append(i)
-            elif isinstance(_finditem(dictionary["scan"][key], i), int):
+            elif isinstance(_finditem(dictionary[key], i), int):
                 second_round_secondary_candidates.append(i)
-            elif isinstance(_finditem(dictionary["scan"][key], i), list):
-                if np.std(_finditem(dictionary["scan"][key], i)) < stdev_precision:
+            elif isinstance(_finditem(dictionary[key], i), list):
+                if np.std(_finditem(dictionary[key], i)) < stdev_precision:
                     second_round_secondary_candidates.append(i)
 
     second_round_secondary_candidates = collections.Counter(second_round_secondary_candidates)
     second_round_secondary_candidates = [
         key
         for key in second_round_secondary_candidates
-        if second_round_secondary_candidates[key] == len(dictionary["scan"])
+        if second_round_secondary_candidates[key] == len(dictionary)
     ]
     # print("secondary candidates after second round", second_round_secondary_candidates)
     # now we check if they vary between the scans
     third_round_sec_candidates = list()
     for i in second_round_secondary_candidates:
         check_array = list()
-        for keys in range(len(dictionary["scan"])):
-            check_array.append(np.average(_finditem(dictionary["scan"][keys], i)))
+        for keys in range(len(dictionary)):
+            check_array.append(np.average(_finditem(dictionary[keys], i)))
         # print(i, check_array, np.std(check_array))
         if np.std(check_array) > stdev_precision:
             third_round_sec_candidates.append(i)

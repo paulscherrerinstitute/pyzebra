@@ -87,8 +87,8 @@ def create():
     proposal_textinput.on_change("value", proposal_textinput_callback)
 
     def _init_datatable():
-        scan_list = [s["idx"] for s in det_data["scan"]]
-        hkl = [f'{s["h"]} {s["k"]} {s["l"]}' for s in det_data["scan"]]
+        scan_list = [s["idx"] for s in det_data]
+        hkl = [f'{s["h"]} {s["k"]} {s["l"]}' for s in det_data]
         scan_table_source.data.update(
             scan=scan_list,
             hkl=hkl,
@@ -159,8 +159,8 @@ def create():
     append_upload_button.on_change("value", append_upload_button_callback)
 
     def _update_table():
-        num_of_peaks = [len(scan.get("peak_indexes", [])) for scan in det_data["scan"]]
-        fit_ok = [(1 if "fit" in scan else 0) for scan in det_data["scan"]]
+        num_of_peaks = [len(scan.get("peak_indexes", [])) for scan in det_data]
+        fit_ok = [(1 if "fit" in scan else 0) for scan in det_data]
         scan_table_source.data.update(peaks=num_of_peaks, fit=fit_ok)
 
     def _update_plot(scan):
@@ -284,7 +284,7 @@ def create():
             # skip unnecessary update caused by selection drop
             return
 
-        _update_plot(det_data["scan"][scan_table_source.data["scan"][new[0]]])
+        _update_plot(det_data[scan_table_source.data["scan"][new[0]]])
 
     scan_table_source = ColumnDataSource(dict(scan=[], hkl=[], peaks=[], fit=[], export=[]))
     scan_table = DataTable(
@@ -305,7 +305,7 @@ def create():
     def _get_selected_scan():
         selected_index = scan_table_source.selected.indices[0]
         selected_scan_id = scan_table_source.data["scan"][selected_index]
-        return det_data["scan"][selected_scan_id]
+        return det_data[selected_scan_id]
 
     def peak_pos_textinput_callback(_attr, _old, new):
         if new is not None and not peak_pos_textinput_lock:
@@ -446,7 +446,7 @@ def create():
 
     def peakfind_all_button_callback():
         peakfind_params = _get_peakfind_params()
-        for scan in det_data["scan"]:
+        for scan in det_data:
             pyzebra.ccl_findpeaks(scan, **peakfind_params)
 
         _update_table()
@@ -478,7 +478,7 @@ def create():
 
     def fit_all_button_callback():
         fit_params = _get_fit_params()
-        for scan in det_data["scan"]:
+        for scan in det_data:
             # fit_params are updated inplace within `fitccl`
             pyzebra.fitccl(scan, **deepcopy(fit_params))
 
@@ -514,8 +514,8 @@ def create():
             export_data = deepcopy(det_data)
             for s, export in zip(scan_table_source.data["scan"], scan_table_source.data["export"]):
                 if not export:
-                    if "fit" in export_data["scan"][s]:
-                        del export_data["scan"][s]["fit"]
+                    if "fit" in export_data[s]:
+                        del export_data[s]["fit"]
 
             pyzebra.export_1D(
                 export_data,
@@ -547,7 +547,7 @@ def create():
             export_data = deepcopy(det_data)
             for s, export in zip(scan_table_source.data["scan"], scan_table_source.data["export"]):
                 if not export:
-                    del export_data["scan"][s]
+                    del export_data[s]
 
             pyzebra.export_1D(
                 export_data,
