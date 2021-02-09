@@ -61,7 +61,7 @@ CCL_FIRST_LINE = (("idx", int), ("h", float), ("k", float), ("l", float))
 
 CCL_ANGLES = {
     "bi": (("twotheta", float), ("omega", float), ("chi", float), ("phi", float)),
-    "nb": (("gamma", float), ("omega", float), ("nu", float), ("unkwn_angle", float)),
+    "nb": (("gamma", float), ("omega", float), ("nu", float)),
 }
 
 CCL_SECOND_LINE = (
