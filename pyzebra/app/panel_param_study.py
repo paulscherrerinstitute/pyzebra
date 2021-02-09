@@ -393,7 +393,7 @@ def create():
             TableColumn(field="fit", title="Fit", width=50),
             TableColumn(field="export", title="Export", editor=CheckboxEditor(), width=50),
         ],
-        width=400,
+        width=460,  # +60 because of the index column
         editable=True,
         fit_columns=False,
     )

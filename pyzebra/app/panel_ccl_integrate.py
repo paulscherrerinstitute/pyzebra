@@ -294,13 +294,14 @@ def create():
     scan_table = DataTable(
         source=scan_table_source,
         columns=[
-            TableColumn(field="scan", title="Scan"),
-            TableColumn(field="hkl", title="hkl"),
-            TableColumn(field="peaks", title="Peaks"),
-            TableColumn(field="fit", title="Fit"),
-            TableColumn(field="export", title="Export", editor=CheckboxEditor()),
+            TableColumn(field="scan", title="Scan", width=50),
+            TableColumn(field="hkl", title="hkl", width=100),
+            TableColumn(field="peaks", title="Peaks", width=50),
+            TableColumn(field="fit", title="Fit", width=50),
+            TableColumn(field="export", title="Export", editor=CheckboxEditor(), width=50),
         ],
-        width=250,
+        width=360,  # +60 because of the index column
+        fit_columns=False,
         editable=True,
     )
 
