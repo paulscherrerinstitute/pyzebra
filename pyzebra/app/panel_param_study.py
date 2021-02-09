@@ -262,9 +262,8 @@ def create():
         x = []
         y = []
         par = []
-        for ind, p in enumerate(scan_table_source.data["param"]):
+        for s, p in enumerate(scan_table_source.data["param"]):
             if p:
-                s = scan_table_source.data["scan"][ind]
                 xs.append(np.array(det_data[s]["om"]))
                 x.extend(det_data[s]["om"])
                 ys.append(np.array(det_data[s]["Counts"]))
@@ -404,9 +403,7 @@ def create():
     scan_table_source.on_change("data", scan_table_source_callback)
 
     def _get_selected_scan():
-        selected_index = scan_table_source.selected.indices[0]
-        selected_scan_id = scan_table_source.data["scan"][selected_index]
-        return det_data[selected_scan_id]
+        return det_data[scan_table_source.selected.indices[0]]
 
     def peak_pos_textinput_callback(_attr, _old, new):
         if new is not None and not peak_pos_textinput_lock:
@@ -613,7 +610,7 @@ def create():
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_file = temp_dir + "/temp"
             export_data = deepcopy(det_data)
-            for s, export in zip(scan_table_source.data["scan"], scan_table_source.data["export"]):
+            for s, export in enumerate(scan_table_source.data["export"]):
                 if not export:
                     del export_data[s]
 
@@ -640,7 +637,7 @@ def create():
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_file = temp_dir + "/temp"
             export_data = deepcopy(det_data)
-            for s, export in zip(scan_table_source.data["scan"], scan_table_source.data["export"]):
+            for s, export in enumerate(scan_table_source.data["export"]):
                 if not export:
                     if "fit" in export_data[s]:
                         del export_data[s]["fit"]
