@@ -79,7 +79,7 @@ def create_dataframe(dict1, variables):
 
     # populate the dict
     for keys in range(len(dict1)):
-        pull_dict["filenames"].append(dict1[0]["meta"]["original_filename"].split("/")[-1])
+        pull_dict["filenames"].append(dict1[0]["original_filename"].split("/")[-1])
 
         pull_dict["fit_area"].append(dict1[keys]["fit"]["fit_area"])
         pull_dict["int_area"].append(dict1[keys]["fit"]["int_area"])
@@ -306,9 +306,9 @@ def scan_dict(dict, precision=0.5):
     note: can be checked by "not d", true if empty
     """
 
-    if dict[0]["meta"]["zebra_mode"] == "bi":
+    if dict[0]["zebra_mode"] == "bi":
         angles = ["twotheta", "omega", "chi", "phi"]
-    elif dict[0]["meta"]["zebra_mode"] == "nb":
+    elif dict[0]["zebra_mode"] == "nb":
         angles = ["gamma", "omega", "nu"]
     else:
         print("Unknown zebra mode")

@@ -77,11 +77,11 @@ def merge(scan1, scan2):
 
 
 def check_UB(dict1, dict2, precision=0.01):
-    return np.max(np.abs(dict1[0]["meta"]["ub"] - dict2[0]["meta"]["ub"])) < precision
+    return np.max(np.abs(dict1[0]["ub"] - dict2[0]["ub"])) < precision
 
 
 def check_zebramode(dict1, dict2):
-    if dict1[0]["meta"]["zebra_mode"] == dict2[0]["meta"]["zebra_mode"]:
+    if dict1[0]["zebra_mode"] == dict2[0]["zebra_mode"]:
         return True
     else:
         return False
@@ -128,12 +128,12 @@ def check_temp_mag(scan1, scan2):
 
 def merge_dups(dictionary):
 
-    if dictionary[0]["meta"]["data_type"] == "dat":
+    if dictionary[0]["data_type"] == "dat":
         return
 
-    if dictionary[0]["meta"]["zebra_mode"] == "bi":
+    if dictionary[0]["zebra_mode"] == "bi":
         angles = ["twotheta", "omega", "chi", "phi"]
-    elif dictionary[0]["meta"]["zebra_mode"] == "nb":
+    elif dictionary[0]["zebra_mode"] == "nb":
         angles = ["gamma", "omega", "nu"]
 
     precision = {
@@ -220,9 +220,9 @@ def unified_merge(dict1, dict2):
         return
 
     # decide angles
-    if dict1[0]["meta"]["zebra_mode"] == "bi":
+    if dict1[0]["zebra_mode"] == "bi":
         angles = ["twotheta", "omega", "chi", "phi"]
-    elif dict1[0]["meta"]["zebra_mode"] == "nb":
+    elif dict1[0]["zebra_mode"] == "nb":
         angles = ["gamma", "omega", "nu"]
 
     # precision of angles to check
@@ -234,7 +234,7 @@ def unified_merge(dict1, dict2):
         "omega": 5,
         "gamma": 0.1,
     }
-    if (dict1[0]["meta"]["data_type"] == "ccl") and (dict2[0]["meta"]["data_type"] == "ccl"):
+    if (dict1[0]["data_type"] == "ccl") and (dict2[0]["data_type"] == "ccl"):
         precision["omega"] = 0.05
 
     process(dict1, dict2, angles, precision)
@@ -249,7 +249,7 @@ def add_dict(dict1, dict2):
     Note: dict1 must be made from ccl, otherwise we would have to change the structure of loaded
     dat file"""
     try:
-        if dict1[0]["meta"]["zebra_mode"] != dict2[0]["meta"]["zebra_mode"]:
+        if dict1[0]["zebra_mode"] != dict2[0]["zebra_mode"]:
             print("You are trying to add scans measured with different zebra modes")
             return
     # this is for the qscan case
@@ -263,6 +263,6 @@ def add_dict(dict1, dict2):
         else:
             print(
                 "The file %s has alredy been added to %s"
-                % (dict2[0]["meta"]["original_filename"], dict1[0]["meta"]["original_filename"])
+                % (dict2[0]["original_filename"], dict1[0]["original_filename"])
             )
     return dict1

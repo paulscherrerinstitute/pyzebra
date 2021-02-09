@@ -155,10 +155,7 @@ def parse_1D(fileobj, data_type):
                 counts.extend(map(float, next(fileobj).split()))
             s["Counts"] = np.array(counts)
 
-            # add metadata to each scan
-            s["meta"] = metadata
-
-            scan.append(s)
+            scan.append({**metadata, **s})
 
     elif data_type == ".dat":
         # skip the first 2 rows, the third row contans the column names
@@ -195,10 +192,7 @@ def parse_1D(fileobj, data_type):
 
         s["idx"] = 1
 
-        # add metadata to the scan
-        s["meta"] = metadata
-
-        scan.append(dict(s))
+        scan.append({**metadata, **s})
 
     else:
         print("Unknown file extention")
@@ -219,7 +213,7 @@ def export_1D(data, path, area_method=AREA_METHODS[0], lorentz=False, hkl_precis
     Scans with integer/real hkl values are saved in .comm/.incomm files correspondingly. If no scans
     are present for a particular output format, that file won't be created.
     """
-    zebra_mode = data[0]["meta"]["zebra_mode"]
+    zebra_mode = data[0]["zebra_mode"]
     file_content = {".comm": [], ".incomm": []}
 
     for scan in data:
