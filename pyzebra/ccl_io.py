@@ -1,4 +1,5 @@
 import os
+import re
 from collections import defaultdict
 
 import numpy as np
@@ -72,7 +73,7 @@ CCL_SECOND_LINE = (
     ("mf", float),
     ("date", str),
     ("time", str),
-    ("scan_type", str),
+    ("variable_name", str),
 )
 
 AREA_METHODS = ("fit_area", "int_area")
@@ -158,11 +159,17 @@ def parse_1D(fileobj, data_type):
             scan.append({**metadata, **s})
 
     elif data_type == ".dat":
-        # skip the first 2 rows, the third row contans the column names
-        next(fileobj)
-        next(fileobj)
-        col_names = next(fileobj).split()
         s = defaultdict(list)
+
+        match = re.search('Scanning Variables: (.*), Steps: (.*)', next(fileobj))
+        s["variable_name"] = match.group(1)
+
+        match = re.search('(.*) Points, Mode: (.*), Preset (.*)', next(fileobj))
+        if match.group(2) != "Monitor":
+            raise Exception("Unknown mode in dat file.")
+        s["monitor"] = float(match.group(3))
+
+        col_names = next(fileobj).split()
 
         for line in fileobj:
             if "END-OF-DATA" in line:
@@ -177,14 +184,9 @@ def parse_1D(fileobj, data_type):
 
         s["h"] = s["k"] = s["l"] = float("nan")
 
-        s["om"] = np.array(s["om"])
-
         for param in ("mf", "temp"):
             if param not in metadata:
                 s[param] = 0
-
-        s["n_points"] = len(s["om"])
-        s["monitor"] = s["Monitor1"][0]
 
         s["idx"] = 1
 
