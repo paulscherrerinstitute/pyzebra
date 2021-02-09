@@ -175,11 +175,7 @@ def parse_1D(fileobj, data_type):
         for name in col_names:
             s[name] = np.array(s[name])
 
-        try:
-            s["h"], s["k"], s["l"] = map(float, metadata["title"].split()[-3:])
-        except (ValueError, IndexError):
-            s["h"] = s["k"] = s["l"] = float("nan")
-            print("seems hkl is not in title")
+        s["h"] = s["k"] = s["l"] = float("nan")
 
         s["om"] = np.array(s["om"])
 
