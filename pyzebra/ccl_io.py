@@ -152,8 +152,8 @@ def parse_1D(fileobj, data_type):
             # subsequent lines with counts
             counts = []
             while len(counts) < s["n_points"]:
-                counts.extend(map(int, next(fileobj).split()))
-            s["Counts"] = counts
+                counts.extend(map(float, next(fileobj).split()))
+            s["Counts"] = np.array(counts)
 
             # add metadata to each scan
             s["meta"] = metadata
@@ -174,6 +174,9 @@ def parse_1D(fileobj, data_type):
 
             for name, val in zip(col_names, line.split()):
                 s[name].append(float(val))
+
+        for name in col_names:
+            s[name] = np.array(s[name])
 
         try:
             s["h"], s["k"], s["l"] = map(float, metadata["title"].split()[-3:])
