@@ -11,7 +11,7 @@ def ccl_findpeaks(
     smooth=False,
     window_size=7,
     poly_order=3,
-    variable="om",
+    variable="omega",
 ):
 
     """function iterates through the dictionary created by load_cclv2 and locates peaks for each scan

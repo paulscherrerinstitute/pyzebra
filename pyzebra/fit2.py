@@ -67,7 +67,7 @@ def fitccl(
         return
 
     if binning is None or binning == 0 or binning == 1:
-        x = list(scan["om"])
+        x = list(scan["omega"])
         y = list(scan["Counts"])
         y_err = list(np.sqrt(y)) if scan.get("sigma", None) is None else list(scan["sigma"])
         if not scan["peak_indexes"]:
@@ -75,7 +75,7 @@ def fitccl(
         else:
             centre = x[int(scan["peak_indexes"])]
     else:
-        x = list(scan["om"])
+        x = list(scan["omega"])
         if not scan["peak_indexes"]:
             centre = np.mean(x)
         else:

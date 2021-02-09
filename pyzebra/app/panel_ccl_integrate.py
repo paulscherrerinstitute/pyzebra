@@ -172,7 +172,7 @@ def create():
         peak_pos_textinput_lock = True
 
         y = scan["Counts"]
-        x = scan["om"]
+        x = scan["omega"]
 
         plot_scatter_source.data.update(x=x, y=y, y_upper=y + np.sqrt(y), y_lower=y - np.sqrt(y))
 
@@ -180,11 +180,11 @@ def create():
         if num_of_peaks is not None and num_of_peaks > 0:
             peak_indexes = scan["peak_indexes"]
             if len(peak_indexes) == 1:
-                peak_pos_textinput.value = str(scan["om"][peak_indexes[0]])
+                peak_pos_textinput.value = str(scan["omega"][peak_indexes[0]])
             else:
-                peak_pos_textinput.value = str([scan["om"][ind] for ind in peak_indexes])
+                peak_pos_textinput.value = str([scan["omega"][ind] for ind in peak_indexes])
 
-            plot_peak_source.data.update(x=scan["om"][peak_indexes], y=scan["peak_heights"])
+            plot_peak_source.data.update(x=scan["omega"][peak_indexes], y=scan["peak_heights"])
             plot_line_smooth_source.data.update(x=x, y=scan["smooth_peaks"])
         else:
             peak_pos_textinput.value = None
@@ -314,7 +314,7 @@ def create():
         if new is not None and not peak_pos_textinput_lock:
             scan = _get_selected_scan()
 
-            peak_ind = (np.abs(scan["om"] - float(new))).argmin()
+            peak_ind = (np.abs(scan["omega"] - float(new))).argmin()
             scan["peak_indexes"] = np.array([peak_ind], dtype=np.int64)
             scan["peak_heights"] = np.array([scan["smooth_peaks"][peak_ind]])
             _update_table()

@@ -39,13 +39,13 @@ def find_nearest(array, value):
 # peaks = [6.2,  8.1, 9.9, 11.5]
 peaks = [23.5, 24.5]
 # peaks = [24]
-def fitccl(scan, variable="om", peak_type="gauss", binning=None):
+def fitccl(scan, variable="omega", peak_type="gauss", binning=None):
 
     x = list(scan[variable])
     y = list(scan["Counts"])
     peak_centre = np.mean(x)
     if binning is None or binning == 0 or binning == 1:
-        x = list(scan["om"])
+        x = list(scan[variable])
         y = list(scan["Counts"])
         y_err = list(np.sqrt(y)) if scan.get("sigma", None) is None else list(scan["sigma"])
         print(scan["peak_indexes"])
@@ -54,7 +54,7 @@ def fitccl(scan, variable="om", peak_type="gauss", binning=None):
         else:
             centre = x[int(scan["peak_indexes"])]
     else:
-        x = list(scan["om"])
+        x = list(scan[variable])
         if not scan["peak_indexes"]:
             peak_centre = np.mean(x)
         else:

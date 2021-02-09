@@ -144,11 +144,18 @@ def parse_1D(fileobj, data_type):
             for param, (param_name, param_type) in zip(next_line.split(), ccl_second_line):
                 s[param_name] = param_type(param)
 
-            s["om"] = np.linspace(
+            if s["variable_name"] != "om":
+                raise Exception("Unsupported variable name in ccl file.")
+
+            # "om" -> "omega"
+            s["variable_name"] = "omega"
+            s["variable"] = np.linspace(
                 s["omega"] - (s["n_points"] / 2) * s["angle_step"],
                 s["omega"] + (s["n_points"] / 2) * s["angle_step"],
                 s["n_points"],
             )
+            # overwrite metadata, because it only refers to the scan center
+            s["omega"] = s["variable"]
 
             # subsequent lines with counts
             counts = []
@@ -181,6 +188,15 @@ def parse_1D(fileobj, data_type):
 
         for name in col_names:
             s[name] = np.array(s[name])
+
+        # "om" -> "omega"
+        if s["variable_name"] == "om":
+            s["variable_name"] = "omega"
+            s["variable"] = s["om"]
+            s["omega"] = s["om"]
+            del s["om"]
+        else:
+            s["variable"] = s[s["variable_name"]]
 
         s["h"] = s["k"] = s["l"] = float("nan")
 

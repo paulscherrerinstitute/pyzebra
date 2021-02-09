@@ -9,7 +9,7 @@ PARAM_PRECISIONS = {
     "chi": 0.1,
     "nu": 0.1,
     "phi": 0.05,
-    "omega": 5,
+    "omega": 0.05,
     "gamma": 0.05,
     "temp": 1,
     "mf": 0.001,
@@ -36,7 +36,14 @@ def _parameters_match(scan1, scan2):
         return False
 
     for param in ("ub", "temp", "mf", *(vars[0] for vars in CCL_ANGLES[zebra_mode])):
-        if np.max(np.abs(scan1[param] - scan2[param])) > PARAM_PRECISIONS[param]:
+        if param == scan1["variable_name"] == scan2["variable_name"]:
+            # check if ranges of variable parameter overlap
+            range1 = scan1["variable"]
+            range2 = scan2["variable"]
+            if range1[0] > range2[-1] or range2[0] > range1[-1]:
+                return False
+
+        elif np.max(np.abs(scan1[param] - scan2[param])) > PARAM_PRECISIONS[param]:
             return False
 
     return True
@@ -53,12 +60,12 @@ def merge_datasets(dataset1, dataset2):
 
 
 def _merge_scans(scan1, scan2):
-    om = np.concatenate((scan1["om"], scan2["om"]))
+    omega = np.concatenate((scan1["omega"], scan2["omega"]))
     counts = np.concatenate((scan1["Counts"], scan2["Counts"]))
 
-    index = np.argsort(om)
+    index = np.argsort(omega)
 
-    scan1["om"] = om[index]
+    scan1["omega"] = omega[index]
     scan1["Counts"] = counts[index]
 
     print(f'Scan {scan2["idx"]} merged into {scan1["idx"]}')
