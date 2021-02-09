@@ -75,7 +75,7 @@ def color_palette(n_colors):
 
 
 def create():
-    det_data = {}
+    det_data = []
     fit_params = {}
     peak_pos_textinput_lock = False
     js_data = {
@@ -124,7 +124,8 @@ def create():
         with open(file_select.value) as file:
             _, ext = os.path.splitext(file_select.value)
             det_data = pyzebra.parse_1D(file, ext)
-            pyzebra.normalize_all(det_data)
+
+        pyzebra.normalize_dataset(det_data)
 
         _init_datatable()
 
@@ -135,8 +136,9 @@ def create():
         with open(file_select.value) as file:
             _, ext = os.path.splitext(file_select.value)
             append_data = pyzebra.parse_1D(file, ext)
-            pyzebra.normalize_all(det_data)
-            pyzebra.add_dict(det_data, append_data)
+
+        pyzebra.normalize_dataset(append_data)
+        det_data.extend(append_data)
 
         _init_datatable()
 
@@ -145,17 +147,17 @@ def create():
 
     def upload_button_callback(_attr, _old, new):
         nonlocal det_data
-        det_data = {}
+        det_data = []
         for f_str, f_name in zip(new, upload_button.filename):
             with io.StringIO(base64.b64decode(f_str).decode()) as file:
                 _, ext = os.path.splitext(f_name)
                 if det_data:
                     append_data = pyzebra.parse_1D(file, ext)
-                    pyzebra.normalize_all(det_data)
-                    pyzebra.add_dict(det_data, append_data)
+                    pyzebra.normalize_dataset(append_data)
+                    det_data.extend(append_data)
                 else:
                     det_data = pyzebra.parse_1D(file, ext)
-                    pyzebra.normalize_all(det_data)
+                    pyzebra.normalize_dataset(det_data)
 
         _init_datatable()
 
@@ -168,8 +170,9 @@ def create():
             with io.StringIO(base64.b64decode(f_str).decode()) as file:
                 _, ext = os.path.splitext(f_name)
                 append_data = pyzebra.parse_1D(file, ext)
-                pyzebra.normalize_all(det_data)
-                pyzebra.add_dict(det_data, append_data)
+
+            pyzebra.normalize_dataset(append_data)
+            det_data.extend(append_data)
 
         _init_datatable()
 

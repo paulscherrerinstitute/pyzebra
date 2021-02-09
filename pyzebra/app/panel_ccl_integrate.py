@@ -110,7 +110,9 @@ def create():
         with open(file_select.value) as file:
             _, ext = os.path.splitext(file_select.value)
             det_data = pyzebra.parse_1D(file, ext)
-            pyzebra.normalize_all(det_data)
+
+        pyzebra.normalize_dataset(det_data)
+        pyzebra.merge_duplicates(det_data)
 
         _init_datatable()
 
@@ -121,9 +123,9 @@ def create():
         with open(file_select.value) as file:
             _, ext = os.path.splitext(file_select.value)
             append_data = pyzebra.parse_1D(file, ext)
-            pyzebra.normalize_all(det_data)
 
-        pyzebra.unified_merge(det_data, append_data)
+        pyzebra.normalize_dataset(append_data)
+        pyzebra.merge_datasets(det_data, append_data)
 
         _init_datatable()
 
@@ -135,7 +137,9 @@ def create():
         with io.StringIO(base64.b64decode(new).decode()) as file:
             _, ext = os.path.splitext(upload_button.filename)
             det_data = pyzebra.parse_1D(file, ext)
-            pyzebra.normalize_all(det_data)
+
+        pyzebra.normalize_dataset(det_data)
+        pyzebra.merge_duplicates(det_data)
 
         _init_datatable()
 
@@ -148,9 +152,9 @@ def create():
         with io.StringIO(base64.b64decode(new).decode()) as file:
             _, ext = os.path.splitext(append_upload_button.filename)
             append_data = pyzebra.parse_1D(file, ext)
-            pyzebra.normalize_all(det_data)
 
-        pyzebra.unified_merge(det_data, append_data)
+        pyzebra.normalize_dataset(append_data)
+        pyzebra.merge_datasets(det_data, append_data)
 
         _init_datatable()
 
