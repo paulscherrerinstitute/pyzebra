@@ -198,9 +198,6 @@ def parse_1D(fileobj, data_type):
     for s in scan:
         if s["h"].is_integer() and s["k"].is_integer() and s["l"].is_integer():
             s["h"], s["k"], s["l"] = map(int, (s["h"], s["k"], s["l"]))
-            s["indices"] = "hkl"
-        else:
-            s["indices"] = "real"
 
     return scan
 
@@ -221,9 +218,10 @@ def export_1D(data, path, area_method=AREA_METHODS[0], lorentz=False, hkl_precis
         idx_str = f"{scan['idx']:6}"
 
         h, k, l = scan["h"], scan["k"], scan["l"]
-        if scan["indices"] == "hkl":
+        hkl_are_integers = isinstance(h, int)  # if True, other indices are of type 'int' too
+        if hkl_are_integers:
             hkl_str = f"{h:6}{k:6}{l:6}"
-        else:  # scan["indices"] == "real"
+        else:
             hkl_str = f"{h:8.{hkl_precision}f}{k:8.{hkl_precision}f}{l:8.{hkl_precision}f}"
 
         area_n = scan["fit"][area_method].n
@@ -248,7 +246,7 @@ def export_1D(data, path, area_method=AREA_METHODS[0], lorentz=False, hkl_precis
         for angle, _ in CCL_ANGLES[zebra_mode]:
             ang_str = ang_str + f"{scan[angle]:8}"
 
-        ref = file_content[".comm"] if scan["indices"] == "hkl" else file_content[".incomm"]
+        ref = file_content[".comm"] if hkl_are_integers else file_content[".incomm"]
         ref.append(idx_str + hkl_str + area_str + ang_str + "\n")
 
     for ext, content in file_content.items():
