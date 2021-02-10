@@ -126,6 +126,10 @@ def parse_1D(fileobj, data_type):
             # this is the end of metadata and the start of data section
             break
 
+    # handle older files that don't contain "zebra_mode" metadata
+    if "zebra_mode" not in metadata:
+        metadata["zebra_mode"] = "nb"
+
     # read data
     scan = []
     if data_type == ".ccl":
