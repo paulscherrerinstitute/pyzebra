@@ -16,6 +16,10 @@ PARAM_PRECISIONS = {
     "ub": 0.01,
 }
 
+MAX_RANGE_GAP = {
+    "omega": 0.5,
+}
+
 
 def normalize_dataset(dataset, monitor=100_000):
     for scan in dataset:
@@ -40,7 +44,9 @@ def _parameters_match(scan1, scan2):
             # check if ranges of variable parameter overlap
             range1 = scan1["variable"]
             range2 = scan2["variable"]
-            if range1[0] > range2[-1] or range2[0] > range1[-1]:
+            # maximum gap between ranges of the scanning parameter (default 0)
+            max_range_gap = MAX_RANGE_GAP.get(param, 0)
+            if max(range1[0] - range2[-1], range2[0] - range1[-1]) > max_range_gap:
                 return False
 
         elif np.max(np.abs(scan1[param] - scan2[param])) > PARAM_PRECISIONS[param]:
