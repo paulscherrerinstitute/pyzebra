@@ -74,4 +74,4 @@ def _merge_scans(scan1, scan2):
     scan1["omega"] = omega[index]
     scan1["Counts"] = counts[index]
 
-    print(f'Scan {scan2["idx"]} merged into {scan1["idx"]}')
+    print(f'Merging scans: {scan1["idx"]} <-- {scan2["idx"]}')
