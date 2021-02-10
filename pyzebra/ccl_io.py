@@ -104,7 +104,7 @@ def parse_1D(fileobj, data_type):
     # read metadata
     for line in fileobj:
         if "=" in line:
-            variable, value = line.split("=")
+            variable, value = line.split("=", 1)
             variable = variable.strip()
             value = value.strip()
 
