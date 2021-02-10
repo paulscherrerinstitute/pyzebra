@@ -137,6 +137,10 @@ def parse_1D(fileobj, data_type):
         ccl_second_line = CCL_SECOND_LINE
 
         for line in fileobj:
+            # skip empty/whitespace lines before start of any scan
+            if not line or line.isspace():
+                continue
+
             s = {}
 
             # first line
