@@ -98,8 +98,8 @@ def create():
     def _init_datatable():
         scan_list = [s["idx"] for s in det_data]
         file_list = []
-        for scan_id in scan_list:
-            _, f_name = os.path.split(det_data[scan_id]["original_filename"])
+        for scan in det_data:
+            _, f_name = os.path.split(scan["original_filename"])
             file_list.append(f_name)
 
         scan_table_source.data.update(
