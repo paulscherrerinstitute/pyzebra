@@ -174,6 +174,10 @@ def parse_1D(fileobj, data_type):
             scan.append({**metadata, **s})
 
     elif data_type == ".dat":
+        # TODO: this might need to be adapted in the future, when "gamma" will be added to dat files
+        if metadata["zebra_mode"] == "nb":
+            metadata["gamma"] = metadata["twotheta"]
+
         s = defaultdict(list)
 
         match = re.search('Scanning Variables: (.*), Steps: (.*)', next(fileobj))
