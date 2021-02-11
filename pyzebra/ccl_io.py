@@ -114,6 +114,8 @@ def parse_1D(fileobj, data_type):
             elif variable in META_VARS_FLOAT:
                 if variable == "2-theta":  # fix that angle name not to be an expression
                     variable = "twotheta"
+                if variable in ("a", "b", "c", "alpha", "beta", "gamma"):
+                    variable += "_cell"
                 metadata[variable] = float(value)
 
             elif variable in META_UB_MATRIX:
