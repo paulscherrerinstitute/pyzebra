@@ -99,6 +99,12 @@ def create():
         scan_table_source.selected.indices = []
         scan_table_source.selected.indices = [0]
 
+        merge_options = [(str(i), f"{i} ({idx})") for i, idx in enumerate(scan_list)]
+        merge_source_select.options = merge_options
+        merge_source_select.value = merge_options[0][0]
+        merge_dest_select.options = merge_options
+        merge_dest_select.value = merge_options[0][0]
+
     def ccl_file_select_callback(_attr, _old, _new):
         pass
 
@@ -309,6 +315,23 @@ def create():
 
     def _get_selected_scan():
         return det_data[scan_table_source.selected.indices[0]]
+
+    merge_dest_select = Select(title="destination:", width=100)
+    merge_source_select = Select(title="source:", width=100)
+
+    def merge_button_callback():
+        scan_dest_ind = int(merge_dest_select.value)
+        scan_source_ind = int(merge_source_select.value)
+
+        if scan_dest_ind == scan_source_ind:
+            print("WARNING: Selected scans for merging are identical")
+            return
+
+        pyzebra.merge_scans(det_data[scan_dest_ind], det_data[scan_source_ind])
+        _update_plot(_get_selected_scan())
+
+    merge_button = Button(label="Merge scans", width=145)
+    merge_button.on_click(merge_button_callback)
 
     def peak_pos_textinput_callback(_attr, _old, new):
         if new is not None and not peak_pos_textinput_lock:
@@ -593,6 +616,11 @@ def create():
         ),
     )
 
+    scan_layout = column(
+        scan_table,
+        row(column(Spacer(height=19), merge_button), merge_dest_select, merge_source_select),
+    )
+
     export_layout = column(
         preview_output_textinput,
         row(
@@ -609,7 +637,7 @@ def create():
             column(upload_div, upload_button),
             column(append_upload_div, append_upload_button),
         ),
-        row(scan_table, plot, Spacer(width=30), fit_output_textinput, export_layout),
+        row(scan_layout, plot, Spacer(width=30), fit_output_textinput, export_layout),
         row(findpeak_controls, Spacer(width=30), fitpeak_controls),
     )
 

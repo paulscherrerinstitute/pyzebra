@@ -31,7 +31,7 @@ def normalize_dataset(dataset, monitor=100_000):
 def merge_duplicates(dataset):
     for scan_i, scan_j in itertools.combinations(dataset, 2):
         if _parameters_match(scan_i, scan_j):
-            _merge_scans(scan_i, scan_j)
+            merge_scans(scan_i, scan_j)
 
 
 def _parameters_match(scan1, scan2):
@@ -59,13 +59,13 @@ def merge_datasets(dataset1, dataset2):
     for scan_j in dataset2:
         for scan_i in dataset1:
             if _parameters_match(scan_i, scan_j):
-                _merge_scans(scan_i, scan_j)
+                merge_scans(scan_i, scan_j)
                 break
         else:
             dataset1.append(scan_j)
 
 
-def _merge_scans(scan1, scan2):
+def merge_scans(scan1, scan2):
     omega = np.concatenate((scan1["omega"], scan2["omega"]))
     counts = np.concatenate((scan1["Counts"], scan2["Counts"]))
 
