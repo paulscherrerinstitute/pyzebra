@@ -118,7 +118,7 @@ def create():
             _, ext = os.path.splitext(file_select.value)
             det_data = pyzebra.parse_1D(file, ext)
 
-        pyzebra.normalize_dataset(det_data)
+        pyzebra.normalize_dataset(det_data, monitor_spinner.value)
         pyzebra.merge_duplicates(det_data)
 
         _init_datatable()
@@ -131,7 +131,7 @@ def create():
             _, ext = os.path.splitext(file_select.value)
             append_data = pyzebra.parse_1D(file, ext)
 
-        pyzebra.normalize_dataset(append_data)
+        pyzebra.normalize_dataset(append_data, monitor_spinner.value)
         pyzebra.merge_datasets(det_data, append_data)
 
         _init_datatable()
@@ -145,7 +145,7 @@ def create():
             _, ext = os.path.splitext(upload_button.filename)
             det_data = pyzebra.parse_1D(file, ext)
 
-        pyzebra.normalize_dataset(det_data)
+        pyzebra.normalize_dataset(det_data, monitor_spinner.value)
         pyzebra.merge_duplicates(det_data)
 
         _init_datatable()
@@ -160,7 +160,7 @@ def create():
             _, ext = os.path.splitext(append_upload_button.filename)
             append_data = pyzebra.parse_1D(file, ext)
 
-        pyzebra.normalize_dataset(append_data)
+        pyzebra.normalize_dataset(append_data, monitor_spinner.value)
         pyzebra.merge_datasets(det_data, append_data)
 
         _init_datatable()
@@ -168,6 +168,14 @@ def create():
     append_upload_div = Div(text="append extra file:", margin=(5, 5, 0, 5))
     append_upload_button = FileInput(accept=".ccl,.dat")
     append_upload_button.on_change("value", append_upload_button_callback)
+
+    def monitor_spinner_callback(_attr, old, new):
+        if det_data:
+            pyzebra.normalize_dataset(det_data, new)
+            _update_plot(_get_selected_scan())
+
+    monitor_spinner = Spinner(title="Monitor:", mode="int", value=100_000, low=1, width=145)
+    monitor_spinner.on_change("value", monitor_spinner_callback)
 
     def _update_table():
         num_of_peaks = [len(scan.get("peak_indexes", [])) for scan in det_data]
@@ -637,6 +645,7 @@ def create():
             Spacer(width=100),
             column(upload_div, upload_button),
             column(append_upload_div, append_upload_button),
+            monitor_spinner,
         ),
         row(scan_layout, plot, Spacer(width=30), export_layout),
         row(findpeak_controls, Spacer(width=30), fitpeak_controls, fit_output_textinput),
