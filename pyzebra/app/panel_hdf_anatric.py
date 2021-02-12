@@ -112,7 +112,7 @@ def create():
     def logfile_textinput_callback(_attr, _old, new):
         config.logfile = new
 
-    logfile_textinput = TextInput(title="Logfile:", value="logfile.log", width=520)
+    logfile_textinput = TextInput(title="Logfile:", value="logfile.log", width=320)
     logfile_textinput.on_change("value", logfile_textinput_callback)
 
     def logfile_verbosity_select_callback(_attr, _old, new):
@@ -133,7 +133,7 @@ def create():
     def filelist_format_textinput_callback(_attr, _old, new):
         config.filelist_format = new
 
-    filelist_format_textinput = TextInput(title="format:", width=490)
+    filelist_format_textinput = TextInput(title="format:", width=290)
     filelist_format_textinput.on_change("value", filelist_format_textinput_callback)
 
     def filelist_datapath_textinput_callback(_attr, _old, new):
@@ -161,7 +161,7 @@ def create():
     def lambda_textinput_callback(_attr, _old, new):
         config.crystal_lambda = new
 
-    lambda_textinput = TextInput(title="lambda:", width=140)
+    lambda_textinput = TextInput(title="lambda:", width=145)
     lambda_textinput.on_change("value", lambda_textinput_callback)
 
     def ub_textareainput_callback(_attr, _old, new):
@@ -173,19 +173,19 @@ def create():
     def zeroOM_textinput_callback(_attr, _old, new):
         config.crystal_zeroOM = new
 
-    zeroOM_textinput = TextInput(title="zeroOM:", width=140)
+    zeroOM_textinput = TextInput(title="zeroOM:", width=145)
     zeroOM_textinput.on_change("value", zeroOM_textinput_callback)
 
     def zeroSTT_textinput_callback(_attr, _old, new):
         config.crystal_zeroSTT = new
 
-    zeroSTT_textinput = TextInput(title="zeroSTT:", width=140)
+    zeroSTT_textinput = TextInput(title="zeroSTT:", width=145)
     zeroSTT_textinput.on_change("value", zeroSTT_textinput_callback)
 
     def zeroCHI_textinput_callback(_attr, _old, new):
         config.crystal_zeroCHI = new
 
-    zeroCHI_textinput = TextInput(title="zeroCHI:", width=140)
+    zeroCHI_textinput = TextInput(title="zeroCHI:", width=145)
     zeroCHI_textinput.on_change("value", zeroCHI_textinput_callback)
 
     # ---- DataFactory
@@ -193,14 +193,14 @@ def create():
         config.dataFactory_implementation = new
 
     dataFactory_implementation_select = Select(
-        title="DataFactory implementation:", options=DATA_FACTORY_IMPLEMENTATION, width=300,
+        title="DataFactory implement.:", options=DATA_FACTORY_IMPLEMENTATION, width=145,
     )
     dataFactory_implementation_select.on_change("value", dataFactory_implementation_select_callback)
 
     def dataFactory_dist1_textinput_callback(_attr, _old, new):
         config.dataFactory_dist1 = new
 
-    dataFactory_dist1_textinput = TextInput(title="dist1:", width=290)
+    dataFactory_dist1_textinput = TextInput(title="dist1:", width=145)
     dataFactory_dist1_textinput.on_change("value", dataFactory_dist1_textinput_callback)
 
     # ---- BackgroundProcessor
@@ -212,7 +212,7 @@ def create():
         config.reflectionPrinter_format = new
 
     reflectionPrinter_format_select = Select(
-        title="ReflectionPrinter format:", options=REFLECTION_PRINTER_FORMATS, width=300,
+        title="ReflectionPrinter format:", options=REFLECTION_PRINTER_FORMATS, width=145,
     )
     reflectionPrinter_format_select.on_change("value", reflectionPrinter_format_select_callback)
 
@@ -357,49 +357,54 @@ def create():
     process_button = Button(label="Process", button_type="primary")
     process_button.on_click(process_button_callback)
 
-    output_log = TextAreaInput(title="Logfile output:", height=700, disabled=True)
-    output_config = TextAreaInput(title="Current config:", height=700, width=400, disabled=True)
+    output_log = TextAreaInput(title="Logfile output:", height=600, disabled=True)
+    output_config = TextAreaInput(title="Current config:", height=600, width=400, disabled=True)
 
-    tab_layout = row(
-        column(
-            row(column(Spacer(height=2), upload_div), upload_button),
-            row(logfile_textinput, logfile_verbosity_select),
-            row(filelist_type, filelist_format_textinput),
-            filelist_datapath_textinput,
-            filelist_ranges_textareainput,
-            crystal_sample_textinput,
-            row(lambda_textinput, zeroOM_textinput, zeroSTT_textinput, zeroCHI_textinput),
-            ub_textareainput,
-            row(dataFactory_implementation_select, dataFactory_dist1_textinput),
-            reflectionPrinter_format_select,
-            process_button,
-        ),
-        column(
-            mode_radio_button_group,
-            row(
-                column(
-                    threshold_textinput,
-                    shell_textinput,
-                    steepness_textinput,
-                    duplicateDistance_textinput,
-                    maxequal_textinput,
-                    aps_window_textinput,
-                ),
-                column(
-                    adm_window_textinput,
-                    border_textinput,
-                    minWindow_textinput,
-                    reflectionFile_textinput,
-                    targetMonitor_textinput,
-                    smoothSize_textinput,
-                    loop_textinput,
-                    minPeakCount_textinput,
-                    displacementCurve_textinput,
-                ),
+    general_params_layout = column(
+        row(logfile_textinput, logfile_verbosity_select),
+        row(filelist_type, filelist_format_textinput),
+        filelist_datapath_textinput,
+        filelist_ranges_textareainput,
+        crystal_sample_textinput,
+        row(lambda_textinput, zeroOM_textinput),
+        row(zeroSTT_textinput, zeroCHI_textinput),
+        ub_textareainput,
+        row(dataFactory_implementation_select, dataFactory_dist1_textinput),
+        reflectionPrinter_format_select,
+    )
+
+    algorithm_params_layout = column(
+        mode_radio_button_group,
+        row(
+            column(
+                threshold_textinput,
+                shell_textinput,
+                steepness_textinput,
+                duplicateDistance_textinput,
+                maxequal_textinput,
+                aps_window_textinput,
+            ),
+            column(
+                adm_window_textinput,
+                border_textinput,
+                minWindow_textinput,
+                reflectionFile_textinput,
+                targetMonitor_textinput,
+                smoothSize_textinput,
+                loop_textinput,
+                minPeakCount_textinput,
+                displacementCurve_textinput,
             ),
         ),
-        output_config,
-        output_log,
+    )
+
+    tab_layout = column(
+        row(column(Spacer(height=2), upload_div), upload_button),
+        row(
+            general_params_layout,
+            algorithm_params_layout,
+            column(row(output_config, output_log), row(process_button)),
+        ),
     )
 
     async def update_config():

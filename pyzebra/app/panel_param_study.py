@@ -278,7 +278,7 @@ def create():
         ov_param_plot_scatter_source.data.update(x=x, y=y, param=par)
 
     # Main plot
-    plot = Plot(x_range=DataRange1d(), y_range=DataRange1d(), plot_height=400, plot_width=700)
+    plot = Plot(x_range=DataRange1d(), y_range=DataRange1d(), plot_height=450, plot_width=700)
 
     plot.add_layout(LinearAxis(axis_label="Counts"), place="left")
     plot.add_layout(LinearAxis(axis_label="Omega"), place="below")
@@ -534,7 +534,7 @@ def create():
     fitparams_add_dropdown_callback(types.SimpleNamespace(item="background"))
     fitparams_add_dropdown_callback(types.SimpleNamespace(item="gauss"))
 
-    fit_output_textinput = TextAreaInput(title="Fit results:", width=450, height=400)
+    fit_output_textinput = TextAreaInput(title="Fit results:", width=450, height=200)
 
     def _get_peakfind_params():
         return dict(
@@ -696,8 +696,8 @@ def create():
             column(upload_div, upload_button),
             column(append_upload_div, append_upload_button),
         ),
-        row(scan_table, plots, Spacer(width=30), fit_output_textinput, export_layout),
-        row(findpeak_controls, Spacer(width=30), fitpeak_controls),
+        row(scan_table, plots, Spacer(width=30), export_layout),
+        row(findpeak_controls, Spacer(width=30), fitpeak_controls, fit_output_textinput),
     )
 
     return Panel(child=tab_layout, title="param study")

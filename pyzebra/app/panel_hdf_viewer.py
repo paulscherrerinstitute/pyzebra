@@ -41,6 +41,8 @@ import pyzebra
 
 IMAGE_W = 256
 IMAGE_H = 128
+IMAGE_PLOT_W = int(IMAGE_W * 2.5)
+IMAGE_PLOT_H = int(IMAGE_H * 2.5)
 
 PROPOSAL_PATH = "/afs/psi.ch/project/sinqdata/2020/zebra/"
 
@@ -179,8 +181,8 @@ def create():
     plot = Plot(
         x_range=Range1d(0, IMAGE_W, bounds=(0, IMAGE_W)),
         y_range=Range1d(0, IMAGE_H, bounds=(0, IMAGE_H)),
-        plot_height=IMAGE_H * 3,
-        plot_width=IMAGE_W * 3,
+        plot_height=IMAGE_PLOT_H,
+        plot_width=IMAGE_PLOT_W,
         toolbar_location="left",
     )
 
@@ -233,8 +235,8 @@ def create():
     proj_v = Plot(
         x_range=plot.x_range,
         y_range=DataRange1d(),
-        plot_height=200,
-        plot_width=IMAGE_W * 3,
+        plot_height=150,
+        plot_width=IMAGE_PLOT_W,
         toolbar_location=None,
     )
 
@@ -250,8 +252,8 @@ def create():
     proj_h = Plot(
         x_range=DataRange1d(),
         y_range=plot.y_range,
-        plot_height=IMAGE_H * 3,
-        plot_width=200,
+        plot_height=IMAGE_PLOT_H,
+        plot_width=150,
         toolbar_location=None,
     )
 
@@ -314,8 +316,8 @@ def create():
         title=Title(text="Projections on X-axis"),
         x_range=det_x_range,
         y_range=frame_range,
-        plot_height=500,
-        plot_width=IMAGE_W * 3,
+        plot_height=400,
+        plot_width=IMAGE_PLOT_W,
     )
 
     # ---- tools
@@ -351,8 +353,8 @@ def create():
         title=Title(text="Projections on Y-axis"),
         x_range=det_y_range,
         y_range=frame_range,
-        plot_height=500,
-        plot_width=IMAGE_H * 3,
+        plot_height=400,
+        plot_width=IMAGE_PLOT_H,
     )
 
     # ---- tools
@@ -393,7 +395,7 @@ def create():
         x_range=DataRange1d(),
         y_range=DataRange1d(),
         plot_height=200,
-        plot_width=IMAGE_W * 3,
+        plot_width=IMAGE_PLOT_W,
         toolbar_location="left",
     )
 
