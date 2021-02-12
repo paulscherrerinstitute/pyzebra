@@ -274,7 +274,8 @@ def export_1D(data, path, area_method=AREA_METHODS[0], lorentz=False, hkl_precis
 
         ang_str = ""
         for angle, _ in CCL_ANGLES[zebra_mode]:
-            ang_str = ang_str + f"{scan[angle]:8}"
+            # TODO: output peak center in case of a scanning variable?
+            ang_str = ang_str + f"{np.mean(scan[angle]):8}"
 
         ref = file_content[".comm"] if hkl_are_integers else file_content[".incomm"]
         ref.append(idx_str + hkl_str + area_str + ang_str + "\n")
