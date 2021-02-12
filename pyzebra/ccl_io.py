@@ -182,10 +182,10 @@ def parse_1D(fileobj, data_type):
 
         s = defaultdict(list)
 
-        match = re.search('Scanning Variables: (.*), Steps: (.*)', next(fileobj))
+        match = re.search("Scanning Variables: (.*), Steps: (.*)", next(fileobj))
         s["variable_name"] = match.group(1)
 
-        match = re.search('(.*) Points, Mode: (.*), Preset (.*)', next(fileobj))
+        match = re.search("(.*) Points, Mode: (.*), Preset (.*)", next(fileobj))
         if match.group(2) != "Monitor":
             raise Exception("Unknown mode in dat file.")
         s["monitor"] = float(match.group(3))
@@ -274,8 +274,11 @@ def export_1D(data, path, area_method=AREA_METHODS[0], lorentz=False, hkl_precis
 
         ang_str = ""
         for angle, _ in CCL_ANGLES[zebra_mode]:
-            # TODO: output peak center in case of a scanning variable?
-            ang_str = ang_str + f"{np.mean(scan[angle]):8}"
+            if angle == scan["variable_name"]:
+                angle_center = (np.min(scan[angle]) + np.max(scan[angle])) / 2
+            else:
+                angle_center = scan[angle]
+            ang_str = ang_str + f"{angle_center:8}"
 
         ref = file_content[".comm"] if hkl_are_integers else file_content[".incomm"]
         ref.append(idx_str + hkl_str + area_str + ang_str + "\n")
