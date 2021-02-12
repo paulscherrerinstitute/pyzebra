@@ -89,12 +89,13 @@ def create():
     def _init_datatable():
         scan_list = [s["idx"] for s in det_data]
         hkl = [f'{s["h"]} {s["k"]} {s["l"]}' for s in det_data]
+        export = [s.get("active", True) for s in det_data]
         scan_table_source.data.update(
             scan=scan_list,
             hkl=hkl,
             peaks=[0] * len(scan_list),
             fit=[0] * len(scan_list),
-            export=[True] * len(scan_list),
+            export=export,
         )
         scan_table_source.selected.indices = []
         scan_table_source.selected.indices = [0]

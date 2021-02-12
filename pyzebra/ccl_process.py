@@ -65,8 +65,8 @@ def merge_datasets(dataset1, dataset2):
             if _parameters_match(scan_i, scan_j):
                 merge_scans(scan_i, scan_j)
                 break
-        else:
-            dataset1.append(scan_j)
+
+        dataset1.append(scan_j)
 
 
 def merge_scans(scan1, scan2):
@@ -78,4 +78,5 @@ def merge_scans(scan1, scan2):
     scan1["omega"] = omega[index]
     scan1["Counts"] = counts[index]
 
+    scan2["active"] = False
     print(f'Merging scans: {scan1["idx"]} <-- {scan2["idx"]}')
