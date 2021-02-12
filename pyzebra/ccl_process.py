@@ -40,6 +40,10 @@ def _parameters_match(scan1, scan2):
         return False
 
     for param in ("ub", "temp", "mf", *(vars[0] for vars in CCL_ANGLES[zebra_mode])):
+        if param.startswith("skip"):
+            # ignore skip parameters, like the last angle in 'nb' zebra mode
+            continue
+
         if param == scan1["variable_name"] == scan2["variable_name"]:
             # check if ranges of variable parameter overlap
             range1 = scan1["variable"]

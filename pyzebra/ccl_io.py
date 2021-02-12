@@ -62,7 +62,7 @@ CCL_FIRST_LINE = (("idx", int), ("h", float), ("k", float), ("l", float))
 
 CCL_ANGLES = {
     "bi": (("twotheta", float), ("omega", float), ("chi", float), ("phi", float)),
-    "nb": (("gamma", float), ("omega", float), ("nu", float)),
+    "nb": (("gamma", float), ("omega", float), ("nu", float), ("skip_angle", float)),
 }
 
 CCL_SECOND_LINE = (
@@ -135,7 +135,7 @@ def parse_1D(fileobj, data_type):
     # read data
     scan = []
     if data_type == ".ccl":
-        ccl_first_line = (*CCL_FIRST_LINE, *CCL_ANGLES[metadata["zebra_mode"]])
+        ccl_first_line = CCL_FIRST_LINE + CCL_ANGLES[metadata["zebra_mode"]]
         ccl_second_line = CCL_SECOND_LINE
 
         for line in fileobj:
