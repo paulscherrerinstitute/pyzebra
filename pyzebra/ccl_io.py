@@ -208,6 +208,15 @@ def parse_1D(fileobj, data_type):
             s["omega"] = s["om"]
             del s["om"]
 
+        # "tt" -> "temp"
+        elif s["scan_motor"] == "tt":
+            s["scan_motor"] = "temp"
+            s["temp"] = s["tt"]
+            del s["tt"]
+
+        # "mf" stays "mf"
+        # "phi" stays "phi"
+
         s["h"] = s["k"] = s["l"] = float("nan")
 
         for param in ("mf", "temp"):

@@ -201,9 +201,12 @@ def create():
         nonlocal peak_pos_textinput_lock
         peak_pos_textinput_lock = True
 
-        y = scan["Counts"]
-        x = scan["omega"]
+        scan_motor = scan["scan_motor"]
 
+        y = scan["Counts"]
+        x = scan[scan_motor]
+
+        plot.axis[0].axis_label = scan_motor
         plot_scatter_source.data.update(x=x, y=y, y_upper=y + np.sqrt(y), y_lower=y - np.sqrt(y))
 
         num_of_peaks = len(scan.get("peak_indexes", []))
@@ -275,12 +278,19 @@ def create():
         par = []
         for s, p in enumerate(scan_table_source.data["param"]):
             if p:
-                xs.append(np.array(det_data[s]["omega"]))
-                x.extend(det_data[s]["omega"])
-                ys.append(np.array(det_data[s]["Counts"]))
-                y.extend([float(p)] * len(det_data[s]["omega"]))
+                scan = det_data[s]
+                scan_motor = scan["scan_motor"]
+                xs.append(scan[scan_motor])
+                x.extend(scan[scan_motor])
+                ys.append(scan["Counts"])
+                y.extend([float(p)] * len(scan[scan_motor]))
                 param.append(float(p))
-                par.extend(det_data[s]["Counts"])
+                par.extend(scan["Counts"])
+
+        if det_data:
+            scan_motor = det_data[0]["scan_motor"]
+            ov_plot.axis[0].axis_label = scan_motor
+            ov_param_plot.axis[0].axis_label = scan_motor
 
         ov_plot_mline_source.data.update(xs=xs, ys=ys, param=param, color=color_palette(len(xs)))
         ov_param_plot_scatter_source.data.update(x=x, y=y, param=par)
@@ -289,7 +299,7 @@ def create():
     plot = Plot(x_range=DataRange1d(), y_range=DataRange1d(), plot_height=450, plot_width=700)
 
     plot.add_layout(LinearAxis(axis_label="Counts"), place="left")
-    plot.add_layout(LinearAxis(axis_label="Omega"), place="below")
+    plot.add_layout(LinearAxis(axis_label="Scan motor"), place="below")
 
     plot.add_layout(Grid(dimension=0, ticker=BasicTicker()))
     plot.add_layout(Grid(dimension=1, ticker=BasicTicker()))
@@ -329,7 +339,7 @@ def create():
     ov_plot = Plot(x_range=DataRange1d(), y_range=DataRange1d(), plot_height=400, plot_width=700)
 
     ov_plot.add_layout(LinearAxis(axis_label="Counts"), place="left")
-    ov_plot.add_layout(LinearAxis(axis_label="Omega"), place="below")
+    ov_plot.add_layout(LinearAxis(axis_label="Scan motor"), place="below")
 
     ov_plot.add_layout(Grid(dimension=0, ticker=BasicTicker()))
     ov_plot.add_layout(Grid(dimension=1, ticker=BasicTicker()))
@@ -346,7 +356,7 @@ def create():
     )
 
     ov_param_plot.add_layout(LinearAxis(axis_label="Param"), place="left")
-    ov_param_plot.add_layout(LinearAxis(axis_label="Omega"), place="below")
+    ov_param_plot.add_layout(LinearAxis(axis_label="Scan motor"), place="below")
 
     ov_param_plot.add_layout(Grid(dimension=0, ticker=BasicTicker()))
     ov_param_plot.add_layout(Grid(dimension=1, ticker=BasicTicker()))

@@ -186,20 +186,23 @@ def create():
         nonlocal peak_pos_textinput_lock
         peak_pos_textinput_lock = True
 
-        y = scan["Counts"]
-        x = scan["omega"]
+        scan_motor = scan["scan_motor"]
 
+        y = scan["Counts"]
+        x = scan[scan_motor]
+
+        plot.axis[0].axis_label = scan_motor
         plot_scatter_source.data.update(x=x, y=y, y_upper=y + np.sqrt(y), y_lower=y - np.sqrt(y))
 
         num_of_peaks = len(scan.get("peak_indexes", []))
         if num_of_peaks is not None and num_of_peaks > 0:
             peak_indexes = scan["peak_indexes"]
             if len(peak_indexes) == 1:
-                peak_pos_textinput.value = str(scan["omega"][peak_indexes[0]])
+                peak_pos_textinput.value = str(scan[scan_motor][peak_indexes[0]])
             else:
-                peak_pos_textinput.value = str([scan["omega"][ind] for ind in peak_indexes])
+                peak_pos_textinput.value = str([scan[scan_motor][ind] for ind in peak_indexes])
 
-            plot_peak_source.data.update(x=scan["omega"][peak_indexes], y=scan["peak_heights"])
+            plot_peak_source.data.update(x=scan[scan_motor][peak_indexes], y=scan["peak_heights"])
             plot_line_smooth_source.data.update(x=x, y=scan["smooth_peaks"])
         else:
             peak_pos_textinput.value = None
@@ -255,7 +258,7 @@ def create():
     plot = Plot(x_range=DataRange1d(), y_range=DataRange1d(), plot_height=470, plot_width=700)
 
     plot.add_layout(LinearAxis(axis_label="Counts"), place="left")
-    plot.add_layout(LinearAxis(axis_label="Omega"), place="below")
+    plot.add_layout(LinearAxis(axis_label="Scan motor"), place="below")
 
     plot.add_layout(Grid(dimension=0, ticker=BasicTicker()))
     plot.add_layout(Grid(dimension=1, ticker=BasicTicker()))
