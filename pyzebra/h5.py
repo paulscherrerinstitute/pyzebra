@@ -73,8 +73,7 @@ def read_detector_data(filepath):
 
         for var in ("omega", "gamma", "nu", "chi", "phi"):
             if abs(det_data[var][0] - det_data[var][-1]) > 0.1:
-                det_data["variable"] = det_data[var]
-                det_data["variable_name"] = var
+                det_data["scan_motor"] = var
                 break
         else:
             raise ValueError("No angles that vary")

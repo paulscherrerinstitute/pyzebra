@@ -144,10 +144,11 @@ def create():
             overview_plot_y_image_source.data.update(y=[0], dh=[n_im])
 
         elif frame_button_group.active == 1:  # Variable angle
-            overview_plot_x.axis[1].axis_label = det_data["variable_name"]
-            overview_plot_y.axis[1].axis_label = det_data["variable_name"]
+            scan_motor = det_data["scan_motor"]
+            overview_plot_x.axis[1].axis_label = scan_motor
+            overview_plot_y.axis[1].axis_label = scan_motor
 
-            var = det_data["variable"]
+            var = det_data[scan_motor]
             var_start = var[0]
             var_end = (var[-1] - var[0]) * n_im / (n_im - 1)
             overview_plot_x_image_source.data.update(y=[var_start], dh=[var_end])

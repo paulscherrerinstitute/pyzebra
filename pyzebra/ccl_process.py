@@ -44,10 +44,10 @@ def _parameters_match(scan1, scan2):
             # ignore skip parameters, like the last angle in 'nb' zebra mode
             continue
 
-        if param == scan1["variable_name"] == scan2["variable_name"]:
+        if param == scan1["scan_motor"] == scan2["scan_motor"]:
             # check if ranges of variable parameter overlap
-            range1 = scan1["variable"]
-            range2 = scan2["variable"]
+            range1 = scan1[param]
+            range2 = scan2[param]
             # maximum gap between ranges of the scanning parameter (default 0)
             max_range_gap = MAX_RANGE_GAP.get(param, 0)
             if max(range1[0] - range2[-1], range2[0] - range1[-1]) > max_range_gap:

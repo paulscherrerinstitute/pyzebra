@@ -73,7 +73,7 @@ CCL_SECOND_LINE = (
     ("mf", float),
     ("date", str),
     ("time", str),
-    ("variable_name", str),
+    ("scan_motor", str),
 )
 
 AREA_METHODS = ("fit_area", "int_area")
@@ -154,18 +154,17 @@ def parse_1D(fileobj, data_type):
             for param, (param_name, param_type) in zip(next_line.split(), ccl_second_line):
                 s[param_name] = param_type(param)
 
-            if s["variable_name"] != "om":
+            if s["scan_motor"] != "om":
                 raise Exception("Unsupported variable name in ccl file.")
 
             # "om" -> "omega"
-            s["variable_name"] = "omega"
-            s["variable"] = np.linspace(
+            s["scan_motor"] = "omega"
+            # overwrite metadata, because it only refers to the scan center
+            s["omega"] = np.linspace(
                 s["omega"] - (s["n_points"] / 2) * s["angle_step"],
                 s["omega"] + (s["n_points"] / 2) * s["angle_step"],
                 s["n_points"],
             )
-            # overwrite metadata, because it only refers to the scan center
-            s["omega"] = s["variable"]
 
             # subsequent lines with counts
             counts = []
@@ -183,7 +182,7 @@ def parse_1D(fileobj, data_type):
         s = defaultdict(list)
 
         match = re.search("Scanning Variables: (.*), Steps: (.*)", next(fileobj))
-        s["variable_name"] = match.group(1)
+        s["scan_motor"] = match.group(1)
 
         match = re.search("(.*) Points, Mode: (.*), Preset (.*)", next(fileobj))
         if match.group(2) != "Monitor":
@@ -204,13 +203,10 @@ def parse_1D(fileobj, data_type):
             s[name] = np.array(s[name])
 
         # "om" -> "omega"
-        if s["variable_name"] == "om":
-            s["variable_name"] = "omega"
-            s["variable"] = s["om"]
+        if s["scan_motor"] == "om":
+            s["scan_motor"] = "omega"
             s["omega"] = s["om"]
             del s["om"]
-        else:
-            s["variable"] = s[s["variable_name"]]
 
         s["h"] = s["k"] = s["l"] = float("nan")
 
@@ -274,7 +270,7 @@ def export_1D(data, path, area_method=AREA_METHODS[0], lorentz=False, hkl_precis
 
         ang_str = ""
         for angle, _ in CCL_ANGLES[zebra_mode]:
-            if angle == scan["variable_name"]:
+            if angle == scan["scan_motor"]:
                 angle_center = (np.min(scan[angle]) + np.max(scan[angle])) / 2
             else:
                 angle_center = scan[angle]

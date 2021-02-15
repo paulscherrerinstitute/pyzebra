@@ -189,8 +189,8 @@ def prepare_event_file(export_filename, roi_dict, path_prefix=""):
             chi = dat["chi"][0]
             phi = dat["phi"][0]
 
-            var_angle = dat["variable"]
-            var_angle_name = dat["variable_name"]
+            scan_motor = dat["scan_motor"]
+            var_angle = dat[scan_motor]
 
             for roi in rois:
                 x0, xN, y0, yN, fr0, frN = roi
@@ -210,15 +210,15 @@ def prepare_event_file(export_filename, roi_dict, path_prefix=""):
                 var_step = var_C - var_F
                 var_p = var_F + var_step * frStep
 
-                if var_angle_name == "gamma":
+                if scan_motor == "gamma":
                     gamma = var_p
-                elif var_angle_name == "omega":
+                elif scan_motor == "omega":
                     omega = var_p
-                elif var_angle_name == "nu":
+                elif scan_motor == "nu":
                     nu = var_p
-                elif var_angle_name == "chi":
+                elif scan_motor == "chi":
                     chi = var_p
-                elif var_angle_name == "phi":
+                elif scan_motor == "phi":
                     phi = var_p
 
                 intensity = coeff[1] * abs(coeff[2] * var_step) * math.sqrt(2) * math.sqrt(np.pi)
