@@ -470,6 +470,7 @@ def create():
     # start with `background` and `gauss` fit functions added
     fitparams_add_dropdown_callback(types.SimpleNamespace(item="background"))
     fitparams_add_dropdown_callback(types.SimpleNamespace(item="gauss"))
+    fitparams_select.value = ["1"]  # add selection to gauss
 
     fit_output_textinput = TextAreaInput(title="Fit results:", width=450, height=200)
 
