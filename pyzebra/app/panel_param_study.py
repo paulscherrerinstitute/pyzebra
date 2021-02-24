@@ -491,7 +491,7 @@ def create():
         if new:
             fitparams_table_source.data.update(fit_params[new[0]])
         else:
-            fitparams_table_source.data.update(dict(param=[], guess=[], vary=[], min=[], max=[]))
+            fitparams_table_source.data.update(dict(param=[], value=[], vary=[], min=[], max=[]))
 
     fitparams_select = MultiSelect(options=[], height=120, default_size=145)
     fitparams_select.tags = [0]
@@ -527,17 +527,17 @@ def create():
 
         n = len(params)
         fitparams = dict(
-            param=params, guess=[None] * n, vary=[True] * n, min=[None] * n, max=[None] * n,
+            param=params, value=[None] * n, vary=[True] * n, min=[None] * n, max=[None] * n,
         )
 
         return fitparams
 
-    fitparams_table_source = ColumnDataSource(dict(param=[], guess=[], vary=[], min=[], max=[]))
+    fitparams_table_source = ColumnDataSource(dict(param=[], value=[], vary=[], min=[], max=[]))
     fitparams_table = DataTable(
         source=fitparams_table_source,
         columns=[
             TableColumn(field="param", title="Parameter"),
-            TableColumn(field="guess", title="Guess", editor=NumberEditor()),
+            TableColumn(field="value", title="Value", editor=NumberEditor()),
             TableColumn(field="vary", title="Vary", editor=CheckboxEditor()),
             TableColumn(field="min", title="Min", editor=NumberEditor()),
             TableColumn(field="max", title="Max", editor=NumberEditor()),
@@ -588,7 +588,7 @@ def create():
 
     def _get_fit_params():
         return dict(
-            guess=fit_params["gauss-1"]["guess"] + fit_params["background-0"]["guess"],
+            value=fit_params["gauss-1"]["value"] + fit_params["background-0"]["value"],
             vary=fit_params["gauss-1"]["vary"] + fit_params["background-0"]["vary"],
             constraints_min=fit_params["gauss-1"]["min"] + fit_params["background-0"]["min"],
             constraints_max=fit_params["gauss-1"]["max"] + fit_params["background-0"]["max"],

@@ -33,7 +33,7 @@ def create_uncertanities(y, y_err):
 
 def fitccl(
     scan,
-    guess,
+    value,
     vary,
     constraints_min,
     constraints_max,
@@ -90,21 +90,21 @@ def fitccl(
     if len(scan["peak_indexes"]) == 0:
         # Case for no peak, gaussian in centre, sigma as 20% of range
         peak_index = find_nearest(x, np.mean(x))
-        guess[0] = centre if guess[0] is None else guess[0]
-        guess[1] = (x[-1] - x[0]) / 5 if guess[1] is None else guess[1]
-        guess[2] = 50 if guess[2] is None else guess[2]
-        guess[3] = 0 if guess[3] is None else guess[3]
-        guess[4] = np.mean(y) if guess[4] is None else guess[4]
+        value[0] = centre if value[0] is None else value[0]
+        value[1] = (x[-1] - x[0]) / 5 if value[1] is None else value[1]
+        value[2] = 50 if value[2] is None else value[2]
+        value[3] = 0 if value[3] is None else value[3]
+        value[4] = np.mean(y) if value[4] is None else value[4]
         constraints_min[2] = 0
 
     elif len(scan["peak_indexes"]) == 1:
         # case for one peak, takse into account users guesses
         peak_height = scan["peak_heights"]
-        guess[0] = centre if guess[0] is None else guess[0]
-        guess[1] = 0.1 if guess[1] is None else guess[1]
-        guess[2] = float(peak_height / 10) if guess[2] is None else float(guess[2])
-        guess[3] = 0 if guess[3] is None else guess[3]
-        guess[4] = np.median(x) if guess[4] is None else guess[4]
+        value[0] = centre if value[0] is None else value[0]
+        value[1] = 0.1 if value[1] is None else value[1]
+        value[2] = float(peak_height / 10) if value[2] is None else float(value[2])
+        value[3] = 0 if value[3] is None else value[3]
+        value[4] = np.median(x) if value[4] is None else value[4]
         constraints_min[0] = np.min(x) if constraints_min[0] is None else constraints_min[0]
         constraints_max[0] = np.max(x) if constraints_max[0] is None else constraints_max[0]
 
@@ -121,11 +121,11 @@ def fitccl(
     mod = Model(gaussian) + Model(background)
     params = Parameters()
     params.add_many(
-        ("g_cen", guess[0], bool(vary[0]), np.min(x), np.max(x), None, None),
-        ("g_width", guess[1], bool(vary[1]), constraints_min[1], constraints_max[1], None, None),
-        ("g_amp", guess[2], bool(vary[2]), constraints_min[2], constraints_max[2], None, None),
-        ("slope", guess[3], bool(vary[3]), constraints_min[3], constraints_max[3], None, None),
-        ("intercept", guess[4], bool(vary[4]), constraints_min[4], constraints_max[4], None, None),
+        ("g_cen", value[0], bool(vary[0]), np.min(x), np.max(x), None, None),
+        ("g_width", value[1], bool(vary[1]), constraints_min[1], constraints_max[1], None, None),
+        ("g_amp", value[2], bool(vary[2]), constraints_min[2], constraints_max[2], None, None),
+        ("slope", value[3], bool(vary[3]), constraints_min[3], constraints_max[3], None, None),
+        ("intercept", value[4], bool(vary[4]), constraints_min[4], constraints_max[4], None, None),
     )
     # the weighted fit
     weights = [np.abs(1 / val) if val != 0 else 1 for val in y_err]
