@@ -376,7 +376,8 @@ def create():
     fitparam_reset_button.on_click(fitparam_reset_button_callback)
 
     def fitparams_add_dropdown_callback(click):
-        new_tag = str(fitparams_select.tags[0])  # bokeh requires (str, str) for MultiSelect options
+        # bokeh requires (str, str) for MultiSelect options
+        new_tag = f"{click.item}-{fitparams_select.tags[0]}"
         fitparams_select.options.append((new_tag, click.item))
         fit_params[new_tag] = fitparams_factory(click.item)
         fitparams_select.tags[0] += 1
@@ -470,7 +471,7 @@ def create():
     # start with `background` and `gauss` fit functions added
     fitparams_add_dropdown_callback(types.SimpleNamespace(item="background"))
     fitparams_add_dropdown_callback(types.SimpleNamespace(item="gauss"))
-    fitparams_select.value = ["1"]  # add selection to gauss
+    fitparams_select.value = ["gauss-1"]  # add selection to gauss
 
     fit_output_textinput = TextAreaInput(title="Fit results:", width=450, height=200)
 
@@ -506,10 +507,10 @@ def create():
 
     def _get_fit_params():
         return dict(
-            guess=fit_params["1"]["guess"] + fit_params["0"]["guess"],
-            vary=fit_params["1"]["vary"] + fit_params["0"]["vary"],
-            constraints_min=fit_params["1"]["min"] + fit_params["0"]["min"],
-            constraints_max=fit_params["1"]["max"] + fit_params["0"]["max"],
+            guess=fit_params["gauss-1"]["guess"] + fit_params["background-0"]["guess"],
+            vary=fit_params["gauss-1"]["vary"] + fit_params["background-0"]["vary"],
+            constraints_min=fit_params["gauss-1"]["min"] + fit_params["background-0"]["min"],
+            constraints_max=fit_params["gauss-1"]["max"] + fit_params["background-0"]["max"],
             numfit_min=integ_from.value,
             numfit_max=integ_to.value,
             binning=bin_size_spinner.value,
