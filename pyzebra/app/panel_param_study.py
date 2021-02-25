@@ -429,8 +429,8 @@ def create():
     window_size_spinner = Spinner(title="Window size:", value=7, step=2, low=1, default_size=145)
     poly_order_spinner = Spinner(title="Poly order:", value=3, low=0, default_size=145)
 
-    integ_from = Spinner(title="Integrate from:", default_size=145)
-    integ_to = Spinner(title="to:", default_size=145)
+    integ_from = Spinner(title="Integrate from:", default_size=145, disabled=True)
+    integ_to = Spinner(title="to:", default_size=145, disabled=True)
 
     def fitparam_reset_button_callback():
         ...
@@ -589,10 +589,12 @@ def create():
     fit_button.on_click(fit_button_callback)
 
     area_method_radiobutton = RadioButtonGroup(
-        labels=["Fit area", "Int area"], active=0, default_size=145,
+        labels=["Fit area", "Int area"], active=0, default_size=145, disabled=True
     )
 
-    bin_size_spinner = Spinner(title="Bin size:", value=1, low=1, step=1, default_size=145)
+    bin_size_spinner = Spinner(
+        title="Bin size:", value=1, low=1, step=1, default_size=145, disabled=True
+    )
 
     lorentz_toggle = Toggle(label="Lorentz Correction", default_size=145)
 
