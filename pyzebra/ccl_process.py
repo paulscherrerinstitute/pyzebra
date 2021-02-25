@@ -1,6 +1,7 @@
 import itertools
 
 import numpy as np
+from lmfit.models import GaussianModel, LinearModel, PseudoVoigtModel, VoigtModel
 
 from .ccl_io import CCL_ANGLES
 
@@ -80,3 +81,41 @@ def merge_scans(scan1, scan2):
 
     scan2["active"] = False
     print(f'Merging scans: {scan1["idx"]} <-- {scan2["idx"]}')
+
+
+def _create_fit_model(model_dict):
+    model = None
+    for model_index, (model_name, model_param) in enumerate(model_dict.items()):
+        model_name, _ = model_name.split("-")
+        prefix = f"f{model_index}_"
+
+        if model_name == "background":
+            _model = LinearModel(prefix=prefix, name="background")
+        elif model_name == "gauss":
+            _model = GaussianModel(prefix=prefix, name="gauss")
+        elif model_name == "voigt":
+            _model = VoigtModel(prefix=prefix)
+        elif model_name == "pseudovoigt":
+            _model = PseudoVoigtModel(prefix=prefix)
+        else:
+            raise ValueError(f"Unknown model name: '{model_name}'")
+
+        for param_index, param_name in enumerate(model_param["param"]):
+            param_hints = {}
+            for hint_name in ("value", "vary", "min", "max"):
+                tmp = model_param[hint_name][param_index]
+                if tmp is not None:
+                    param_hints[hint_name] = tmp
+            _model.set_param_hint(param_name, **param_hints)
+
+        if model is None:
+            model = _model
+        else:
+            model += _model
+
+    return model
+
+
+def fit_scan(scan, model_dict):
+    model = _create_fit_model(model_dict)
+    scan["fit_result"] = model.fit(scan["Counts"], x=scan[scan["scan_motor"]])

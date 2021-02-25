@@ -211,41 +211,23 @@ def create():
 
         peak_pos_textinput_lock = False
 
-        fit = scan.get("fit")
-        if fit is not None:
-            x = scan["fit"]["x_fit"]
-            plot_gauss_source.data.update(x=x, y=scan["fit"]["comps"]["gaussian"])
-            plot_bkg_source.data.update(x=x, y=scan["fit"]["comps"]["background"])
-            params = fit["result"].params
-            fit_output_textinput.value = (
-                "Gaussian: centre = %9.4f, sigma = %9.4f, area = %9.4f \n"
-                "background: slope = %9.4f, intercept = %9.4f \n"
-                "Int. area = %9.4f +/- %9.4f \n"
-                "fit area = %9.4f +/- %9.4f \n"
-                "ratio((fit-int)/fit) = %9.4f"
-                % (
-                    params["g_cen"].value,
-                    params["g_width"].value,
-                    params["g_amp"].value,
-                    params["slope"].value,
-                    params["intercept"].value,
-                    fit["int_area"].n,
-                    fit["int_area"].s,
-                    params["g_amp"].value,
-                    params["g_amp"].stderr,
-                    (params["g_amp"].value - fit["int_area"].n) / params["g_amp"].value,
-                )
-            )
-            numfit_min, numfit_max = fit["numfit"]
-            if numfit_min is None:
-                numfit_min_span.location = None
-            else:
-                numfit_min_span.location = x[numfit_min]
+        fit_result = scan.get("fit_result")
+        if fit_result is not None:
+            comps = fit_result.eval_components()
+            plot_gauss_source.data.update(x=x, y=comps["f1_"])
+            plot_bkg_source.data.update(x=x, y=comps["f0_"])
+            fit_output_textinput.value = fit_result.fit_report()
 
-            if numfit_max is None:
-                numfit_max_span.location = None
-            else:
-                numfit_max_span.location = x[numfit_max]
+            # numfit_min, numfit_max = fit_result["numfit"]
+            # if numfit_min is None:
+            #     numfit_min_span.location = None
+            # else:
+            #     numfit_min_span.location = x[numfit_min]
+
+            # if numfit_max is None:
+            #     numfit_max_span.location = None
+            # else:
+            #     numfit_max_span.location = x[numfit_max]
 
         else:
             plot_gauss_source.data.update(x=[], y=[])
@@ -505,22 +487,9 @@ def create():
     peakfind_button = Button(label="Peak Find Current", default_size=145)
     peakfind_button.on_click(peakfind_button_callback)
 
-    def _get_fit_params():
-        return dict(
-            value=fit_params["gauss-1"]["value"] + fit_params["background-0"]["value"],
-            vary=fit_params["gauss-1"]["vary"] + fit_params["background-0"]["vary"],
-            constraints_min=fit_params["gauss-1"]["min"] + fit_params["background-0"]["min"],
-            constraints_max=fit_params["gauss-1"]["max"] + fit_params["background-0"]["max"],
-            numfit_min=integ_from.value,
-            numfit_max=integ_to.value,
-            binning=bin_size_spinner.value,
-        )
-
     def fit_all_button_callback():
-        fit_params = _get_fit_params()
         for scan in det_data:
-            # fit_params are updated inplace within `fitccl`
-            pyzebra.fitccl(scan, **deepcopy(fit_params))
+            pyzebra.fit_scan(scan, fit_params)
 
         _update_plot(_get_selected_scan())
         _update_table()
@@ -530,7 +499,7 @@ def create():
 
     def fit_button_callback():
         scan = _get_selected_scan()
-        pyzebra.fitccl(scan, **_get_fit_params())
+        pyzebra.fit_scan(scan, fit_params)
 
         _update_plot(scan)
         _update_table()
