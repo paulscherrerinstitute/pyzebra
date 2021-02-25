@@ -414,7 +414,7 @@ def create():
 
     def fitparams_factory(function):
         if function == "background":
-            params = ["slope", "offset"]
+            params = ["slope", "intercept"]
         elif function == "gauss":
             params = ["center", "sigma", "amplitude"]
         elif function == "voigt":
