@@ -83,7 +83,10 @@ def merge_scans(scan1, scan2):
     print(f'Merging scans: {scan1["idx"]} <-- {scan2["idx"]}')
 
 
-def _create_fit_model(model_dict):
+def fit_scan(scan, model_dict):
+    y_fit = scan["Counts"]
+    x_fit = scan[scan["scan_motor"]]
+
     model = None
     for model_index, (model_name, model_param) in enumerate(model_dict.items()):
         model_name, _ = model_name.split("-")
@@ -100,12 +103,17 @@ def _create_fit_model(model_dict):
         else:
             raise ValueError(f"Unknown model name: '{model_name}'")
 
+        _init_guess = _model.guess(y_fit, x=x_fit)
+
         for param_index, param_name in enumerate(model_param["param"]):
             param_hints = {}
             for hint_name in ("value", "vary", "min", "max"):
                 tmp = model_param[hint_name][param_index]
-                if tmp is not None:
+                if tmp is None:
+                    param_hints[hint_name] = getattr(_init_guess[prefix + param_name], hint_name)
+                else:
                     param_hints[hint_name] = tmp
+
             _model.set_param_hint(param_name, **param_hints)
 
         if model is None:
@@ -113,9 +121,4 @@ def _create_fit_model(model_dict):
         else:
             model += _model
 
-    return model
-
-
-def fit_scan(scan, model_dict):
-    model = _create_fit_model(model_dict)
-    scan["fit_result"] = model.fit(scan["Counts"], x=scan[scan["scan_motor"]])
+    scan["fit_result"] = model.fit(y_fit, x=x_fit)
