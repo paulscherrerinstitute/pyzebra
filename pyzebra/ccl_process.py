@@ -121,4 +121,4 @@ def fit_scan(scan, model_dict):
         else:
             model += _model
 
-    scan["fit_result"] = model.fit(y_fit, x=x_fit)
+    scan["fit"] = model.fit(y_fit, x=x_fit)

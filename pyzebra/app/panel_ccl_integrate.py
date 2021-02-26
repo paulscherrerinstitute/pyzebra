@@ -211,14 +211,14 @@ def create():
 
         peak_pos_textinput_lock = False
 
-        fit_result = scan.get("fit_result")
-        if fit_result is not None:
-            comps = fit_result.eval_components()
+        fit = scan.get("fit")
+        if fit is not None:
+            comps = fit.eval_components()
             plot_gauss_source.data.update(x=x, y=comps["f1_"])
             plot_bkg_source.data.update(x=x, y=comps["f0_"])
-            fit_output_textinput.value = fit_result.fit_report()
+            fit_output_textinput.value = fit.fit_report()
 
-            # numfit_min, numfit_max = fit_result["numfit"]
+            # numfit_min, numfit_max = fit["numfit"]
             # if numfit_min is None:
             #     numfit_min_span.location = None
             # else:
