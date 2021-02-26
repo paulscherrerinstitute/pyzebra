@@ -187,7 +187,7 @@ def create():
         fit = scan.get("fit")
         if fit is not None:
             comps = fit.eval_components()
-            plot_gauss_source.data.update(x=x, y=comps["f1_"])
+            plot_fit_source.data.update(x=x, y=fit.best_fit)
             plot_bkg_source.data.update(x=x, y=comps["f0_"])
             fit_output_textinput.value = fit.fit_report()
 
@@ -203,7 +203,7 @@ def create():
             #     numfit_max_span.location = x[numfit_max]
 
         else:
-            plot_gauss_source.data.update(x=[], y=[])
+            plot_fit_source.data.update(x=[], y=[])
             plot_bkg_source.data.update(x=[], y=[])
             fit_output_textinput.value = ""
             numfit_min_span.location = None
@@ -222,8 +222,8 @@ def create():
     plot.add_glyph(plot_scatter_source, Scatter(x="x", y="y", line_color="steelblue"))
     plot.add_layout(Whisker(source=plot_scatter_source, base="x", upper="y_upper", lower="y_lower"))
 
-    plot_gauss_source = ColumnDataSource(dict(x=[0], y=[0]))
-    plot.add_glyph(plot_gauss_source, Line(x="x", y="y", line_color="red", line_dash="dashed"))
+    plot_fit_source = ColumnDataSource(dict(x=[0], y=[0]))
+    plot.add_glyph(plot_fit_source, Line(x="x", y="y"))
 
     plot_bkg_source = ColumnDataSource(dict(x=[0], y=[0]))
     plot.add_glyph(plot_bkg_source, Line(x="x", y="y", line_color="green", line_dash="dashed"))
