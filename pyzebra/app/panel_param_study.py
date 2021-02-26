@@ -20,6 +20,7 @@ from bokeh.models import (
     Dropdown,
     FileInput,
     Grid,
+    Legend,
     Line,
     LinearAxis,
     MultiLine,
@@ -270,15 +271,17 @@ def create():
     plot.add_layout(Grid(dimension=1, ticker=BasicTicker()))
 
     plot_scatter_source = ColumnDataSource(dict(x=[0], y=[0], y_upper=[0], y_lower=[0]))
-    plot.add_glyph(plot_scatter_source, Scatter(x="x", y="y", line_color="steelblue"))
+    plot_scatter = plot.add_glyph(
+        plot_scatter_source, Scatter(x="x", y="y", line_color="steelblue")
+    )
     plot.add_layout(Whisker(source=plot_scatter_source, base="x", upper="y_upper", lower="y_lower"))
 
     plot_fit_source = ColumnDataSource(dict(x=[0], y=[0]))
-    plot.add_glyph(plot_fit_source, Line(x="x", y="y"))
+    plot_fit = plot.add_glyph(plot_fit_source, Line(x="x", y="y"))
 
     plot_bkg_source = ColumnDataSource(dict(x=[0], y=[0]))
-    plot.add_glyph(
-        plot_bkg_source, Line(x="x", y="y", line_color="green", line_dash="dashed"),
+    plot_bkg = plot.add_glyph(
+        plot_bkg_source, Line(x="x", y="y", line_color="green", line_dash="dashed")
     )
 
     numfit_min_span = Span(location=None, dimension="height", line_dash="dashed")
@@ -286,6 +289,13 @@ def create():
 
     numfit_max_span = Span(location=None, dimension="height", line_dash="dashed")
     plot.add_layout(numfit_max_span)
+
+    plot.add_layout(
+        Legend(
+            items=[("data", [plot_scatter]), ("best fit", [plot_fit]), ("background", [plot_bkg])],
+            location="top_left",
+        )
+    )
 
     plot.add_tools(PanTool(), WheelZoomTool(), ResetTool())
     plot.toolbar.logo = None
