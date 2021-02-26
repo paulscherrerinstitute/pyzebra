@@ -9,7 +9,6 @@ from copy import deepcopy
 import numpy as np
 from bokeh.layouts import column, row
 from bokeh.models import (
-    Asterisk,
     BasicTicker,
     Button,
     CheckboxEditor,
@@ -77,7 +76,6 @@ def color_palette(n_colors):
 def create():
     det_data = []
     fit_params = {}
-    peak_pos_textinput_lock = False
     js_data = {
         ".comm": ColumnDataSource(data=dict(cont=[], ext=[])),
         ".incomm": ColumnDataSource(data=dict(cont=[], ext=[])),
@@ -106,7 +104,6 @@ def create():
             file=file_list,
             scan=scan_list,
             param=[""] * len(scan_list),
-            peaks=[0] * len(scan_list),
             fit=[0] * len(scan_list),
             export=[True] * len(scan_list),
         )
@@ -189,18 +186,14 @@ def create():
     monitor_spinner.on_change("value", monitor_spinner_callback)
 
     def _update_table():
-        num_of_peaks = [len(scan.get("peak_indexes", [])) for scan in det_data]
         fit_ok = [(1 if "fit" in scan else 0) for scan in det_data]
-        scan_table_source.data.update(peaks=num_of_peaks, fit=fit_ok)
+        scan_table_source.data.update(fit=fit_ok)
 
     def _update_plot():
         _update_single_scan_plot(_get_selected_scan())
         _update_overview()
 
     def _update_single_scan_plot(scan):
-        nonlocal peak_pos_textinput_lock
-        peak_pos_textinput_lock = True
-
         scan_motor = scan["scan_motor"]
 
         y = scan["Counts"]
@@ -208,23 +201,6 @@ def create():
 
         plot.axis[0].axis_label = scan_motor
         plot_scatter_source.data.update(x=x, y=y, y_upper=y + np.sqrt(y), y_lower=y - np.sqrt(y))
-
-        num_of_peaks = len(scan.get("peak_indexes", []))
-        if num_of_peaks is not None and num_of_peaks > 0:
-            peak_indexes = scan["peak_indexes"]
-            if len(peak_indexes) == 1:
-                peak_pos_textinput.value = str(x[peak_indexes[0]])
-            else:
-                peak_pos_textinput.value = str([x[ind] for ind in peak_indexes])
-
-            plot_peak_source.data.update(x=x[peak_indexes], y=scan["peak_heights"])
-            plot_line_smooth_source.data.update(x=x, y=scan["smooth_peaks"])
-        else:
-            peak_pos_textinput.value = None
-            plot_peak_source.data.update(x=[], y=[])
-            plot_line_smooth_source.data.update(x=[], y=[])
-
-        peak_pos_textinput_lock = False
 
         fit = scan.get("fit")
         if fit is not None:
@@ -290,11 +266,6 @@ def create():
     plot.add_glyph(plot_scatter_source, Scatter(x="x", y="y", line_color="steelblue"))
     plot.add_layout(Whisker(source=plot_scatter_source, base="x", upper="y_upper", lower="y_lower"))
 
-    plot_line_smooth_source = ColumnDataSource(dict(x=[0], y=[0]))
-    plot.add_glyph(
-        plot_line_smooth_source, Line(x="x", y="y", line_color="steelblue", line_dash="dashed"),
-    )
-
     plot_gauss_source = ColumnDataSource(dict(x=[0], y=[0]))
     plot.add_glyph(
         plot_gauss_source, Line(x="x", y="y", line_color="red", line_dash="dashed"),
@@ -304,9 +275,6 @@ def create():
     plot.add_glyph(
         plot_bkg_source, Line(x="x", y="y", line_color="green", line_dash="dashed"),
     )
-
-    plot_peak_source = ColumnDataSource(dict(x=[], y=[]))
-    plot.add_glyph(plot_peak_source, Asterisk(x="x", y="y", size=10, line_color="red"))
 
     numfit_min_span = Span(location=None, dimension="height", line_dash="dashed")
     plot.add_layout(numfit_min_span)
@@ -380,20 +348,17 @@ def create():
 
         _update_plot()
 
-    scan_table_source = ColumnDataSource(
-        dict(file=[], scan=[], param=[], peaks=[], fit=[], export=[])
-    )
+    scan_table_source = ColumnDataSource(dict(file=[], scan=[], param=[], fit=[], export=[]))
     scan_table = DataTable(
         source=scan_table_source,
         columns=[
             TableColumn(field="file", title="file", width=150),
             TableColumn(field="scan", title="scan", width=50),
             TableColumn(field="param", title="param", width=50),
-            TableColumn(field="peaks", title="Peaks", width=50),
             TableColumn(field="fit", title="Fit", width=50),
             TableColumn(field="export", title="Export", editor=CheckboxEditor(), width=50),
         ],
-        width=460,  # +60 because of the index column
+        width=410,  # +60 because of the index column
         editable=True,
         fit_columns=False,
     )
@@ -407,27 +372,6 @@ def create():
 
     def _get_selected_scan():
         return det_data[scan_table_source.selected.indices[0]]
-
-    def peak_pos_textinput_callback(_attr, _old, new):
-        if new is not None and not peak_pos_textinput_lock:
-            scan = _get_selected_scan()
-
-            peak_ind = (np.abs(scan["omega"] - float(new))).argmin()
-            scan["peak_indexes"] = np.array([peak_ind], dtype=np.int64)
-            scan["peak_heights"] = np.array([scan["smooth_peaks"][peak_ind]])
-            _update_table()
-            _update_plot()
-
-    peak_pos_textinput = TextInput(title="Peak position:", default_size=145)
-    peak_pos_textinput.on_change("value", peak_pos_textinput_callback)
-
-    peak_int_ratio_spinner = Spinner(
-        title="Peak intensity ratio:", value=0.8, step=0.01, low=0, high=1, default_size=145
-    )
-    peak_prominence_spinner = Spinner(title="Peak prominence:", value=50, low=0, default_size=145)
-    smooth_toggle = Toggle(label="Smooth curve", default_size=145)
-    window_size_spinner = Spinner(title="Window size:", value=7, step=2, low=1, default_size=145)
-    poly_order_spinner = Spinner(title="Poly order:", value=3, low=0, default_size=145)
 
     integ_from = Spinner(title="Integrate from:", default_size=145, disabled=True)
     integ_to = Spinner(title="to:", default_size=145, disabled=True)
@@ -537,36 +481,6 @@ def create():
 
     fit_output_textinput = TextAreaInput(title="Fit results:", width=450, height=200)
 
-    def _get_peakfind_params():
-        return dict(
-            int_threshold=peak_int_ratio_spinner.value,
-            prominence=peak_prominence_spinner.value,
-            smooth=smooth_toggle.active,
-            window_size=window_size_spinner.value,
-            poly_order=poly_order_spinner.value,
-        )
-
-    def peakfind_all_button_callback():
-        peakfind_params = _get_peakfind_params()
-        for scan in det_data:
-            pyzebra.ccl_findpeaks(scan, **peakfind_params)
-
-        _update_table()
-        _update_plot()
-
-    peakfind_all_button = Button(label="Peak Find All", button_type="primary", default_size=145)
-    peakfind_all_button.on_click(peakfind_all_button_callback)
-
-    def peakfind_button_callback():
-        scan = _get_selected_scan()
-        pyzebra.ccl_findpeaks(scan, **_get_peakfind_params())
-
-        _update_table()
-        _update_plot()
-
-    peakfind_button = Button(label="Peak Find Current", default_size=145)
-    peakfind_button.on_click(peakfind_button_callback)
-
     def fit_all_button_callback():
         for scan in det_data:
             pyzebra.fit_scan(scan, fit_params)
@@ -656,13 +570,6 @@ def create():
     save_button.js_on_click(CustomJS(args={"js_data": js_data[".comm"]}, code=javaScript))
     save_button.js_on_click(CustomJS(args={"js_data": js_data[".incomm"]}, code=javaScript))
 
-    findpeak_controls = column(
-        row(peak_pos_textinput, column(Spacer(height=19), smooth_toggle)),
-        row(peak_int_ratio_spinner, peak_prominence_spinner),
-        row(window_size_spinner, poly_order_spinner),
-        row(peakfind_button, peakfind_all_button),
-    )
-
     fitpeak_controls = row(
         column(fitparams_add_dropdown, fitparams_select, fitparams_remove_button),
         fitparams_table,
@@ -688,7 +595,7 @@ def create():
             monitor_spinner,
         ),
         row(scan_table, plots, Spacer(width=30), export_layout),
-        row(findpeak_controls, Spacer(width=30), fitpeak_controls, fit_output_textinput),
+        row(fitpeak_controls, fit_output_textinput),
     )
 
     return Panel(child=tab_layout, title="param study")
