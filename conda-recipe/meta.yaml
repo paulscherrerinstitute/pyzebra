@@ -21,7 +21,6 @@ requirements:
     - python >=3.6
     - numpy
     - scipy
-    - pandas
     - h5py
     - bokeh =2.2
     - matplotlib
