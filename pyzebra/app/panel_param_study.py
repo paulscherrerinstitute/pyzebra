@@ -98,8 +98,7 @@ def create():
         scan_list = [s["idx"] for s in det_data]
         file_list = []
         for scan in det_data:
-            _, f_name = os.path.split(scan["original_filename"])
-            file_list.append(f_name)
+            file_list.append(os.path.basename(scan["original_filename"]))
 
         scan_table_source.data.update(
             file=file_list,

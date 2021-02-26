@@ -1,4 +1,5 @@
 import itertools
+import os
 
 import numpy as np
 from lmfit.models import GaussianModel, LinearModel, PseudoVoigtModel, VoigtModel
@@ -80,7 +81,10 @@ def merge_scans(scan1, scan2):
     scan1["Counts"] = counts[index]
 
     scan2["active"] = False
-    print(f'Merging scans: {scan1["idx"]} <-- {scan2["idx"]}')
+
+    fname1 = os.path.basename(scan1["original_filename"])
+    fname2 = os.path.basename(scan2["original_filename"])
+    print(f'Merging scans: {scan1["idx"]} ({fname1}) <-- {scan2["idx"]} ({fname2})')
 
 
 def fit_scan(scan, model_dict):
