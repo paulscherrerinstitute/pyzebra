@@ -205,12 +205,13 @@ def create():
 
         fit = scan.get("fit")
         if fit is not None:
-            plot_fit_source.data.update(x=x, y=fit.best_fit)
+            x_fit = np.linspace(x[0], x[-1], 100)
+            plot_fit_source.data.update(x=x_fit, y=fit.eval(x=x_fit))
 
             for i, model in enumerate(fit_params):
                 if "background" in model:
-                    comps = fit.eval_components()
-                    plot_bkg_source.data.update(x=x, y=comps[f"f{i}_"])
+                    comps = fit.eval_components(x=x_fit)
+                    plot_bkg_source.data.update(x=x_fit, y=comps[f"f{i}_"])
                     break
             else:
                 plot_bkg_source.data.update(x=[], y=[])
