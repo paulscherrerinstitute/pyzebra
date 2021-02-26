@@ -186,9 +186,16 @@ def create():
 
         fit = scan.get("fit")
         if fit is not None:
-            comps = fit.eval_components()
             plot_fit_source.data.update(x=x, y=fit.best_fit)
-            plot_bkg_source.data.update(x=x, y=comps["f0_"])
+
+            for i, model in enumerate(fit_params):
+                if "background" in model:
+                    comps = fit.eval_components()
+                    plot_bkg_source.data.update(x=x, y=comps[f"f{i}_"])
+                    break
+            else:
+                plot_bkg_source.data.update(x=[], y=[])
+
             fit_output_textinput.value = fit.fit_report()
 
             # numfit_min, numfit_max = fit["numfit"]
