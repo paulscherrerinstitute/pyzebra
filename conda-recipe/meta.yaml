@@ -15,10 +15,10 @@ build:
 
 requirements:
   build:
-    - python >=3.6
+    - python >=3.7
     - setuptools
   run:
-    - python >=3.6
+    - python >=3.7
     - numpy
     - scipy
     - h5py
@@ -26,6 +26,7 @@ requirements:
     - matplotlib
     - numba
     - lmfit
+    - mpi4py  # is needed for spind
     - uncertainties
 
 
