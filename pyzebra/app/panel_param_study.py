@@ -20,6 +20,7 @@ from bokeh.models import (
     Dropdown,
     FileInput,
     Grid,
+    HoverTool,
     Legend,
     Line,
     LinearAxis,
@@ -311,6 +312,9 @@ def create():
 
     ov_plot_mline_source = ColumnDataSource(dict(xs=[], ys=[], param=[], color=[]))
     ov_plot.add_glyph(ov_plot_mline_source, MultiLine(xs="xs", ys="ys", line_color="color"))
+
+    hover_tool = HoverTool(tooltips=[("param", "@param")])
+    ov_plot.add_tools(PanTool(), WheelZoomTool(), hover_tool, ResetTool())
 
     ov_plot.add_tools(PanTool(), WheelZoomTool(), ResetTool())
     ov_plot.toolbar.logo = None
