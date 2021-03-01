@@ -208,7 +208,7 @@ def create():
             plot_fit_source.data.update(x=x_fit, y=fit.eval(x=x_fit))
 
             for i, model in enumerate(fit_params):
-                if "background" in model:
+                if "linear" in model:
                     comps = fit.eval_components(x=x_fit)
                     plot_bkg_source.data.update(x=x_fit, y=comps[f"f{i}_"])
                     break
@@ -292,7 +292,7 @@ def create():
 
     plot.add_layout(
         Legend(
-            items=[("data", [plot_scatter]), ("best fit", [plot_fit]), ("background", [plot_bkg])],
+            items=[("data", [plot_scatter]), ("best fit", [plot_fit]), ("linear", [plot_bkg])],
             location="top_left",
         )
     )
@@ -401,10 +401,10 @@ def create():
     fitparams_add_dropdown = Dropdown(
         label="Add fit function",
         menu=[
-            ("Background", "background"),
-            ("Gauss", "gauss"),
+            ("Linear", "linear"),
+            ("Gaussian", "gaussian"),
             ("Voigt", "voigt"),
-            ("Pseudo Voigt", "pseudovoigt"),
+            ("Pseudo Voigt", "pvoigt"),
             # ("Pseudo Voigt1", "pseudovoigt1"),
         ],
         default_size=145,
@@ -446,16 +446,16 @@ def create():
     fitparams_remove_button.on_click(fitparams_remove_button_callback)
 
     def fitparams_factory(function):
-        if function == "background":
+        if function == "linear":
             params = ["slope", "intercept"]
-        elif function == "gauss":
-            params = ["center", "sigma", "amplitude"]
+        elif function == "gaussian":
+            params = ["amplitude", "center", "sigma"]
         elif function == "voigt":
-            params = ["center", "sigma", "amplitude", "gamma"]
-        elif function == "pseudovoigt":
-            params = ["center", "sigma", "amplitude", "fraction"]
+            params = ["amplitude", "center", "sigma", "gamma"]
+        elif function == "pvoigt":
+            params = ["amplitude", "center", "sigma", "fraction"]
         elif function == "pseudovoigt1":
-            params = ["center", "g_sigma", "l_sigma", "amplitude", "fraction"]
+            params = ["amplitude", "center", "g_sigma", "l_sigma", "fraction"]
         else:
             raise ValueError("Unknown fit function")
 
@@ -484,9 +484,9 @@ def create():
     )
 
     # start with `background` and `gauss` fit functions added
-    fitparams_add_dropdown_callback(types.SimpleNamespace(item="background"))
-    fitparams_add_dropdown_callback(types.SimpleNamespace(item="gauss"))
-    fitparams_select.value = ["gauss-1"]  # add selection to gauss
+    fitparams_add_dropdown_callback(types.SimpleNamespace(item="linear"))
+    fitparams_add_dropdown_callback(types.SimpleNamespace(item="gaussian"))
+    fitparams_select.value = ["gaussian-1"]  # add selection to gauss
 
     fit_output_textinput = TextAreaInput(title="Fit results:", width=750, height=200)
 

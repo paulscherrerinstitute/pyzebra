@@ -96,13 +96,13 @@ def fit_scan(scan, model_dict):
         model_name, _ = model_name.split("-")
         prefix = f"f{model_index}_"
 
-        if model_name == "background":
-            _model = LinearModel(prefix=prefix, name="background")
-        elif model_name == "gauss":
-            _model = GaussianModel(prefix=prefix, name="gauss")
+        if model_name == "linear":
+            _model = LinearModel(prefix=prefix)
+        elif model_name == "gaussian":
+            _model = GaussianModel(prefix=prefix)
         elif model_name == "voigt":
             _model = VoigtModel(prefix=prefix)
-        elif model_name == "pseudovoigt":
+        elif model_name == "pvoigt":
             _model = PseudoVoigtModel(prefix=prefix)
         else:
             raise ValueError(f"Unknown model name: '{model_name}'")
