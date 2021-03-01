@@ -293,7 +293,7 @@ def export_1D(data, path, area_method=AREA_METHODS[0], lorentz=False, hkl_precis
                 angle_center = (np.min(scan[angle]) + np.max(scan[angle])) / 2
             else:
                 angle_center = scan[angle]
-            ang_str = ang_str + f"{angle_center:8}"
+            ang_str = ang_str + f"{angle_center:8g}"
 
         ref = file_content[".comm"] if hkl_are_integers else file_content[".incomm"]
         ref.append(idx_str + hkl_str + area_str + ang_str + "\n")
