@@ -391,12 +391,6 @@ def create():
     integ_from = Spinner(title="Integrate from:", default_size=145, disabled=True)
     integ_to = Spinner(title="to:", default_size=145, disabled=True)
 
-    def fitparam_reset_button_callback():
-        ...
-
-    fitparam_reset_button = Button(label="Reset to defaults", default_size=145, disabled=True)
-    fitparam_reset_button.on_click(fitparam_reset_button_callback)
-
     def fitparams_add_dropdown_callback(click):
         # bokeh requires (str, str) for MultiSelect options
         new_tag = f"{click.item}-{fitparams_select.tags[0]}"
@@ -494,7 +488,7 @@ def create():
     fitparams_add_dropdown_callback(types.SimpleNamespace(item="gauss"))
     fitparams_select.value = ["gauss-1"]  # add selection to gauss
 
-    fit_output_textinput = TextAreaInput(title="Fit results:", width=450, height=200)
+    fit_output_textinput = TextAreaInput(title="Fit results:", width=750, height=200)
 
     def fit_all_button_callback():
         for scan in det_data:
@@ -592,7 +586,7 @@ def create():
         column(
             row(integ_from, integ_to),
             row(bin_size_spinner, column(Spacer(height=19), lorentz_toggle)),
-            row(fitparam_reset_button, area_method_radiobutton),
+            row(area_method_radiobutton),
             row(fit_button, fit_all_button),
         ),
     )
