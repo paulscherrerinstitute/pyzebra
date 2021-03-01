@@ -125,4 +125,5 @@ def fit_scan(scan, model_dict):
         else:
             model += _model
 
-    scan["fit"] = model.fit(y_fit, x=x_fit)
+    weights = [1 / np.sqrt(val) if val != 0 else 1 for val in y_fit]
+    scan["fit"] = model.fit(y_fit, x=x_fit, weights=weights)
