@@ -477,7 +477,7 @@ def create():
 
             preview_output_textinput.value = exported_content
 
-    preview_output_button = Button(label="Preview file", default_size=200, disabled=True)
+    preview_output_button = Button(label="Preview file", default_size=200)
     preview_output_button.on_click(preview_output_button_callback)
 
     hkl_precision_select = Select(
@@ -509,9 +509,7 @@ def create():
                     cont = ""
                 js_data[ext].data.update(cont=[cont], ext=[ext])
 
-    save_button = Button(
-        label="Download file", button_type="success", default_size=200, disabled=True
-    )
+    save_button = Button(label="Download file", button_type="success", default_size=200)
     save_button.on_click(save_button_callback)
     save_button.js_on_click(CustomJS(args={"js_data": js_data[".comm"]}, code=javaScript))
     save_button.js_on_click(CustomJS(args={"js_data": js_data[".incomm"]}, code=javaScript))

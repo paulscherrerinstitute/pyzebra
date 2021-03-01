@@ -259,8 +259,18 @@ def export_1D(data, path, area_method=AREA_METHODS[0], lorentz=False, hkl_precis
         else:
             hkl_str = f"{h:8.{hkl_precision}f}{k:8.{hkl_precision}f}{l:8.{hkl_precision}f}"
 
-        area_n = scan["fit"][area_method].n
-        area_s = scan["fit"][area_method].s
+        for name, param in scan["fit"].params.items():
+            if "amplitude" in name:
+                area_n = param.value
+                area_s = param.stderr
+                break
+        else:
+            area_n = 0
+            area_s = 0
+
+        if area_n is None or area_s is None:
+            print(f"Couldn't export scan: {scan['idx']}")
+            continue
 
         # apply lorentz correction to area
         if lorentz:
