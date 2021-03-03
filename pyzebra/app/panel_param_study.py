@@ -392,6 +392,22 @@ def create():
     def _get_selected_scan():
         return det_data[scan_table_source.selected.indices[0]]
 
+    def param_select_callback(_attr, _old, new):
+        if new == "user defined":
+            param = [""] * len(det_data)
+        else:
+            param = [scan[new] for scan in det_data]
+
+        scan_table_source.data["param"] = param
+
+    param_select = Select(
+        title="Parameter:",
+        options=["user defined", "temp", "mf"],
+        value="user defined",
+        default_size=145,
+    )
+    param_select.on_change("value", param_select_callback)
+
     integ_from = Spinner(title="Integrate from:", default_size=145, disabled=True)
     integ_to = Spinner(title="to:", default_size=145, disabled=True)
 
@@ -595,6 +611,8 @@ def create():
         ),
     )
 
+    scan_layout = column(scan_table, row(param_select))
+
     export_layout = column(preview_output_textinput, row(preview_output_button, save_button))
 
     tab_layout = column(
@@ -607,7 +625,7 @@ def create():
             column(append_upload_div, append_upload_button),
             monitor_spinner,
         ),
-        row(scan_table, plots, Spacer(width=30), export_layout),
+        row(scan_layout, plots, Spacer(width=30), export_layout),
         row(fitpeak_controls, fit_output_textinput),
     )
 
