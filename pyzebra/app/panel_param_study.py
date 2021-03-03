@@ -260,6 +260,10 @@ def create():
             ov_param_plot.axis[0].axis_label = scan_motor
 
         ov_plot_mline_source.data.update(xs=xs, ys=ys, param=param, color=color_palette(len(xs)))
+
+        if y:
+            mapper["transform"].low = np.min(ys)
+            mapper["transform"].high = np.max(ys)
         ov_param_plot_scatter_source.data.update(x=x, y=y, param=par)
 
     # Main plot
