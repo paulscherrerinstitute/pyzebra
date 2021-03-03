@@ -185,7 +185,16 @@ def parse_1D(fileobj, data_type):
         s = defaultdict(list)
 
         match = re.search("Scanning Variables: (.*), Steps: (.*)", next(fileobj))
-        s["scan_motor"] = match.group(1)
+        if match.group(1) == "h, k, l":
+            steps = match.group(2).split()
+            for step, ind in zip(steps, "hkl"):
+                if float(step) != 0:
+                    scan_motor = ind
+                    break
+        else:
+            scan_motor = match.group(1)
+
+        s["scan_motor"] = scan_motor
 
         match = re.search("(.*) Points, Mode: (.*), Preset (.*)", next(fileobj))
         if match.group(2) != "Monitor":
@@ -220,7 +229,8 @@ def parse_1D(fileobj, data_type):
         # "mf" stays "mf"
         # "phi" stays "phi"
 
-        s["h"] = s["k"] = s["l"] = float("nan")
+        if "h" not in s:
+            s["h"] = s["k"] = s["l"] = float("nan")
 
         for param in ("mf", "temp"):
             if param not in metadata:
