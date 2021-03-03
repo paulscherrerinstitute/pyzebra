@@ -172,6 +172,9 @@ def parse_1D(fileobj, data_type):
                 counts.extend(map(float, next(fileobj).split()))
             s["Counts"] = np.array(counts)
 
+            if s["h"].is_integer() and s["k"].is_integer() and s["l"].is_integer():
+                s["h"], s["k"], s["l"] = map(int, (s["h"], s["k"], s["l"]))
+
             scan.append({**metadata, **s})
 
     elif data_type == ".dat":
@@ -229,10 +232,6 @@ def parse_1D(fileobj, data_type):
 
     else:
         print("Unknown file extention")
-
-    for s in scan:
-        if s["h"].is_integer() and s["k"].is_integer() and s["l"].is_integer():
-            s["h"], s["k"], s["l"] = map(int, (s["h"], s["k"], s["l"]))
 
     return scan
 
