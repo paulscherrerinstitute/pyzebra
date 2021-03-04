@@ -160,11 +160,8 @@ def parse_1D(fileobj, data_type):
             # "om" -> "omega"
             s["scan_motor"] = "omega"
             # overwrite metadata, because it only refers to the scan center
-            s["omega"] = np.linspace(
-                s["omega"] - (s["n_points"] / 2) * s["angle_step"],
-                s["omega"] + (s["n_points"] / 2) * s["angle_step"],
-                s["n_points"],
-            )
+            half_dist = (s["n_points"] - 1) / 2 * s["angle_step"]
+            s["omega"] = np.linspace(s["omega"] - half_dist, s["omega"] + half_dist, s["n_points"])
 
             # subsequent lines with counts
             counts = []
