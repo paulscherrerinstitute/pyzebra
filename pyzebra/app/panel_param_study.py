@@ -111,6 +111,8 @@ def create():
         scan_table_source.selected.indices = []
         scan_table_source.selected.indices = [0]
 
+        param_select.value = "user defined"
+
     def file_select_callback(_attr, _old, _new):
         pass
 
