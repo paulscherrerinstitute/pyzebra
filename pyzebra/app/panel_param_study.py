@@ -262,8 +262,8 @@ def create():
         ov_plot_mline_source.data.update(xs=xs, ys=ys, param=param, color=color_palette(len(xs)))
 
         if y:
-            mapper["transform"].low = np.min(ys)
-            mapper["transform"].high = np.max(ys)
+            mapper["transform"].low = np.min([np.min(y) for y in ys])
+            mapper["transform"].high = np.max([np.max(y) for y in ys])
         ov_param_plot_scatter_source.data.update(x=x, y=y, param=par)
 
     # Main plot
