@@ -220,23 +220,10 @@ def create():
 
             fit_output_textinput.value = fit.fit_report()
 
-            # numfit_min, numfit_max = fit["numfit"]
-            # if numfit_min is None:
-            #     numfit_min_span.location = None
-            # else:
-            #     numfit_min_span.location = x[numfit_min]
-
-            # if numfit_max is None:
-            #     numfit_max_span.location = None
-            # else:
-            #     numfit_max_span.location = x[numfit_max]
-
         else:
             plot_fit_source.data.update(x=[], y=[])
             plot_bkg_source.data.update(x=[], y=[])
             fit_output_textinput.value = ""
-            numfit_min_span.location = None
-            numfit_max_span.location = None
 
     def _update_overview():
         xs = []
@@ -291,11 +278,11 @@ def create():
         plot_bkg_source, Line(x="x", y="y", line_color="green", line_dash="dashed")
     )
 
-    numfit_min_span = Span(location=None, dimension="height", line_dash="dashed")
-    plot.add_layout(numfit_min_span)
+    fit_from_span = Span(location=None, dimension="height", line_dash="dashed")
+    plot.add_layout(fit_from_span)
 
-    numfit_max_span = Span(location=None, dimension="height", line_dash="dashed")
-    plot.add_layout(numfit_max_span)
+    fit_to_span = Span(location=None, dimension="height", line_dash="dashed")
+    plot.add_layout(fit_to_span)
 
     plot.add_layout(
         Legend(
@@ -414,8 +401,17 @@ def create():
     )
     param_select.on_change("value", param_select_callback)
 
+    def fit_from_spinner_callback(_attr, _old, new):
+        fit_from_span.location = new
+
     fit_from_spinner = Spinner(title="Fit from:", default_size=145)
+    fit_from_spinner.on_change("value", fit_from_spinner_callback)
+
+    def fit_to_spinner_callback(_attr, _old, new):
+        fit_to_span.location = new
+
     fit_to_spinner = Spinner(title="to:", default_size=145)
+    fit_to_spinner.on_change("value", fit_to_spinner_callback)
 
     def fitparams_add_dropdown_callback(click):
         # bokeh requires (str, str) for MultiSelect options
