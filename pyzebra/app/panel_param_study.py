@@ -90,9 +90,8 @@ def create():
             if file.endswith(".dat"):
                 dat_file_list.append((os.path.join(full_proposal_path, file), file))
         file_select.options = dat_file_list
-        file_select.value = dat_file_list[0][0]
 
-    proposal_textinput = TextInput(title="Enter proposal number:", default_size=145)
+    proposal_textinput = TextInput(title="Proposal number:", default_size=200)
     proposal_textinput.on_change("value", proposal_textinput_callback)
 
     def _init_datatable():
@@ -116,16 +115,22 @@ def create():
     def file_select_callback(_attr, _old, _new):
         pass
 
-    file_select = Select(title="Available .dat files")
+    file_select = MultiSelect(title="Available .dat files", default_size=200, height=250)
     file_select.on_change("value", file_select_callback)
 
     def file_open_button_callback():
         nonlocal det_data
-        with open(file_select.value) as file:
-            _, ext = os.path.splitext(file_select.value)
-            det_data = pyzebra.parse_1D(file, ext)
-
-        pyzebra.normalize_dataset(det_data, monitor_spinner.value)
+        det_data = []
+        for f_name in file_select.value:
+            with open(f_name) as file:
+                _, ext = os.path.splitext(f_name)
+                if det_data:
+                    append_data = pyzebra.parse_1D(file, ext)
+                    pyzebra.normalize_dataset(append_data, monitor_spinner.value)
+                    det_data.extend(append_data)
+                else:
+                    det_data = pyzebra.parse_1D(file, ext)
+                    pyzebra.normalize_dataset(det_data, monitor_spinner.value)
 
         _init_datatable()
 
@@ -133,12 +138,13 @@ def create():
     file_open_button.on_click(file_open_button_callback)
 
     def file_append_button_callback():
-        with open(file_select.value) as file:
-            _, ext = os.path.splitext(file_select.value)
-            append_data = pyzebra.parse_1D(file, ext)
+        for f_name in file_select.value:
+            with open(f_name) as file:
+                _, ext = os.path.splitext(f_name)
+                append_data = pyzebra.parse_1D(file, ext)
 
-        pyzebra.normalize_dataset(append_data, monitor_spinner.value)
-        det_data.extend(append_data)
+            pyzebra.normalize_dataset(append_data, monitor_spinner.value)
+            det_data.extend(append_data)
 
         _init_datatable()
 
@@ -162,7 +168,7 @@ def create():
         _init_datatable()
 
     upload_div = Div(text="or upload .dat files:", margin=(5, 5, 0, 5))
-    upload_button = FileInput(accept=".dat", multiple=True)
+    upload_button = FileInput(accept=".dat", multiple=True, default_size=200)
     upload_button.on_change("value", upload_button_callback)
 
     def append_upload_button_callback(_attr, _old, new):
@@ -177,7 +183,7 @@ def create():
         _init_datatable()
 
     append_upload_div = Div(text="append extra files:", margin=(5, 5, 0, 5))
-    append_upload_button = FileInput(accept=".dat", multiple=True)
+    append_upload_button = FileInput(accept=".dat", multiple=True, default_size=200)
     append_upload_button.on_change("value", append_upload_button_callback)
 
     def monitor_spinner_callback(_attr, _old, new):
@@ -617,21 +623,22 @@ def create():
         ),
     )
 
-    scan_layout = column(scan_table, row(param_select))
+    scan_layout = column(scan_table, row(monitor_spinner, param_select))
+
+    import_layout = column(
+        proposal_textinput,
+        file_select,
+        row(file_open_button, file_append_button),
+        upload_div,
+        upload_button,
+        append_upload_div,
+        append_upload_button,
+    )
 
     export_layout = column(preview_output_textinput, row(preview_output_button, save_button))
 
     tab_layout = column(
-        row(
-            proposal_textinput,
-            file_select,
-            column(Spacer(height=19), row(file_open_button, file_append_button)),
-            Spacer(width=100),
-            column(upload_div, upload_button),
-            column(append_upload_div, append_upload_button),
-            monitor_spinner,
-        ),
-        row(scan_layout, plots, Spacer(width=30), export_layout),
+        row(import_layout, scan_layout, plots, Spacer(width=30), export_layout),
         row(fitpeak_controls, fit_output_textinput),
     )
 
