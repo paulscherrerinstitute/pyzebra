@@ -414,8 +414,8 @@ def create():
     )
     param_select.on_change("value", param_select_callback)
 
-    integ_from = Spinner(title="Integrate from:", default_size=145, disabled=True)
-    integ_to = Spinner(title="to:", default_size=145, disabled=True)
+    fit_from_spinner = Spinner(title="Fit from:", default_size=145)
+    fit_to_spinner = Spinner(title="to:", default_size=145)
 
     def fitparams_add_dropdown_callback(click):
         # bokeh requires (str, str) for MultiSelect options
@@ -518,7 +518,9 @@ def create():
 
     def fit_all_button_callback():
         for scan in det_data:
-            pyzebra.fit_scan(scan, fit_params)
+            pyzebra.fit_scan(
+                scan, fit_params, fit_from=fit_from_spinner.value, fit_to=fit_to_spinner.value
+            )
 
         _update_plot()
         _update_table()
@@ -528,7 +530,9 @@ def create():
 
     def fit_button_callback():
         scan = _get_selected_scan()
-        pyzebra.fit_scan(scan, fit_params)
+        pyzebra.fit_scan(
+            scan, fit_params, fit_from=fit_from_spinner.value, fit_to=fit_to_spinner.value
+        )
 
         _update_plot()
         _update_table()
@@ -610,7 +614,7 @@ def create():
         fitparams_table,
         Spacer(width=20),
         column(
-            row(integ_from, integ_to),
+            row(fit_from_spinner, fit_to_spinner),
             row(bin_size_spinner, column(Spacer(height=19), lorentz_toggle)),
             row(area_method_radiobutton),
             row(fit_button, fit_all_button),

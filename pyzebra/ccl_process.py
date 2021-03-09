@@ -87,9 +87,19 @@ def merge_scans(scan1, scan2):
     print(f'Merging scans: {scan1["idx"]} ({fname1}) <-- {scan2["idx"]} ({fname2})')
 
 
-def fit_scan(scan, model_dict):
+def fit_scan(scan, model_dict, fit_from=None, fit_to=None):
+    if fit_from is None:
+        fit_from = -np.inf
+    if fit_to is None:
+        fit_to = np.inf
+
     y_fit = scan["Counts"]
     x_fit = scan[scan["scan_motor"]]
+
+    # apply fitting range
+    fit_ind = (fit_from <= x_fit) & (x_fit <= fit_to)
+    y_fit = y_fit[fit_ind]
+    x_fit = x_fit[fit_ind]
 
     model = None
     for model_index, (model_name, model_param) in enumerate(model_dict.items()):
