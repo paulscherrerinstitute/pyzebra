@@ -398,7 +398,7 @@ def create():
 
     param_select = Select(
         title="Parameter:",
-        options=["user defined", "temp", "mf"],
+        options=["user defined", "temp", "mf", "h", "k", "l"],
         value="user defined",
         default_size=145,
     )
