@@ -3,7 +3,6 @@ import io
 import os
 import tempfile
 import types
-from copy import deepcopy
 
 import numpy as np
 from bokeh.layouts import column, row
@@ -449,11 +448,10 @@ def create():
     def preview_output_button_callback():
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_file = temp_dir + "/temp"
-            export_data = deepcopy(det_data)
-            for s, export in enumerate(scan_table_source.data["export"]):
-                if not export:
-                    if "fit" in export_data[s]:
-                        del export_data[s]["fit"]
+            export_data = []
+            for s, export in zip(det_data, scan_table_source.data["export"]):
+                if export:
+                    export_data.append(s)
 
             pyzebra.export_1D(
                 export_data,
@@ -482,10 +480,10 @@ def create():
     def save_button_callback():
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_file = temp_dir + "/temp"
-            export_data = deepcopy(det_data)
-            for s, export in enumerate(scan_table_source.data["export"]):
-                if not export:
-                    del export_data[s]
+            export_data = []
+            for s, export in zip(det_data, scan_table_source.data["export"]):
+                if export:
+                    export_data.append(s)
 
             pyzebra.export_1D(
                 export_data,
