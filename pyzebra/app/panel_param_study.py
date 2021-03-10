@@ -100,7 +100,7 @@ def create():
         scan_table_source.data.update(
             file=file_list,
             scan=scan_list,
-            param=[""] * len(scan_list),
+            param=[None] * len(scan_list),
             fit=[0] * len(scan_list),
             export=[True] * len(scan_list),
         )
@@ -236,7 +236,7 @@ def create():
         y = []
         par = []
         for s, p in enumerate(scan_table_source.data["param"]):
-            if p:
+            if p is not None:
                 scan = det_data[s]
                 scan_motor = scan["scan_motor"]
                 xs.append(scan[scan_motor])
@@ -369,7 +369,7 @@ def create():
         columns=[
             TableColumn(field="file", title="file", width=150),
             TableColumn(field="scan", title="scan", width=50),
-            TableColumn(field="param", title="param", width=50),
+            TableColumn(field="param", title="param", editor=NumberEditor(), width=50),
             TableColumn(field="fit", title="Fit", width=50),
             TableColumn(field="export", title="Export", editor=CheckboxEditor(), width=50),
         ],
@@ -390,7 +390,7 @@ def create():
 
     def param_select_callback(_attr, _old, new):
         if new == "user defined":
-            param = [""] * len(det_data)
+            param = [None] * len(det_data)
         else:
             param = [scan[new] for scan in det_data]
 
