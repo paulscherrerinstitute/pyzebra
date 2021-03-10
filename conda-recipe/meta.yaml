@@ -26,7 +26,6 @@ requirements:
     - matplotlib
     - numba
     - lmfit
-    - mpi4py  # is needed for spind
     - uncertainties
 
 
