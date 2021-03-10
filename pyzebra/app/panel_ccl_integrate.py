@@ -139,32 +139,38 @@ def create():
 
     def upload_button_callback(_attr, _old, new):
         nonlocal det_data
-        with io.StringIO(base64.b64decode(new).decode()) as file:
-            _, ext = os.path.splitext(upload_button.filename)
-            det_data = pyzebra.parse_1D(file, ext)
-
-        pyzebra.normalize_dataset(det_data, monitor_spinner.value)
-        pyzebra.merge_duplicates(det_data)
+        det_data = []
+        for f_str, f_name in zip(new, upload_button.filename):
+            with io.StringIO(base64.b64decode(f_str).decode()) as file:
+                _, ext = os.path.splitext(f_name)
+                if det_data:
+                    append_data = pyzebra.parse_1D(file, ext)
+                    pyzebra.normalize_dataset(append_data, monitor_spinner.value)
+                    pyzebra.merge_datasets(det_data, append_data)
+                else:
+                    det_data = pyzebra.parse_1D(file, ext)
+                    pyzebra.normalize_dataset(det_data, monitor_spinner.value)
+                    pyzebra.merge_duplicates(det_data)
 
         _init_datatable()
 
-    upload_div = Div(text="or upload new .ccl/.dat file:", margin=(5, 5, 0, 5))
-    upload_button = FileInput(accept=".ccl,.dat", default_size=200)
+    upload_div = Div(text="or upload new .ccl/.dat files:", margin=(5, 5, 0, 5))
+    upload_button = FileInput(accept=".ccl,.dat", multiple=True, default_size=200)
     upload_button.on_change("value", upload_button_callback)
 
     def append_upload_button_callback(_attr, _old, new):
-        nonlocal det_data
-        with io.StringIO(base64.b64decode(new).decode()) as file:
-            _, ext = os.path.splitext(append_upload_button.filename)
-            append_data = pyzebra.parse_1D(file, ext)
+        for f_str, f_name in zip(new, append_upload_button.filename):
+            with io.StringIO(base64.b64decode(f_str).decode()) as file:
+                _, ext = os.path.splitext(f_name)
+                append_data = pyzebra.parse_1D(file, ext)
 
-        pyzebra.normalize_dataset(append_data, monitor_spinner.value)
-        pyzebra.merge_datasets(det_data, append_data)
+            pyzebra.normalize_dataset(append_data, monitor_spinner.value)
+            pyzebra.merge_datasets(det_data, append_data)
 
         _init_datatable()
 
-    append_upload_div = Div(text="append extra file:", margin=(5, 5, 0, 5))
-    append_upload_button = FileInput(accept=".ccl,.dat", default_size=200)
+    append_upload_div = Div(text="append extra files:", margin=(5, 5, 0, 5))
+    append_upload_button = FileInput(accept=".ccl,.dat", multiple=True, default_size=200)
     append_upload_button.on_change("value", append_upload_button_callback)
 
     def monitor_spinner_callback(_attr, old, new):
