@@ -120,7 +120,7 @@ def create():
 
         _init_datatable()
 
-    file_open_button = Button(label="Open", default_size=100)
+    file_open_button = Button(label="Open New", default_size=100)
     file_open_button.on_click(file_open_button_callback)
 
     def file_append_button_callback():
@@ -148,7 +148,7 @@ def create():
 
         _init_datatable()
 
-    upload_div = Div(text="or upload .ccl/.dat file:", margin=(5, 5, 0, 5))
+    upload_div = Div(text="or upload new .ccl/.dat file:", margin=(5, 5, 0, 5))
     upload_button = FileInput(accept=".ccl,.dat", default_size=200)
     upload_button.on_change("value", upload_button_callback)
 

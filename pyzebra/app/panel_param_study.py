@@ -112,7 +112,7 @@ def create():
     def file_select_callback(_attr, _old, _new):
         pass
 
-    file_select = MultiSelect(title="Available .dat files", default_size=200, height=250)
+    file_select = MultiSelect(title="Available .dat files:", default_size=200, height=250)
     file_select.on_change("value", file_select_callback)
 
     def file_open_button_callback():
@@ -131,7 +131,7 @@ def create():
 
         _init_datatable()
 
-    file_open_button = Button(label="Open", default_size=100)
+    file_open_button = Button(label="Open New", default_size=100)
     file_open_button.on_click(file_open_button_callback)
 
     def file_append_button_callback():
@@ -164,7 +164,7 @@ def create():
 
         _init_datatable()
 
-    upload_div = Div(text="or upload .dat files:", margin=(5, 5, 0, 5))
+    upload_div = Div(text="or upload new .dat files:", margin=(5, 5, 0, 5))
     upload_button = FileInput(accept=".dat", multiple=True, default_size=200)
     upload_button.on_change("value", upload_button_callback)
 
