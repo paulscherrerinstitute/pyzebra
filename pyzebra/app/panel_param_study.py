@@ -51,19 +51,17 @@ import pyzebra
 from pyzebra.ccl_io import AREA_METHODS
 
 javaScript = """
-setTimeout(function() {
-    if (js_data.data['cont'][0] === "") return 0;
-    const filename = 'output' + js_data.data['ext'][0]
-    const blob = new Blob([js_data.data['cont'][0]], {type: 'text/plain'})
-    const link = document.createElement('a');
-    document.body.appendChild(link);
-    const url = window.URL.createObjectURL(blob);
-    link.href = url;
-    link.download = filename;
-    link.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(link);
-}, 3000);
+if (js_data.data['content'][0] === "") return 0;
+const filename = 'output' + js_data.data['ext'][0]
+const blob = new Blob([js_data.data['content'][0]], {type: 'text/plain'})
+const link = document.createElement('a');
+document.body.appendChild(link);
+const url = window.URL.createObjectURL(blob);
+link.href = url;
+link.download = filename;
+link.click();
+window.URL.revokeObjectURL(url);
+document.body.removeChild(link);
 """
 
 PROPOSAL_PATH = "/afs/psi.ch/project/sinqdata/2020/zebra/"
@@ -78,8 +76,8 @@ def create():
     det_data = []
     fit_params = {}
     js_data = {
-        ".comm": ColumnDataSource(data=dict(cont=[], ext=[])),
-        ".incomm": ColumnDataSource(data=dict(cont=[], ext=[])),
+        ".comm": ColumnDataSource(data=dict(content=[], ext=[])),
+        ".incomm": ColumnDataSource(data=dict(content=[], ext=[])),
     }
 
     def proposal_textinput_callback(_attr, _old, new):
@@ -551,9 +549,9 @@ def create():
 
     lorentz_toggle = Toggle(label="Lorentz Correction", default_size=145)
 
-    preview_output_textinput = TextAreaInput(title="Export file preview:", width=450, height=400)
+    export_preview_textinput = TextAreaInput(title="Export preview:", width=450, height=400)
 
-    def preview_output_button_callback():
+    def preview_button_callback():
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_file = temp_dir + "/temp"
             export_data = []
@@ -573,39 +571,19 @@ def create():
                 fname = temp_file + ext
                 if os.path.isfile(fname):
                     with open(fname) as f:
-                        exported_content += f"{ext} file:\n" + f.read()
-
-            preview_output_textinput.value = exported_content
-
-    preview_output_button = Button(label="Preview file", default_size=220)
-    preview_output_button.on_click(preview_output_button_callback)
-
-    def save_button_callback():
-        with tempfile.TemporaryDirectory() as temp_dir:
-            temp_file = temp_dir + "/temp"
-            export_data = []
-            for s, export in zip(det_data, scan_table_source.data["export"]):
-                if export:
-                    export_data.append(s)
-
-            pyzebra.export_1D(
-                export_data,
-                temp_file,
-                area_method=AREA_METHODS[int(area_method_radiobutton.active)],
-                lorentz=lorentz_toggle.active,
-            )
-
-            for ext in (".comm", ".incomm"):
-                fname = temp_file + ext
-                if os.path.isfile(fname):
-                    with open(fname) as f:
-                        cont = f.read()
+                        content = f.read()
+                        exported_content += f"{ext} file:\n" + content
                 else:
-                    cont = ""
-                js_data[ext].data.update(cont=[cont], ext=[ext])
+                    content = ""
 
-    save_button = Button(label="Download file", button_type="success", default_size=220)
-    save_button.on_click(save_button_callback)
+                js_data[ext].data.update(content=[content], ext=[ext])
+
+            export_preview_textinput.value = exported_content
+
+    preview_button = Button(label="Preview", default_size=220)
+    preview_button.on_click(preview_button_callback)
+
+    save_button = Button(label="Download preview", button_type="success", default_size=220)
     save_button.js_on_click(CustomJS(args={"js_data": js_data[".comm"]}, code=javaScript))
     save_button.js_on_click(CustomJS(args={"js_data": js_data[".incomm"]}, code=javaScript))
 
@@ -633,7 +611,7 @@ def create():
         append_upload_button,
     )
 
-    export_layout = column(preview_output_textinput, row(preview_output_button, save_button))
+    export_layout = column(export_preview_textinput, row(preview_button, save_button))
 
     tab_layout = column(
         row(import_layout, scan_layout, plots, Spacer(width=30), export_layout),
