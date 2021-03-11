@@ -516,10 +516,11 @@ def create():
     fit_output_textinput = TextAreaInput(title="Fit results:", width=750, height=200)
 
     def fit_all_button_callback():
-        for scan in det_data:
-            pyzebra.fit_scan(
-                scan, fit_params, fit_from=fit_from_spinner.value, fit_to=fit_to_spinner.value
-            )
+        for scan, export in zip(det_data, scan_table_source.data["export"]):
+            if export:
+                pyzebra.fit_scan(
+                    scan, fit_params, fit_from=fit_from_spinner.value, fit_to=fit_to_spinner.value
+                )
 
         _update_plot()
         _update_table()
