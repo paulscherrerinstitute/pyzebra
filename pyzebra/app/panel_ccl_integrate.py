@@ -46,16 +46,19 @@ from pyzebra.ccl_io import AREA_METHODS
 
 
 javaScript = """
-if (js_data.data['content'][0] === "") return 0;
-const blob = new Blob(js_data.data['content'], {type: 'text/plain'})
-const link = document.createElement('a');
-document.body.appendChild(link);
-const url = window.URL.createObjectURL(blob);
-link.href = url;
-link.download = js_data.data['fname'][0];
-link.click();
-window.URL.revokeObjectURL(url);
-document.body.removeChild(link);
+for (let i = 0; i < js_data.data['fname'].length; i++) {
+    if (js_data.data['content'][i] === "") continue;
+
+    const blob = new Blob([js_data.data['content'][i]], {type: 'text/plain'})
+    const link = document.createElement('a');
+    document.body.appendChild(link);
+    const url = window.URL.createObjectURL(blob);
+    link.href = url;
+    link.download = js_data.data['fname'][i];
+    link.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+}
 """
 
 PROPOSAL_PATH = "/afs/psi.ch/project/sinqdata/2020/zebra/"
@@ -64,10 +67,7 @@ PROPOSAL_PATH = "/afs/psi.ch/project/sinqdata/2020/zebra/"
 def create():
     det_data = {}
     fit_params = {}
-    js_data = {
-        ".comm": ColumnDataSource(data=dict(content=[""], fname=[""])),
-        ".incomm": ColumnDataSource(data=dict(content=[""], fname=[""])),
-    }
+    js_data = ColumnDataSource(data=dict(content=["", ""], fname=["", ""]))
 
     def proposal_textinput_callback(_attr, _old, new):
         ccl_path = os.path.join(PROPOSAL_PATH, new.strip())
@@ -116,8 +116,7 @@ def create():
                     det_data = pyzebra.parse_1D(file, ext)
                     pyzebra.normalize_dataset(det_data, monitor_spinner.value)
                     pyzebra.merge_duplicates(det_data)
-                    js_data[".comm"].data.update(fname=[base + ".comm"])
-                    js_data[".incomm"].data.update(fname=[base + ".incomm"])
+                    js_data.data.update(fname=[base + ".comm", base + ".incomm"])
 
         _init_datatable()
 
@@ -152,8 +151,7 @@ def create():
                     det_data = pyzebra.parse_1D(file, ext)
                     pyzebra.normalize_dataset(det_data, monitor_spinner.value)
                     pyzebra.merge_duplicates(det_data)
-                    js_data[".comm"].data.update(fname=[base + ".comm"])
-                    js_data[".incomm"].data.update(fname=[base + ".incomm"])
+                    js_data.data.update(fname=[base + ".comm", base + ".incomm"])
 
         _init_datatable()
 
@@ -477,6 +475,7 @@ def create():
             )
 
             exported_content = ""
+            file_content = []
             for ext in (".comm", ".incomm"):
                 fname = temp_file + ext
                 if os.path.isfile(fname):
@@ -485,9 +484,9 @@ def create():
                         exported_content += f"{ext} file:\n" + content
                 else:
                     content = ""
+                file_content.append(content)
 
-                js_data[ext].data.update(content=[content])
-
+            js_data.data.update(content=file_content)
             export_preview_textinput.value = exported_content
 
     preview_button = Button(label="Preview", default_size=200)
@@ -498,8 +497,7 @@ def create():
     )
 
     save_button = Button(label="Download preview", button_type="success", default_size=200)
-    save_button.js_on_click(CustomJS(args={"js_data": js_data[".comm"]}, code=javaScript))
-    save_button.js_on_click(CustomJS(args={"js_data": js_data[".incomm"]}, code=javaScript))
+    save_button.js_on_click(CustomJS(args={"js_data": js_data}, code=javaScript))
 
     fitpeak_controls = row(
         column(fitparams_add_dropdown, fitparams_select, fitparams_remove_button),
