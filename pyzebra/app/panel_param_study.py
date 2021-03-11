@@ -214,19 +214,29 @@ def create():
             x_fit = np.linspace(x[0], x[-1], 100)
             plot_fit_source.data.update(x=x_fit, y=fit.eval(x=x_fit))
 
+            x_bkg = []
+            y_bkg = []
+            xs_peak = []
+            ys_peak = []
+            comps = fit.eval_components(x=x_fit)
             for i, model in enumerate(fit_params):
                 if "linear" in model:
-                    comps = fit.eval_components(x=x_fit)
-                    plot_bkg_source.data.update(x=x_fit, y=comps[f"f{i}_"])
-                    break
-            else:
-                plot_bkg_source.data.update(x=[], y=[])
+                    x_bkg = x_fit
+                    y_bkg = comps[f"f{i}_"]
+
+                elif any(val in model for val in ("gaussian", "voigt", "pvoigt")):
+                    xs_peak.append(x_fit)
+                    ys_peak.append(comps[f"f{i}_"])
+
+            plot_bkg_source.data.update(x=x_bkg, y=y_bkg)
+            plot_peak_source.data.update(xs=xs_peak, ys=ys_peak)
 
             fit_output_textinput.value = fit.fit_report()
 
         else:
             plot_fit_source.data.update(x=[], y=[])
             plot_bkg_source.data.update(x=[], y=[])
+            plot_peak_source.data.update(xs=[], ys=[])
             fit_output_textinput.value = ""
 
     def _update_overview():
@@ -260,7 +270,12 @@ def create():
         ov_param_plot_scatter_source.data.update(x=x, y=y, param=par)
 
     # Main plot
-    plot = Plot(x_range=DataRange1d(), y_range=DataRange1d(), plot_height=450, plot_width=700)
+    plot = Plot(
+        x_range=DataRange1d(),
+        y_range=DataRange1d(only_visible=True),
+        plot_height=450,
+        plot_width=700,
+    )
 
     plot.add_layout(LinearAxis(axis_label="Counts"), place="left")
     plot.add_layout(LinearAxis(axis_label="Scan motor"), place="below")
@@ -282,6 +297,11 @@ def create():
         plot_bkg_source, Line(x="x", y="y", line_color="green", line_dash="dashed")
     )
 
+    plot_peak_source = ColumnDataSource(dict(xs=[0], ys=[0]))
+    plot_peak = plot.add_glyph(
+        plot_peak_source, MultiLine(xs="xs", ys="ys", line_color="red", line_dash="dashed")
+    )
+
     fit_from_span = Span(location=None, dimension="height", line_dash="dashed")
     plot.add_layout(fit_from_span)
 
@@ -290,8 +310,14 @@ def create():
 
     plot.add_layout(
         Legend(
-            items=[("data", [plot_scatter]), ("best fit", [plot_fit]), ("linear", [plot_bkg])],
+            items=[
+                ("data", [plot_scatter]),
+                ("best fit", [plot_fit]),
+                ("peak", [plot_peak]),
+                ("linear", [plot_bkg]),
+            ],
             location="top_left",
+            click_policy="hide",
         )
     )
 
