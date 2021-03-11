@@ -52,13 +52,12 @@ from pyzebra.ccl_io import AREA_METHODS
 
 javaScript = """
 if (js_data.data['content'][0] === "") return 0;
-const filename = 'output' + js_data.data['ext'][0]
-const blob = new Blob([js_data.data['content'][0]], {type: 'text/plain'})
+const blob = new Blob(js_data.data['content'], {type: 'text/plain'})
 const link = document.createElement('a');
 document.body.appendChild(link);
 const url = window.URL.createObjectURL(blob);
 link.href = url;
-link.download = filename;
+link.download = js_data.data['fname'][0];
 link.click();
 window.URL.revokeObjectURL(url);
 document.body.removeChild(link);
@@ -76,8 +75,8 @@ def create():
     det_data = []
     fit_params = {}
     js_data = {
-        ".comm": ColumnDataSource(data=dict(content=[], ext=[])),
-        ".incomm": ColumnDataSource(data=dict(content=[], ext=[])),
+        ".comm": ColumnDataSource(data=dict(content=[""], fname=[""])),
+        ".incomm": ColumnDataSource(data=dict(content=[""], fname=[""])),
     }
 
     def proposal_textinput_callback(_attr, _old, new):
@@ -120,7 +119,7 @@ def create():
         det_data = []
         for f_name in file_select.value:
             with open(f_name) as file:
-                _, ext = os.path.splitext(f_name)
+                base, ext = os.path.splitext(f_name)
                 if det_data:
                     append_data = pyzebra.parse_1D(file, ext)
                     pyzebra.normalize_dataset(append_data, monitor_spinner.value)
@@ -128,6 +127,8 @@ def create():
                 else:
                     det_data = pyzebra.parse_1D(file, ext)
                     pyzebra.normalize_dataset(det_data, monitor_spinner.value)
+                    js_data[".comm"].data.update(fname=[base + ".comm"])
+                    js_data[".incomm"].data.update(fname=[base + ".incomm"])
 
         _init_datatable()
 
@@ -153,7 +154,7 @@ def create():
         det_data = []
         for f_str, f_name in zip(new, upload_button.filename):
             with io.StringIO(base64.b64decode(f_str).decode()) as file:
-                _, ext = os.path.splitext(f_name)
+                base, ext = os.path.splitext(f_name)
                 if det_data:
                     append_data = pyzebra.parse_1D(file, ext)
                     pyzebra.normalize_dataset(append_data, monitor_spinner.value)
@@ -161,6 +162,8 @@ def create():
                 else:
                     det_data = pyzebra.parse_1D(file, ext)
                     pyzebra.normalize_dataset(det_data, monitor_spinner.value)
+                    js_data[".comm"].data.update(fname=[base + ".comm"])
+                    js_data[".incomm"].data.update(fname=[base + ".incomm"])
 
         _init_datatable()
 
@@ -577,7 +580,7 @@ def create():
                 else:
                     content = ""
 
-                js_data[ext].data.update(content=[content], ext=[ext])
+                js_data[ext].data.update(content=[content])
 
             export_preview_textinput.value = exported_content
 
