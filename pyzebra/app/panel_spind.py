@@ -45,7 +45,7 @@ def create():
             temp_hkl_file = os.path.join(temp_dir, "hkl.h5")
             roi_dict = ast.literal_eval(selection_list.value)
 
-            subprocess.run(
+            comp_proc = subprocess.run(
                 [
                     "mpiexec",
                     "-n",
@@ -59,11 +59,16 @@ def create():
                     temp_hkl_file,
                 ],
                 check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
             )
+            print(" ".join(comp_proc.args))
+            print(comp_proc.stdout)
 
             diff_vec = prepare_event_file(temp_event_file, roi_dict, path_prefix_textinput.value)
 
-            subprocess.run(
+            comp_proc = subprocess.run(
                 [
                     "mpiexec",
                     "-n",
@@ -84,7 +89,12 @@ def create():
                     str(eval_hkl_tol_spinner.value),
                 ],
                 check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
             )
+            print(" ".join(comp_proc.args))
+            print(comp_proc.stdout)
 
             try:
                 with open(os.path.join(temp_dir, "spind.txt")) as f_out:
