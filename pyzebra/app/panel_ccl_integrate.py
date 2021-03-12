@@ -310,7 +310,7 @@ def create():
         ],
         width=310,  # +60 because of the index column
         height=350,
-        fit_columns=False,
+        autosize_mode="none",
         editable=True,
     )
 

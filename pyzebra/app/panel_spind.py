@@ -137,7 +137,7 @@ def create():
         ],
         height=300,
         width=700,
-        fit_columns=False,
+        autosize_mode="none",
         index_position=None,
     )
 

@@ -402,7 +402,7 @@ def create():
         ],
         width=410,  # +60 because of the index column
         editable=True,
-        fit_columns=False,
+        autosize_mode="none",
     )
 
     def scan_table_source_callback(_attr, _old, _new):
