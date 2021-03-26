@@ -68,6 +68,10 @@ def create():
 
             diff_vec = prepare_event_file(temp_event_file, roi_dict, path_prefix_textinput.value)
 
+            print(f"Content of {temp_event_file} file:")
+            with open(temp_event_file) as f:
+                print(f.read())
+
             comp_proc = subprocess.run(
                 [
                     "mpiexec",
