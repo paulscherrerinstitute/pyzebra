@@ -297,7 +297,7 @@ def create():
         plot_bkg_source, Line(x="x", y="y", line_color="green", line_dash="dashed")
     )
 
-    plot_peak_source = ColumnDataSource(dict(xs=[0], ys=[0]))
+    plot_peak_source = ColumnDataSource(dict(xs=[[0]], ys=[[0]]))
     plot_peak = plot.add_glyph(
         plot_peak_source, MultiLine(xs="xs", ys="ys", line_color="red", line_dash="dashed")
     )
