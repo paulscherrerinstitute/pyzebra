@@ -68,7 +68,7 @@ def create():
 
             diff_vec = prepare_event_file(temp_event_file, roi_dict, path_prefix_textinput.value)
 
-            print(f"Content of {temp_event_file} file:")
+            print(f"Content of {temp_event_file}:")
             with open(temp_event_file) as f:
                 print(f.read())
 
@@ -100,8 +100,9 @@ def create():
             print(" ".join(comp_proc.args))
             print(comp_proc.stdout)
 
+            spind_out_file = os.path.join(temp_dir, "spind.txt")
             try:
-                with open(os.path.join(temp_dir, "spind.txt")) as f_out:
+                with open(spind_out_file) as f_out:
                     spind_res = defaultdict(list)
                     for line in f_out:
                         c1, c2, c3, c4, c5, *c_rest = line.split()
@@ -118,6 +119,10 @@ def create():
                         spind_res["ub_matrix"].append(ub_matrix)
 
                     results_table_source.data.update(spind_res)
+
+                print(f"Content of {spind_out_file}:")
+                with open(spind_out_file) as f:
+                    print(f.read())
 
             except FileNotFoundError:
                 print("No results from spind")
