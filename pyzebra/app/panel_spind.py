@@ -35,6 +35,7 @@ def create():
     eval_hkl_tol_spinner = Spinner(title="eval-hkl-tol", value=0.15, step=0.01)
 
     diff_vec = []
+    ub_matrices = []
 
     def process_button_callback():
         nonlocal diff_vec
@@ -115,8 +116,9 @@ def create():
                         # last digits are spind UB matrix
                         vals = list(map(float, c_rest))
                         ub_matrix_spind = np.array(vals).reshape(3, 3)
-                        ub_matrix = np.linalg.inv(np.transpose(ub_matrix_spind)) * 1e10
-                        spind_res["ub_matrix"].append(ub_matrix)
+                        ub_matrix = np.linalg.inv(np.transpose(ub_matrix_spind))
+                        ub_matrices.append(ub_matrix)
+                        spind_res["ub_matrix"].append(ub_matrix * 1e9)
 
                     results_table_source.data.update(spind_res)
 
@@ -135,10 +137,10 @@ def create():
     def results_table_select_callback(_attr, old, new):
         if new:
             ind = new[0]
-            ub_matrix = results_table_source.data["ub_matrix"][ind]
+            ub_matrix = ub_matrices[ind]
             res = ""
             for vec in diff_vec:
-                res += f"{vec @ ub_matrix}\n"
+                res += f"{ub_matrix @ vec}\n"
             hkl_textareainput.value = res
         else:
             hkl_textareainput.value = None
@@ -253,9 +255,10 @@ def prepare_event_file(export_filename, roi_dict, path_prefix=""):
                 ga, nu = pyzebra.det2pol(ddist, gamma, nu, x_pos, y_pos)
                 diff_vector = pyzebra.z1frmd(wave, ga, omega, chi, phi, nu)
                 d_spacing = float(pyzebra.dandth(wave, diff_vector)[0])
-                dv1, dv2, dv3 = diff_vector.flatten() * 1e10
+                diff_vector = diff_vector.flatten() * 1e10
+                dv1, dv2, dv3 = diff_vector
 
-                diff_vec.append(diff_vector.flatten())
+                diff_vec.append(diff_vector)
 
                 f.write(f"{x_pos} {y_pos} {intensity} {snr_cnts} {dv1} {dv2} {dv3} {d_spacing}\n")
 
