@@ -132,6 +132,7 @@ def create():
     process_button = Button(label="Process", button_type="primary")
     process_button.on_click(process_button_callback)
 
+    ub_matrix_textareainput = TextAreaInput(title="UB matrix:", rows=7)
     hkl_textareainput = TextAreaInput(title="hkl values:", rows=7)
 
     def results_table_select_callback(_attr, old, new):
@@ -141,8 +142,10 @@ def create():
             res = ""
             for vec in diff_vec:
                 res += f"{ub_matrix @ vec}\n"
+            ub_matrix_textareainput.value = str(results_table_source.data["ub_matrix"][ind])
             hkl_textareainput.value = res
         else:
+            ub_matrix_textareainput.value = None
             hkl_textareainput.value = None
 
     results_table_source = ColumnDataSource(dict())
@@ -176,7 +179,7 @@ def create():
             eval_hkl_tol_spinner,
             process_button,
         ),
-        column(results_table, row(hkl_textareainput)),
+        column(results_table, row(ub_matrix_textareainput, hkl_textareainput)),
     )
 
     return Panel(child=tab_layout, title="spind")
