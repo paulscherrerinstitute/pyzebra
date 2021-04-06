@@ -121,8 +121,8 @@ def create():
         overview_x = np.mean(h5_data, axis=1)
         overview_y = np.mean(h5_data, axis=2)
 
-        overview_plot_x_image_source.data.update(image=[overview_x], dw=[n_x])
-        overview_plot_y_image_source.data.update(image=[overview_y], dw=[n_y])
+        overview_plot_x_image_source.data.update(image=[overview_x], x=[0], dw=[n_x])
+        overview_plot_y_image_source.data.update(image=[overview_y], x=[0], dw=[n_y])
 
         if proj_auto_toggle.active:
             im_min = min(np.min(overview_x), np.min(overview_y))
@@ -140,8 +140,8 @@ def create():
             overview_plot_x.axis[1].axis_label = "Frame"
             overview_plot_y.axis[1].axis_label = "Frame"
 
-            overview_plot_x_image_source.data.update(y=[0], dh=[n_im])
-            overview_plot_y_image_source.data.update(y=[0], dh=[n_im])
+            var_start = 0
+            var_end = n_im
 
         elif frame_button_group.active == 1:  # Variable angle
             scan_motor = det_data["scan_motor"]
@@ -151,8 +151,17 @@ def create():
             var = det_data[scan_motor]
             var_start = var[0]
             var_end = (var[-1] - var[0]) * n_im / (n_im - 1)
-            overview_plot_x_image_source.data.update(y=[var_start], dh=[var_end])
-            overview_plot_y_image_source.data.update(y=[var_start], dh=[var_end])
+
+        frame_range.start = var_start
+        frame_range.end = var_start + var_end
+        frame_range.bounds = (var_start, var_start + var_end)
+
+        # ResetTool should reset to the new range boundaries
+        frame_range.reset_start = var_start
+        frame_range.reset_end = var_start + var_end
+
+        overview_plot_x_image_source.data.update(y=[var_start], dh=[var_end])
+        overview_plot_y_image_source.data.update(y=[var_start], dh=[var_end])
 
     def filelist_callback(_attr, _old, new):
         nonlocal det_data
@@ -311,7 +320,7 @@ def create():
     plot.toolbar.active_scroll = wheelzoomtool
 
     # shared frame range
-    frame_range = DataRange1d()
+    frame_range = Range1d(0, 1, bounds=(0, 1))
     det_x_range = Range1d(0, IMAGE_W, bounds=(0, IMAGE_W))
     overview_plot_x = Plot(
         title=Title(text="Projections on X-axis"),
@@ -560,9 +569,7 @@ def create():
     selection_button = Button(label="Add selection")
     selection_button.on_click(selection_button_callback)
 
-    mf_spinner = Spinner(
-        title="Magnetic field:", format="0.00", width=145, disabled=True
-    )
+    mf_spinner = Spinner(title="Magnetic field:", format="0.00", width=145, disabled=True)
     temp_spinner = Spinner(title="Temperature:", format="0.00", width=145, disabled=True)
     geometry_textinput = TextInput(title="Geometry:", disabled=True)
 
