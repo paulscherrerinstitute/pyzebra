@@ -516,6 +516,10 @@ def create():
             param=params, value=[None] * n, vary=[True] * n, min=[None] * n, max=[None] * n,
         )
 
+        if function == "linear":
+            fitparams["value"] = [0, 0]
+            fitparams["vary"] = [False, False]
+
         return fitparams
 
     fitparams_table_source = ColumnDataSource(dict(param=[], value=[], vary=[], min=[], max=[]))
