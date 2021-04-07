@@ -24,7 +24,15 @@ ALGORITHMS = ["adaptivemaxcog", "adaptivedynamic"]
 
 
 def anatric(config_file, anatric_path="/afs/psi.ch/project/sinq/rhel7/bin/anatric"):
-    subprocess.run([anatric_path, config_file], check=True)
+    comp_proc = subprocess.run(
+        [anatric_path, config_file],
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+    )
+    print(" ".join(comp_proc.args))
+    print(comp_proc.stdout)
 
 
 class AnatricConfig:
