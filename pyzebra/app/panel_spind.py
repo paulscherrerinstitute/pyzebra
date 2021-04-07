@@ -118,7 +118,7 @@ def create():
                         ub_matrix_spind = np.array(vals).reshape(3, 3)
                         ub_matrix = np.linalg.inv(np.transpose(ub_matrix_spind))
                         ub_matrices.append(ub_matrix)
-                        spind_res["ub_matrix"].append(ub_matrix * 1e9)
+                        spind_res["ub_matrix"].append(ub_matrix_spind)
 
                     results_table_source.data.update(spind_res)
 
@@ -142,7 +142,7 @@ def create():
             res = ""
             for vec in diff_vec:
                 res += f"{ub_matrix @ vec}\n"
-            ub_matrix_textareainput.value = str(results_table_source.data["ub_matrix"][ind])
+            ub_matrix_textareainput.value = str(ub_matrix * 1e10)
             hkl_textareainput.value = res
         else:
             ub_matrix_textareainput.value = None
