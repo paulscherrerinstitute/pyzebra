@@ -44,7 +44,12 @@ def create():
         ub_textareainput.value = config.crystal_UB
 
         dataFactory_implementation_select.value = config.dataFactory_implementation
-        dataFactory_dist1_textinput.value = config.dataFactory_dist1
+        if config.dataFactory_dist1 is not None:
+            dataFactory_dist1_textinput.value = config.dataFactory_dist1
+        if config.dataFactory_dist2 is not None:
+            dataFactory_dist2_textinput.value = config.dataFactory_dist2
+        if config.dataFactory_dist3 is not None:
+            dataFactory_dist3_textinput.value = config.dataFactory_dist3
         reflectionPrinter_format_select.value = config.reflectionPrinter_format
 
         set_active_widgets(config.algorithm)
@@ -200,8 +205,20 @@ def create():
     def dataFactory_dist1_textinput_callback(_attr, _old, new):
         config.dataFactory_dist1 = new
 
-    dataFactory_dist1_textinput = TextInput(title="dist1:", width=145)
+    dataFactory_dist1_textinput = TextInput(title="dist1:", width=75)
     dataFactory_dist1_textinput.on_change("value", dataFactory_dist1_textinput_callback)
+
+    def dataFactory_dist2_textinput_callback(_attr, _old, new):
+        config.dataFactory_dist2 = new
+
+    dataFactory_dist2_textinput = TextInput(title="dist2:", width=75)
+    dataFactory_dist2_textinput.on_change("value", dataFactory_dist2_textinput_callback)
+
+    def dataFactory_dist3_textinput_callback(_attr, _old, new):
+        config.dataFactory_dist3 = new
+
+    dataFactory_dist3_textinput = TextInput(title="dist3:", width=75)
+    dataFactory_dist3_textinput.on_change("value", dataFactory_dist3_textinput_callback)
 
     # ---- BackgroundProcessor
 
@@ -369,7 +386,12 @@ def create():
         row(lambda_textinput, zeroOM_textinput),
         row(zeroSTT_textinput, zeroCHI_textinput),
         ub_textareainput,
-        row(dataFactory_implementation_select, dataFactory_dist1_textinput),
+        row(
+            dataFactory_implementation_select,
+            dataFactory_dist1_textinput,
+            dataFactory_dist2_textinput,
+            dataFactory_dist3_textinput,
+        ),
         reflectionPrinter_format_select,
     )
 

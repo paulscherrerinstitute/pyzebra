@@ -236,11 +236,36 @@ class AnatricConfig:
 
     @property
     def dataFactory_dist1(self):
-        return self._tree.find("DataFactory").find("dist1").attrib["value"]
+        elem = self._tree.find("DataFactory").find("dist1")
+        if elem is not None:
+            return elem.attrib["value"]
+        return None
 
     @dataFactory_dist1.setter
     def dataFactory_dist1(self, value):
         self._tree.find("DataFactory").find("dist1").attrib["value"] = value
+
+    @property
+    def dataFactory_dist2(self):
+        elem = self._tree.find("DataFactory").find("dist2")
+        if elem is not None:
+            return elem.attrib["value"]
+        return None
+
+    @dataFactory_dist2.setter
+    def dataFactory_dist2(self, value):
+        self._tree.find("DataFactory").find("dist2").attrib["value"] = value
+
+    @property
+    def dataFactory_dist3(self):
+        elem = self._tree.find("DataFactory").find("dist3")
+        if elem is not None:
+            return elem.attrib["value"]
+        return None
+
+    @dataFactory_dist3.setter
+    def dataFactory_dist3(self, value):
+        self._tree.find("DataFactory").find("dist3").attrib["value"] = value
 
     @property
     def reflectionPrinter_format(self):
