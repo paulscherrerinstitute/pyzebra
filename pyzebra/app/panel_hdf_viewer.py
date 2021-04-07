@@ -121,8 +121,8 @@ def create():
         overview_x = np.mean(h5_data, axis=1)
         overview_y = np.mean(h5_data, axis=2)
 
-        overview_plot_x_image_source.data.update(image=[overview_x], x=[0], dw=[n_x])
-        overview_plot_y_image_source.data.update(image=[overview_y], x=[0], dw=[n_y])
+        overview_plot_x_image_source.data.update(image=[overview_x], dw=[n_x], dh=[n_im])
+        overview_plot_y_image_source.data.update(image=[overview_y], dw=[n_y], dh=[n_im])
 
         if proj_auto_toggle.active:
             im_min = min(np.min(overview_x), np.min(overview_y))
@@ -136,32 +136,24 @@ def create():
             overview_plot_x_image_glyph.color_mapper.high = im_max
             overview_plot_y_image_glyph.color_mapper.high = im_max
 
-        if frame_button_group.active == 0:  # Frame
-            overview_plot_x.axis[1].axis_label = "Frame"
-            overview_plot_y.axis[1].axis_label = "Frame"
+        frame_range.start = 0
+        frame_range.end = n_im
+        frame_range.reset_start = 0
+        frame_range.reset_end = n_im
+        frame_range.bounds = (0, n_im)
 
-            var_start = 0
-            var_end = n_im
+        scan_motor = det_data["scan_motor"]
+        overview_plot_y.axis[1].axis_label = f"Scanning motor, {scan_motor}"
 
-        elif frame_button_group.active == 1:  # Variable angle
-            scan_motor = det_data["scan_motor"]
-            overview_plot_x.axis[1].axis_label = scan_motor
-            overview_plot_y.axis[1].axis_label = scan_motor
+        var = det_data[scan_motor]
+        var_start = var[0]
+        var_end = var[-1] + (var[-1] - var[0]) / (n_im - 1)
 
-            var = det_data[scan_motor]
-            var_start = var[0]
-            var_end = (var[-1] - var[0]) * n_im / (n_im - 1)
-
-        frame_range.start = var_start
-        frame_range.end = var_start + var_end
-        frame_range.bounds = (var_start, var_start + var_end)
-
-        # ResetTool should reset to the new range boundaries
-        frame_range.reset_start = var_start
-        frame_range.reset_end = var_start + var_end
-
-        overview_plot_x_image_source.data.update(y=[var_start], dh=[var_end])
-        overview_plot_y_image_source.data.update(y=[var_start], dh=[var_end])
+        scanning_motor_range.start = var_start
+        scanning_motor_range.end = var_end
+        scanning_motor_range.reset_start = var_start
+        scanning_motor_range.reset_end = var_end
+        scanning_motor_range.bounds = (var_start, var_end)
 
     def filelist_callback(_attr, _old, new):
         nonlocal det_data
@@ -319,13 +311,16 @@ def create():
     )
     plot.toolbar.active_scroll = wheelzoomtool
 
-    # shared frame range
+    # shared frame ranges
     frame_range = Range1d(0, 1, bounds=(0, 1))
+    scanning_motor_range = Range1d(0, 1, bounds=(0, 1))
+
     det_x_range = Range1d(0, IMAGE_W, bounds=(0, IMAGE_W))
     overview_plot_x = Plot(
         title=Title(text="Projections on X-axis"),
         x_range=det_x_range,
         y_range=frame_range,
+        extra_y_ranges={"scanning_motor": scanning_motor_range},
         plot_height=400,
         plot_width=IMAGE_PLOT_W,
     )
@@ -363,6 +358,7 @@ def create():
         title=Title(text="Projections on Y-axis"),
         x_range=det_y_range,
         y_range=frame_range,
+        extra_y_ranges={"scanning_motor": scanning_motor_range},
         plot_height=400,
         plot_width=IMAGE_PLOT_H,
     )
@@ -378,7 +374,12 @@ def create():
     # ---- axes
     overview_plot_y.add_layout(LinearAxis(axis_label="Coordinate Y, pix"), place="below")
     overview_plot_y.add_layout(
-        LinearAxis(axis_label="Frame", major_label_orientation="vertical"), place="left"
+        LinearAxis(
+            y_range_name="scanning_motor",
+            axis_label="Scanning motor",
+            major_label_orientation="vertical",
+        ),
+        place="right",
     )
 
     # ---- grid lines
@@ -394,12 +395,6 @@ def create():
     overview_plot_y.add_glyph(
         overview_plot_y_image_source, overview_plot_y_image_glyph, name="image_glyph"
     )
-
-    def frame_button_group_callback(_active):
-        update_overview_plot()
-
-    frame_button_group = RadioButtonGroup(labels=["Frames", "Variable Angle"], active=0)
-    frame_button_group.on_click(frame_button_group_callback)
 
     roi_avg_plot = Plot(
         x_range=DataRange1d(),
@@ -590,7 +585,7 @@ def create():
     layout_controls = row(
         column(selection_button, selection_list),
         Spacer(width=20),
-        column(frame_button_group, colormap_layout),
+        column(colormap_layout),
         Spacer(width=20),
         column(index_spinner, params_layout, hkl_layout),
     )
