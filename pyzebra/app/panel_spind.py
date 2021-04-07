@@ -132,8 +132,8 @@ def create():
     process_button = Button(label="Process", button_type="primary")
     process_button.on_click(process_button_callback)
 
-    ub_matrix_textareainput = TextAreaInput(title="UB matrix:", rows=7)
-    hkl_textareainput = TextAreaInput(title="hkl values:", rows=7)
+    ub_matrix_textareainput = TextAreaInput(title="UB matrix:", rows=7, width=400)
+    hkl_textareainput = TextAreaInput(title="hkl values:", rows=7, width=400)
 
     def results_table_select_callback(_attr, old, new):
         if new:
@@ -157,10 +157,10 @@ def create():
             TableColumn(field="match_rate", title="Match Rate", width=100),
             TableColumn(field="matched_peaks", title="Matched Peaks", width=100),
             TableColumn(field="column_5", title="", width=100),
-            TableColumn(field="ub_matrix", title="UB Matrix", width=250),
+            TableColumn(field="ub_matrix", title="UB Matrix", width=700),
         ],
         height=300,
-        width=700,
+        width=1200,
         autosize_mode="none",
         index_position=None,
     )
