@@ -10,6 +10,7 @@ from bokeh.models import (
     BasicTicker,
     Button,
     CheckboxEditor,
+    CheckboxGroup,
     ColumnDataSource,
     CustomJS,
     DataRange1d,
@@ -37,7 +38,6 @@ from bokeh.models import (
     TableColumn,
     TextAreaInput,
     TextInput,
-    Toggle,
     WheelZoomTool,
     Whisker,
 )
@@ -489,11 +489,13 @@ def create():
     )
     area_method_radiobutton.on_click(area_method_radiobutton_callback)
 
-    def lorentz_toggle_callback(_handler):
+    def lorentz_checkbox_callback(_handler):
         _update_preview()
 
-    lorentz_toggle = Toggle(label="Lorentz Correction", default_size=145)
-    lorentz_toggle.on_click(lorentz_toggle_callback)
+    lorentz_checkbox = CheckboxGroup(
+        labels=["Lorentz Correction"], default_size=145, margin=[13, 5, 5, 5]
+    )
+    lorentz_checkbox.on_click(lorentz_checkbox_callback)
 
     export_preview_textinput = TextAreaInput(title="Export file preview:", width=500, height=400)
 
@@ -509,7 +511,7 @@ def create():
                 export_data,
                 temp_file,
                 area_method=AREA_METHODS[int(area_method_radiobutton.active)],
-                lorentz=lorentz_toggle.active,
+                lorentz=bool(lorentz_checkbox.active),
                 hkl_precision=int(hkl_precision_select.value),
             )
 
@@ -545,7 +547,7 @@ def create():
         Spacer(width=20),
         column(
             row(fit_from_spinner, fit_to_spinner),
-            row(area_method_radiobutton, lorentz_toggle),
+            row(area_method_radiobutton, lorentz_checkbox),
             row(fit_button, fit_all_button),
         ),
     )

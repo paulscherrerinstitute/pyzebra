@@ -9,6 +9,7 @@ from bokeh.models import (
     BoxEditTool,
     BoxZoomTool,
     Button,
+    CheckboxGroup,
     ColumnDataSource,
     DataRange1d,
     Div,
@@ -22,7 +23,6 @@ from bokeh.models import (
     Panel,
     PanTool,
     Plot,
-    RadioButtonGroup,
     Range1d,
     Rect,
     ResetTool,
@@ -32,7 +32,6 @@ from bokeh.models import (
     TextAreaInput,
     TextInput,
     Title,
-    Toggle,
     WheelZoomTool,
 )
 from bokeh.palettes import Cividis256, Greys256, Plasma256  # pylint: disable=E0611
@@ -91,7 +90,7 @@ def create():
         )
         image_source.data.update(image=[current_image])
 
-        if auto_toggle.active:
+        if main_auto_checkbox.active:
             im_min = np.min(current_image)
             im_max = np.max(current_image)
 
@@ -124,7 +123,7 @@ def create():
         overview_plot_x_image_source.data.update(image=[overview_x], dw=[n_x], dh=[n_im])
         overview_plot_y_image_source.data.update(image=[overview_y], dw=[n_y], dh=[n_im])
 
-        if proj_auto_toggle.active:
+        if proj_auto_checkbox.active:
             im_min = min(np.min(overview_x), np.min(overview_y))
             im_max = max(np.max(overview_x), np.max(overview_y))
 
@@ -435,8 +434,8 @@ def create():
     colormap.value = "plasma"
 
     STEP = 1
-    # ---- colormap auto toggle button
-    def auto_toggle_callback(state):
+
+    def main_auto_checkbox_callback(state):
         if state:
             display_min_spinner.disabled = True
             display_max_spinner.disabled = True
@@ -446,45 +445,43 @@ def create():
 
         update_image()
 
-    auto_toggle = Toggle(
-        label="Main Auto Range", active=True, button_type="default", default_size=125
+    main_auto_checkbox = CheckboxGroup(
+        labels=["Main Auto Range"], active=[0], default_size=145, margin=[10, 5, 0, 5]
     )
-    auto_toggle.on_click(auto_toggle_callback)
+    main_auto_checkbox.on_click(main_auto_checkbox_callback)
 
-    # ---- colormap display max value
     def display_max_spinner_callback(_attr, _old_value, new_value):
         display_min_spinner.high = new_value - STEP
         image_glyph.color_mapper.high = new_value
 
     display_max_spinner = Spinner(
-        title="Max Value:",
         low=0 + STEP,
         value=1,
         step=STEP,
-        disabled=auto_toggle.active,
-        default_size=80,
+        disabled=bool(main_auto_checkbox.active),
+        default_size=95,
+        height=31,
     )
     display_max_spinner.on_change("value", display_max_spinner_callback)
 
-    # ---- colormap display min value
     def display_min_spinner_callback(_attr, _old_value, new_value):
         display_max_spinner.low = new_value + STEP
         image_glyph.color_mapper.low = new_value
 
     display_min_spinner = Spinner(
-        title="Min Value:",
         low=0,
         high=1 - STEP,
         value=0,
         step=STEP,
-        disabled=auto_toggle.active,
-        default_size=80,
+        disabled=bool(main_auto_checkbox.active),
+        default_size=95,
+        height=31,
     )
     display_min_spinner.on_change("value", display_min_spinner_callback)
 
     PROJ_STEP = 0.1
-    # ---- proj colormap auto toggle button
-    def proj_auto_toggle_callback(state):
+
+    def proj_auto_checkbox_callback(state):
         if state:
             proj_display_min_spinner.disabled = True
             proj_display_max_spinner.disabled = True
@@ -494,41 +491,39 @@ def create():
 
         update_overview_plot()
 
-    proj_auto_toggle = Toggle(
-        label="Proj Auto Range", active=True, button_type="default", default_size=125
+    proj_auto_checkbox = CheckboxGroup(
+        labels=["Projections Auto Range"], active=[0], default_size=145, margin=[10, 5, 0, 5]
     )
-    proj_auto_toggle.on_click(proj_auto_toggle_callback)
+    proj_auto_checkbox.on_click(proj_auto_checkbox_callback)
 
-    # ---- proj colormap display max value
     def proj_display_max_spinner_callback(_attr, _old_value, new_value):
         proj_display_min_spinner.high = new_value - PROJ_STEP
         overview_plot_x_image_glyph.color_mapper.high = new_value
         overview_plot_y_image_glyph.color_mapper.high = new_value
 
     proj_display_max_spinner = Spinner(
-        title="Max Value:",
         low=0 + PROJ_STEP,
         value=1,
         step=PROJ_STEP,
-        disabled=proj_auto_toggle.active,
-        default_size=80,
+        disabled=bool(proj_auto_checkbox.active),
+        default_size=95,
+        height=31,
     )
     proj_display_max_spinner.on_change("value", proj_display_max_spinner_callback)
 
-    # ---- proj colormap display min value
     def proj_display_min_spinner_callback(_attr, _old_value, new_value):
         proj_display_max_spinner.low = new_value + PROJ_STEP
         overview_plot_x_image_glyph.color_mapper.low = new_value
         overview_plot_y_image_glyph.color_mapper.low = new_value
 
     proj_display_min_spinner = Spinner(
-        title="Min Value:",
         low=0,
         high=1 - PROJ_STEP,
         value=0,
         step=PROJ_STEP,
-        disabled=proj_auto_toggle.active,
-        default_size=80,
+        disabled=bool(proj_auto_checkbox.active),
+        default_size=95,
+        height=31,
     )
     proj_display_min_spinner.on_change("value", proj_display_min_spinner_callback)
 
@@ -571,13 +566,11 @@ def create():
     # Final layout
     layout_image = column(gridplot([[proj_v, None], [plot, proj_h]], merge_tools=False))
     colormap_layout = column(
-        row(colormap),
-        row(column(Spacer(height=19), auto_toggle), display_max_spinner, display_min_spinner),
-        row(
-            column(Spacer(height=19), proj_auto_toggle),
-            proj_display_max_spinner,
-            proj_display_min_spinner,
-        ),
+        colormap,
+        main_auto_checkbox,
+        row(display_min_spinner, display_max_spinner),
+        proj_auto_checkbox,
+        row(proj_display_min_spinner, proj_display_max_spinner),
     )
     hkl_layout = column(geometry_textinput, hkl_button)
     params_layout = row(mf_spinner, temp_spinner)
