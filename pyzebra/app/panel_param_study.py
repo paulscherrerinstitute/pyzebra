@@ -130,6 +130,7 @@ def create():
                     js_data.data.update(fname=[base + ".comm", base + ".incomm"])
 
         _init_datatable()
+        _update_preview()
 
     file_open_button = Button(label="Open New", default_size=100)
     file_open_button.on_click(file_open_button_callback)
@@ -164,6 +165,7 @@ def create():
                     js_data.data.update(fname=[base + ".comm", base + ".incomm"])
 
         _init_datatable()
+        _update_preview()
 
     upload_div = Div(text="or upload new .dat files:", margin=(5, 5, 0, 5))
     upload_button = FileInput(accept=".dat", multiple=True, default_size=200)
@@ -555,6 +557,7 @@ def create():
 
         _update_plot()
         _update_table()
+        _update_preview()
 
     fit_all_button = Button(label="Fit All", button_type="primary", default_size=145)
     fit_all_button.on_click(fit_all_button_callback)
@@ -567,23 +570,32 @@ def create():
 
         _update_plot()
         _update_table()
+        _update_preview()
 
     fit_button = Button(label="Fit Current", default_size=145)
     fit_button.on_click(fit_button_callback)
 
+    def area_method_radiobutton_callback(_handler):
+        _update_preview()
+
     area_method_radiobutton = RadioButtonGroup(
         labels=["Fit area", "Int area"], active=0, default_size=145, disabled=True
     )
+    area_method_radiobutton.on_click(area_method_radiobutton_callback)
 
     bin_size_spinner = Spinner(
         title="Bin size:", value=1, low=1, step=1, default_size=145, disabled=True
     )
 
+    def lorentz_toggle_callback(_handler):
+        _update_preview()
+
     lorentz_toggle = Toggle(label="Lorentz Correction", default_size=145)
+    lorentz_toggle.on_click(lorentz_toggle_callback)
 
-    export_preview_textinput = TextAreaInput(title="Export preview:", width=450, height=400)
+    export_preview_textinput = TextAreaInput(title="Export file preview:", width=450, height=400)
 
-    def preview_button_callback():
+    def _update_preview():
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_file = temp_dir + "/temp"
             export_data = []
@@ -613,10 +625,7 @@ def create():
             js_data.data.update(content=file_content)
             export_preview_textinput.value = exported_content
 
-    preview_button = Button(label="Preview", default_size=220)
-    preview_button.on_click(preview_button_callback)
-
-    save_button = Button(label="Download preview", button_type="success", default_size=220)
+    save_button = Button(label="Download File", button_type="success", default_size=220)
     save_button.js_on_click(CustomJS(args={"js_data": js_data}, code=javaScript))
 
     fitpeak_controls = row(
@@ -643,7 +652,7 @@ def create():
         append_upload_button,
     )
 
-    export_layout = column(export_preview_textinput, row(preview_button, save_button))
+    export_layout = column(export_preview_textinput, row(save_button))
 
     tab_layout = column(
         row(import_layout, scan_layout, plots, Spacer(width=30), export_layout),
