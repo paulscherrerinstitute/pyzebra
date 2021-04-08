@@ -583,10 +583,6 @@ def create():
     )
     area_method_radiobutton.on_click(area_method_radiobutton_callback)
 
-    bin_size_spinner = Spinner(
-        title="Bin size:", value=1, low=1, step=1, default_size=145, disabled=True
-    )
-
     def lorentz_toggle_callback(_handler):
         _update_preview()
 
@@ -634,8 +630,7 @@ def create():
         Spacer(width=20),
         column(
             row(fit_from_spinner, fit_to_spinner),
-            row(bin_size_spinner, column(Spacer(height=19), lorentz_toggle)),
-            row(area_method_radiobutton),
+            row(area_method_radiobutton, lorentz_toggle),
             row(fit_button, fit_all_button),
         ),
     )
