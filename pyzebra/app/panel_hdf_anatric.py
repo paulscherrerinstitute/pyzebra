@@ -10,9 +10,9 @@ from bokeh.models import (
     Div,
     FileInput,
     Panel,
-    RadioButtonGroup,
     Select,
     Spacer,
+    Tabs,
     TextAreaInput,
     TextInput,
 )
@@ -52,8 +52,8 @@ def create():
             dataFactory_dist3_textinput.value = config.dataFactory_dist3
         reflectionPrinter_format_select.value = config.reflectionPrinter_format
 
-        set_active_widgets(config.algorithm)
         if config.algorithm == "adaptivemaxcog":
+            algorithm_tabs.active = 0
             threshold_textinput.value = config.threshold
             shell_textinput.value = config.shell
             steepness_textinput.value = config.steepness
@@ -62,6 +62,7 @@ def create():
             aps_window_textinput.value = str(tuple(map(int, config.aps_window.values())))
 
         elif config.algorithm == "adaptivedynamic":
+            algorithm_tabs.active = 1
             adm_window_textinput.value = str(tuple(map(int, config.adm_window.values())))
             border_textinput.value = str(tuple(map(int, config.border.values())))
             minWindow_textinput.value = str(tuple(map(int, config.minWindow.values())))
@@ -71,38 +72,9 @@ def create():
             loop_textinput.value = config.loop
             minPeakCount_textinput.value = config.minPeakCount
             displacementCurve_textinput.value = "\n".join(map(str, config.displacementCurve))
+
         else:
             raise ValueError("Unknown processing mode.")
-
-    def set_active_widgets(implementation):
-        if implementation == "adaptivemaxcog":
-            mode_radio_button_group.active = 0
-            disable_adaptivemaxcog = False
-            disable_adaptivedynamic = True
-
-        elif implementation == "adaptivedynamic":
-            mode_radio_button_group.active = 1
-            disable_adaptivemaxcog = True
-            disable_adaptivedynamic = False
-        else:
-            raise ValueError("Implementation can be either 'adaptivemaxcog' or 'adaptivedynamic'")
-
-        threshold_textinput.disabled = disable_adaptivemaxcog
-        shell_textinput.disabled = disable_adaptivemaxcog
-        steepness_textinput.disabled = disable_adaptivemaxcog
-        duplicateDistance_textinput.disabled = disable_adaptivemaxcog
-        maxequal_textinput.disabled = disable_adaptivemaxcog
-        aps_window_textinput.disabled = disable_adaptivemaxcog
-
-        adm_window_textinput.disabled = disable_adaptivedynamic
-        border_textinput.disabled = disable_adaptivedynamic
-        minWindow_textinput.disabled = disable_adaptivedynamic
-        reflectionFile_textinput.disabled = disable_adaptivedynamic
-        targetMonitor_textinput.disabled = disable_adaptivedynamic
-        smoothSize_textinput.disabled = disable_adaptivedynamic
-        loop_textinput.disabled = disable_adaptivedynamic
-        minPeakCount_textinput.disabled = disable_adaptivedynamic
-        displacementCurve_textinput.disabled = disable_adaptivedynamic
 
     def upload_button_callback(_attr, _old, new):
         with io.BytesIO(base64.b64decode(new)) as file:
@@ -345,19 +317,42 @@ def create():
     )
     displacementCurve_textinput.on_change("value", displacementCurve_textinput_callback)
 
-    def mode_radio_button_group_callback(active):
-        if active == 0:
+    def algorithm_tabs_callback(_attr, _old, new):
+        if new == 0:
             config.algorithm = "adaptivemaxcog"
-            set_active_widgets("adaptivemaxcog")
         else:
             config.algorithm = "adaptivedynamic"
-            set_active_widgets("adaptivedynamic")
 
-    mode_radio_button_group = RadioButtonGroup(
-        labels=["Adaptive Peak Detection", "Adaptive Dynamic Integration"], active=0
+    algorithm_tabs = Tabs(
+        tabs=[
+            Panel(
+                child=column(
+                    threshold_textinput,
+                    shell_textinput,
+                    steepness_textinput,
+                    duplicateDistance_textinput,
+                    maxequal_textinput,
+                    aps_window_textinput,
+                ),
+                title="Adaptive Peak Search",
+            ),
+            Panel(
+                child=column(
+                    adm_window_textinput,
+                    border_textinput,
+                    minWindow_textinput,
+                    reflectionFile_textinput,
+                    targetMonitor_textinput,
+                    smoothSize_textinput,
+                    loop_textinput,
+                    minPeakCount_textinput,
+                    displacementCurve_textinput,
+                ),
+                title="Adaptive Dynamic Integration",
+            ),
+        ]
     )
-    mode_radio_button_group.on_click(mode_radio_button_group_callback)
-    set_active_widgets("adaptivemaxcog")
+    algorithm_tabs.on_change("active", algorithm_tabs_callback)
 
     def process_button_callback():
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -395,36 +390,11 @@ def create():
         reflectionPrinter_format_select,
     )
 
-    algorithm_params_layout = column(
-        mode_radio_button_group,
-        row(
-            column(
-                threshold_textinput,
-                shell_textinput,
-                steepness_textinput,
-                duplicateDistance_textinput,
-                maxequal_textinput,
-                aps_window_textinput,
-            ),
-            column(
-                adm_window_textinput,
-                border_textinput,
-                minWindow_textinput,
-                reflectionFile_textinput,
-                targetMonitor_textinput,
-                smoothSize_textinput,
-                loop_textinput,
-                minPeakCount_textinput,
-                displacementCurve_textinput,
-            ),
-        ),
-    )
-
     tab_layout = column(
         row(column(Spacer(height=2), upload_div), upload_button),
         row(
             general_params_layout,
-            algorithm_params_layout,
+            algorithm_tabs,
             column(row(output_config, output_log), row(process_button)),
         ),
     )
