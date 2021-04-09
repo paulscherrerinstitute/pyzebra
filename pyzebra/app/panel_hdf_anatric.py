@@ -29,7 +29,7 @@ def create():
         config.load_from_file(file)
 
         logfile_textinput.value = config.logfile
-        logfile_verbosity_select.value = config.logfile_verbosity
+        logfile_verbosity.value = config.logfile_verbosity
 
         filelist_type.value = config.filelist_type
         filelist_format_textinput.value = config.filelist_format
@@ -92,13 +92,11 @@ def create():
     logfile_textinput = TextInput(title="Logfile:", value="logfile.log")
     logfile_textinput.on_change("value", logfile_textinput_callback)
 
-    def logfile_verbosity_select_callback(_attr, _old, new):
+    def logfile_verbosity_callback(_attr, _old, new):
         config.logfile_verbosity = new
 
-    logfile_verbosity_select = Select(
-        title="verbosity:", options=["0", "5", "10", "15", "30"], width=70
-    )
-    logfile_verbosity_select.on_change("value", logfile_verbosity_select_callback)
+    logfile_verbosity = TextInput(title="verbosity:", width=70)
+    logfile_verbosity.on_change("value", logfile_verbosity_callback)
 
     # ---- FileList
     def filelist_type_callback(_attr, _old, new):
@@ -368,7 +366,7 @@ def create():
 
     general_params_layout = column(
         row(column(Spacer(height=2), upload_div), upload_button),
-        row(logfile_textinput, logfile_verbosity_select),
+        row(logfile_textinput, logfile_verbosity),
         row(filelist_type, filelist_format_textinput),
         filelist_datapath_textinput,
         filelist_ranges_textareainput,
