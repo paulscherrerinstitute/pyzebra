@@ -43,19 +43,19 @@ IMAGE_H = 128
 IMAGE_PLOT_W = int(IMAGE_W * 2.5)
 IMAGE_PLOT_H = int(IMAGE_H * 2.5)
 
-PROPOSAL_PATH = "/afs/psi.ch/project/sinqdata/2020/zebra/"
-
 
 def create():
     det_data = {}
     roi_selection = {}
 
     def proposal_textinput_callback(_attr, _old, new):
-        full_proposal_path = os.path.join(PROPOSAL_PATH, new.strip())
+        proposal = new.strip()
+        year = new[:4]
+        proposal_path = f"/afs/psi.ch/project/sinqdata/{year}/zebra/{proposal}"
         file_list = []
-        for file in os.listdir(full_proposal_path):
+        for file in os.listdir(proposal_path):
             if file.endswith(".hdf"):
-                file_list.append((os.path.join(full_proposal_path, file), file))
+                file_list.append((os.path.join(proposal_path, file), file))
         filelist.options = file_list
         filelist.value = file_list[0][0]
 

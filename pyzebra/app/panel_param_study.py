@@ -66,8 +66,6 @@ for (let i = 0; i < js_data.data['fname'].length; i++) {
 }
 """
 
-PROPOSAL_PATH = "/afs/psi.ch/project/sinqdata/2020/zebra/"
-
 
 def color_palette(n_colors):
     palette = itertools.cycle(Category10[10])
@@ -80,11 +78,13 @@ def create():
     js_data = ColumnDataSource(data=dict(content=["", ""], fname=["", ""]))
 
     def proposal_textinput_callback(_attr, _old, new):
-        full_proposal_path = os.path.join(PROPOSAL_PATH, new.strip())
+        proposal = new.strip()
+        year = new[:4]
+        proposal_path = f"/afs/psi.ch/project/sinqdata/{year}/zebra/{proposal}"
         dat_file_list = []
-        for file in os.listdir(full_proposal_path):
+        for file in os.listdir(proposal_path):
             if file.endswith(".dat"):
-                dat_file_list.append((os.path.join(full_proposal_path, file), file))
+                dat_file_list.append((os.path.join(proposal_path, file), file))
         file_select.options = dat_file_list
 
     proposal_textinput = TextInput(title="Proposal number:", width=210)

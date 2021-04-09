@@ -62,8 +62,6 @@ for (let i = 0; i < js_data.data['fname'].length; i++) {
 }
 """
 
-PROPOSAL_PATH = "/afs/psi.ch/project/sinqdata/2020/zebra/"
-
 
 def create():
     det_data = {}
@@ -71,11 +69,13 @@ def create():
     js_data = ColumnDataSource(data=dict(content=["", ""], fname=["", ""]))
 
     def proposal_textinput_callback(_attr, _old, new):
-        ccl_path = os.path.join(PROPOSAL_PATH, new.strip())
+        proposal = new.strip()
+        year = new[:4]
+        proposal_path = f"/afs/psi.ch/project/sinqdata/{year}/zebra/{proposal}"
         ccl_file_list = []
-        for file in os.listdir(ccl_path):
+        for file in os.listdir(proposal_path):
             if file.endswith((".ccl", ".dat")):
-                ccl_file_list.append((os.path.join(ccl_path, file), file))
+                ccl_file_list.append((os.path.join(proposal_path, file), file))
         file_select.options = ccl_file_list
 
     proposal_textinput = TextInput(title="Proposal number:", width=210)
