@@ -346,7 +346,7 @@ def create():
 
     def process_button_callback():
         with tempfile.TemporaryDirectory() as temp_dir:
-            temp_file = temp_dir + "/temp.xml"
+            temp_file = temp_dir + "/config.xml"
             config.save_as(temp_file)
             if doc.anatric_path:
                 pyzebra.anatric(temp_file, anatric_path=doc.anatric_path)
@@ -356,10 +356,14 @@ def create():
             with open(config.logfile) as f_log:
                 output_log.value = f_log.read()
 
+            with open(config.reflectionPrinter_file) as f_res:
+                output_res.value = f_res.read()
+
     process_button = Button(label="Process", button_type="primary")
     process_button.on_click(process_button_callback)
 
     output_log = TextAreaInput(title="Logfile output:", height=320, width=465, disabled=True)
+    output_res = TextAreaInput(title="Result output:", height=320, width=465, disabled=True)
     output_config = TextAreaInput(title="Current config:", height=320, width=465, disabled=True)
 
     general_params_layout = column(
@@ -383,12 +387,12 @@ def create():
     tab_layout = row(
         general_params_layout,
         column(output_config, algorithm_params, row(process_button)),
-        output_log,
+        column(output_log, output_res),
     )
 
     async def update_config():
         with tempfile.TemporaryDirectory() as temp_dir:
-            temp_file = temp_dir + "/debug.xml"
+            temp_file = temp_dir + "/config.xml"
             config.save_as(temp_file)
             with open(temp_file) as f_config:
                 output_config.value = f_config.read()

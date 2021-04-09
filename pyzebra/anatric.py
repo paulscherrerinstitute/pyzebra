@@ -287,6 +287,14 @@ class AnatricConfig:
         self._tree.find("ReflectionPrinter").attrib["format"] = value
 
     @property
+    def reflectionPrinter_file(self):
+        return self._tree.find("ReflectionPrinter").attrib["file"]
+
+    @reflectionPrinter_file.setter
+    def reflectionPrinter_file(self, value):
+        self._tree.find("ReflectionPrinter").attrib["file"] = value
+
+    @property
     def algorithm(self):
         return self._tree.find("Algorithm").attrib["implementation"]
 
