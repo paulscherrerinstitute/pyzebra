@@ -28,11 +28,11 @@ def create():
     lattice_const_textinput = TextInput(
         title="Lattice constants:", value="8.3211,8.3211,8.3211,90.00,90.00,90.00"
     )
-    max_res_spinner = Spinner(title="max-res", value=2, step=0.01)
-    seed_pool_size_spinner = Spinner(title="seed-pool-size", value=5, step=0.01)
-    seed_len_tol_spinner = Spinner(title="seed-len-tol", value=0.02, step=0.01)
-    seed_angle_tol_spinner = Spinner(title="seed-angle-tol", value=1, step=0.01)
-    eval_hkl_tol_spinner = Spinner(title="eval-hkl-tol", value=0.15, step=0.01)
+    max_res_spinner = Spinner(title="max-res:", value=2, step=0.01, width=145)
+    seed_pool_size_spinner = Spinner(title="seed-pool-size:", value=5, step=0.01, width=145)
+    seed_len_tol_spinner = Spinner(title="seed-len-tol:", value=0.02, step=0.01, width=145)
+    seed_angle_tol_spinner = Spinner(title="seed-angle-tol:", value=1, step=0.01, width=145)
+    eval_hkl_tol_spinner = Spinner(title="eval-hkl-tol:", value=0.15, step=0.01, width=145)
 
     diff_vec = []
     ub_matrices = []
@@ -172,11 +172,9 @@ def create():
             path_prefix_textinput,
             selection_list,
             lattice_const_textinput,
-            max_res_spinner,
-            seed_pool_size_spinner,
-            seed_len_tol_spinner,
-            seed_angle_tol_spinner,
-            eval_hkl_tol_spinner,
+            row(max_res_spinner, seed_pool_size_spinner),
+            row(seed_len_tol_spinner, seed_angle_tol_spinner),
+            row(eval_hkl_tol_spinner),
             process_button,
         ),
         column(results_table, row(ub_matrix_textareainput, hkl_textareainput)),

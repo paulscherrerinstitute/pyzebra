@@ -87,7 +87,7 @@ def create():
                 dat_file_list.append((os.path.join(full_proposal_path, file), file))
         file_select.options = dat_file_list
 
-    proposal_textinput = TextInput(title="Proposal number:", default_size=200)
+    proposal_textinput = TextInput(title="Proposal number:", width=210)
     proposal_textinput.on_change("value", proposal_textinput_callback)
 
     def _init_datatable():
@@ -111,7 +111,7 @@ def create():
     def file_select_callback(_attr, _old, _new):
         pass
 
-    file_select = MultiSelect(title="Available .dat files:", default_size=200, height=250)
+    file_select = MultiSelect(title="Available .dat files:", width=210, height=250)
     file_select.on_change("value", file_select_callback)
 
     def file_open_button_callback():
@@ -132,7 +132,7 @@ def create():
         _init_datatable()
         _update_preview()
 
-    file_open_button = Button(label="Open New", default_size=100)
+    file_open_button = Button(label="Open New", width=100)
     file_open_button.on_click(file_open_button_callback)
 
     def file_append_button_callback():
@@ -146,7 +146,7 @@ def create():
 
         _init_datatable()
 
-    file_append_button = Button(label="Append", default_size=100)
+    file_append_button = Button(label="Append", width=100)
     file_append_button.on_click(file_append_button_callback)
 
     def upload_button_callback(_attr, _old, new):
@@ -168,7 +168,7 @@ def create():
         _update_preview()
 
     upload_div = Div(text="or upload new .dat files:", margin=(5, 5, 0, 5))
-    upload_button = FileInput(accept=".dat", multiple=True, default_size=200)
+    upload_button = FileInput(accept=".dat", multiple=True, width=200)
     upload_button.on_change("value", upload_button_callback)
 
     def append_upload_button_callback(_attr, _old, new):
@@ -183,7 +183,7 @@ def create():
         _init_datatable()
 
     append_upload_div = Div(text="append extra files:", margin=(5, 5, 0, 5))
-    append_upload_button = FileInput(accept=".dat", multiple=True, default_size=200)
+    append_upload_button = FileInput(accept=".dat", multiple=True, width=200)
     append_upload_button.on_change("value", append_upload_button_callback)
 
     def monitor_spinner_callback(_attr, _old, new):
@@ -429,20 +429,20 @@ def create():
         title="Parameter:",
         options=["user defined", "temp", "mf", "h", "k", "l"],
         value="user defined",
-        default_size=145,
+        width=145,
     )
     param_select.on_change("value", param_select_callback)
 
     def fit_from_spinner_callback(_attr, _old, new):
         fit_from_span.location = new
 
-    fit_from_spinner = Spinner(title="Fit from:", default_size=145)
+    fit_from_spinner = Spinner(title="Fit from:", width=145)
     fit_from_spinner.on_change("value", fit_from_spinner_callback)
 
     def fit_to_spinner_callback(_attr, _old, new):
         fit_to_span.location = new
 
-    fit_to_spinner = Spinner(title="to:", default_size=145)
+    fit_to_spinner = Spinner(title="to:", width=145)
     fit_to_spinner.on_change("value", fit_to_spinner_callback)
 
     def fitparams_add_dropdown_callback(click):
@@ -461,7 +461,7 @@ def create():
             ("Pseudo Voigt", "pvoigt"),
             # ("Pseudo Voigt1", "pseudovoigt1"),
         ],
-        default_size=145,
+        width=145,
     )
     fitparams_add_dropdown.on_click(fitparams_add_dropdown_callback)
 
@@ -481,7 +481,7 @@ def create():
         else:
             fitparams_table_source.data.update(dict(param=[], value=[], vary=[], min=[], max=[]))
 
-    fitparams_select = MultiSelect(options=[], height=120, default_size=145)
+    fitparams_select = MultiSelect(options=[], height=120, width=145)
     fitparams_select.tags = [0]
     fitparams_select.on_change("value", fitparams_select_callback)
 
@@ -496,7 +496,7 @@ def create():
 
             fitparams_select.value = []
 
-    fitparams_remove_button = Button(label="Remove fit function", default_size=145)
+    fitparams_remove_button = Button(label="Remove fit function", width=145)
     fitparams_remove_button.on_click(fitparams_remove_button_callback)
 
     def fitparams_factory(function):
@@ -559,7 +559,7 @@ def create():
         _update_table()
         _update_preview()
 
-    fit_all_button = Button(label="Fit All", button_type="primary", default_size=145)
+    fit_all_button = Button(label="Fit All", button_type="primary", width=145)
     fit_all_button.on_click(fit_all_button_callback)
 
     def fit_button_callback():
@@ -572,23 +572,21 @@ def create():
         _update_table()
         _update_preview()
 
-    fit_button = Button(label="Fit Current", default_size=145)
+    fit_button = Button(label="Fit Current", width=145)
     fit_button.on_click(fit_button_callback)
 
     def area_method_radiobutton_callback(_handler):
         _update_preview()
 
     area_method_radiobutton = RadioButtonGroup(
-        labels=["Fit area", "Int area"], active=0, default_size=145, disabled=True
+        labels=["Fit area", "Int area"], active=0, width=145, disabled=True
     )
     area_method_radiobutton.on_click(area_method_radiobutton_callback)
 
     def lorentz_checkbox_callback(_handler):
         _update_preview()
 
-    lorentz_checkbox = CheckboxGroup(
-        labels=["Lorentz Correction"], default_size=145, margin=[13, 5, 5, 5]
-    )
+    lorentz_checkbox = CheckboxGroup(labels=["Lorentz Correction"], width=145, margin=[13, 5, 5, 5])
     lorentz_checkbox.on_click(lorentz_checkbox_callback)
 
     export_preview_textinput = TextAreaInput(title="Export file preview:", width=450, height=400)
@@ -623,7 +621,7 @@ def create():
             js_data.data.update(content=file_content)
             export_preview_textinput.value = exported_content
 
-    save_button = Button(label="Download File", button_type="success", default_size=220)
+    save_button = Button(label="Download File", button_type="success", width=220)
     save_button.js_on_click(CustomJS(args={"js_data": js_data}, code=javaScript))
 
     fitpeak_controls = row(

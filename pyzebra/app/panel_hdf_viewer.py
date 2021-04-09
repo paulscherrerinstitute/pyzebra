@@ -59,7 +59,7 @@ def create():
         filelist.options = file_list
         filelist.value = file_list[0][0]
 
-    proposal_textinput = TextInput(title="Enter proposal number:", default_size=145)
+    proposal_textinput = TextInput(title="Enter proposal number:", width=145)
     proposal_textinput.on_change("value", proposal_textinput_callback)
 
     def upload_button_callback(_attr, _old, new):
@@ -176,7 +176,7 @@ def create():
     def index_spinner_callback(_attr, _old, new):
         update_image(new)
 
-    index_spinner = Spinner(title="Image index:", value=0, low=0)
+    index_spinner = Spinner(title="Image index:", value=0, low=0, width=80)
     index_spinner.on_change("value", index_spinner_callback)
 
     plot = Plot(
@@ -429,7 +429,7 @@ def create():
         overview_plot_x_image_glyph.color_mapper = LinearColorMapper(palette=cmap_dict[new])
         overview_plot_y_image_glyph.color_mapper = LinearColorMapper(palette=cmap_dict[new])
 
-    colormap = Select(title="Colormap:", options=list(cmap_dict.keys()), default_size=145)
+    colormap = Select(title="Colormap:", options=list(cmap_dict.keys()), width=210)
     colormap.on_change("value", colormap_callback)
     colormap.value = "plasma"
 
@@ -446,7 +446,7 @@ def create():
         update_image()
 
     main_auto_checkbox = CheckboxGroup(
-        labels=["Main Auto Range"], active=[0], default_size=145, margin=[10, 5, 0, 5]
+        labels=["Main Auto Range"], active=[0], width=145, margin=[10, 5, 0, 5]
     )
     main_auto_checkbox.on_click(main_auto_checkbox_callback)
 
@@ -459,7 +459,7 @@ def create():
         value=1,
         step=STEP,
         disabled=bool(main_auto_checkbox.active),
-        default_size=95,
+        width=100,
         height=31,
     )
     display_max_spinner.on_change("value", display_max_spinner_callback)
@@ -474,7 +474,7 @@ def create():
         value=0,
         step=STEP,
         disabled=bool(main_auto_checkbox.active),
-        default_size=95,
+        width=100,
         height=31,
     )
     display_min_spinner.on_change("value", display_min_spinner_callback)
@@ -492,7 +492,7 @@ def create():
         update_overview_plot()
 
     proj_auto_checkbox = CheckboxGroup(
-        labels=["Projections Auto Range"], active=[0], default_size=145, margin=[10, 5, 0, 5]
+        labels=["Projections Auto Range"], active=[0], width=145, margin=[10, 5, 0, 5]
     )
     proj_auto_checkbox.on_click(proj_auto_checkbox_callback)
 
@@ -506,7 +506,7 @@ def create():
         value=1,
         step=PROJ_STEP,
         disabled=bool(proj_auto_checkbox.active),
-        default_size=95,
+        width=100,
         height=31,
     )
     proj_display_max_spinner.on_change("value", proj_display_max_spinner_callback)
@@ -522,7 +522,7 @@ def create():
         value=0,
         step=PROJ_STEP,
         disabled=bool(proj_auto_checkbox.active),
-        default_size=95,
+        width=100,
         height=31,
     )
     proj_display_min_spinner.on_change("value", proj_display_min_spinner_callback)
@@ -532,7 +532,7 @@ def create():
         h, k, l = calculate_hkl(det_data, index)
         image_source.data.update(h=[h], k=[k], l=[l])
 
-    hkl_button = Button(label="Calculate hkl (slow)")
+    hkl_button = Button(label="Calculate hkl (slow)", width=210)
     hkl_button.on_click(hkl_button_callback)
 
     selection_list = TextAreaInput(rows=7)
@@ -559,9 +559,9 @@ def create():
     selection_button = Button(label="Add selection")
     selection_button.on_click(selection_button_callback)
 
-    mf_spinner = Spinner(title="Magnetic field:", format="0.00", width=145, disabled=True)
-    temp_spinner = Spinner(title="Temperature:", format="0.00", width=145, disabled=True)
-    geometry_textinput = TextInput(title="Geometry:", disabled=True)
+    mf_spinner = Spinner(title="Magnetic field:", format="0.00", width=100, disabled=True)
+    temp_spinner = Spinner(title="Temperature:", format="0.00", width=100, disabled=True)
+    geometry_textinput = TextInput(title="Geometry:", width=120, disabled=True)
 
     # Final layout
     layout_image = column(gridplot([[proj_v, None], [plot, proj_h]], merge_tools=False))
@@ -572,15 +572,13 @@ def create():
         proj_auto_checkbox,
         row(proj_display_min_spinner, proj_display_max_spinner),
     )
-    hkl_layout = column(geometry_textinput, hkl_button)
-    params_layout = row(mf_spinner, temp_spinner)
 
     layout_controls = row(
         column(selection_button, selection_list),
         Spacer(width=20),
         column(colormap_layout),
         Spacer(width=20),
-        column(index_spinner, params_layout, hkl_layout),
+        column(row(mf_spinner, temp_spinner), row(geometry_textinput, index_spinner), hkl_button),
     )
 
     layout_overview = column(
