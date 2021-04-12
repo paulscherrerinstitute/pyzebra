@@ -108,11 +108,7 @@ def create():
 
         param_select.value = "user defined"
 
-    def file_select_callback(_attr, _old, _new):
-        pass
-
     file_select = MultiSelect(title="Available .dat files:", width=210, height=250)
-    file_select.on_change("value", file_select_callback)
 
     def file_open_button_callback():
         nonlocal det_data

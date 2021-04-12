@@ -15,6 +15,7 @@ from bokeh.models import (
     Div,
     FileInput,
     Grid,
+    MultiSelect,
     HoverTool,
     Image,
     Line,
@@ -40,8 +41,8 @@ import pyzebra
 
 IMAGE_W = 256
 IMAGE_H = 128
-IMAGE_PLOT_W = int(IMAGE_W * 2.5)
-IMAGE_PLOT_H = int(IMAGE_H * 2.5)
+IMAGE_PLOT_W = int(IMAGE_W * 2) + 52
+IMAGE_PLOT_H = int(IMAGE_H * 2) + 27
 
 
 def create():
@@ -56,21 +57,19 @@ def create():
         for file in os.listdir(proposal_path):
             if file.endswith(".hdf"):
                 file_list.append((os.path.join(proposal_path, file), file))
-        filelist.options = file_list
-        filelist.value = file_list[0][0]
+        file_select.options = file_list
 
-    proposal_textinput = TextInput(title="Enter proposal number:", width=145)
+    proposal_textinput = TextInput(title="Proposal number:", width=210)
     proposal_textinput.on_change("value", proposal_textinput_callback)
 
     def upload_button_callback(_attr, _old, new):
         with io.StringIO(base64.b64decode(new).decode()) as file:
             h5meta_list = pyzebra.parse_h5meta(file)
             file_list = h5meta_list["filelist"]
-            filelist.options = [(entry, os.path.basename(entry)) for entry in file_list]
-            filelist.value = file_list[0]
+            file_select.options = [(entry, os.path.basename(entry)) for entry in file_list]
 
     upload_div = Div(text="or upload .cami file:", margin=(5, 5, 0, 5))
-    upload_button = FileInput(accept=".cami")
+    upload_button = FileInput(accept=".cami", width=200)
     upload_button.on_change("value", upload_button_callback)
 
     def update_image(index=None):
@@ -154,9 +153,23 @@ def create():
         scanning_motor_range.reset_end = var_end
         scanning_motor_range.bounds = (var_start, var_end)
 
-    def filelist_callback(_attr, _old, new):
+    def file_select_callback(_attr, old, new):
         nonlocal det_data
-        det_data = pyzebra.read_detector_data(new)
+        if not new:
+            # skip empty selections
+            return
+
+        # Avoid selection of multiple indicies (via Shift+Click or Ctrl+Click)
+        if len(new) > 1:
+            # drop selection to the previous one
+            file_select.value = old
+            return
+
+        if len(old) > 1:
+            # skip unnecessary update caused by selection drop
+            return
+
+        det_data = pyzebra.read_detector_data(new[0])
 
         index_spinner.value = 0
         index_spinner.high = det_data["data"].shape[0] - 1
@@ -170,8 +183,8 @@ def create():
         update_image(0)
         update_overview_plot()
 
-    filelist = Select(title="Available .hdf files:")
-    filelist.on_change("value", filelist_callback)
+    file_select = MultiSelect(title="Available .hdf files:", width=210, height=250)
+    file_select.on_change("value", file_select_callback)
 
     def index_spinner_callback(_attr, _old, new):
         update_image(new)
@@ -321,7 +334,7 @@ def create():
         y_range=frame_range,
         extra_y_ranges={"scanning_motor": scanning_motor_range},
         plot_height=400,
-        plot_width=IMAGE_PLOT_W,
+        plot_width=IMAGE_PLOT_W - 3,
     )
 
     # ---- tools
@@ -359,7 +372,7 @@ def create():
         y_range=frame_range,
         extra_y_ranges={"scanning_motor": scanning_motor_range},
         plot_height=400,
-        plot_width=IMAGE_PLOT_H,
+        plot_width=IMAGE_PLOT_H + 22,
     )
 
     # ---- tools
@@ -398,7 +411,7 @@ def create():
     roi_avg_plot = Plot(
         x_range=DataRange1d(),
         y_range=DataRange1d(),
-        plot_height=200,
+        plot_height=150,
         plot_width=IMAGE_PLOT_W,
         toolbar_location="left",
     )
@@ -548,7 +561,7 @@ def create():
             int(np.ceil(frame_range.end)),
         ]
 
-        filename_id = filelist.value[-8:-4]
+        filename_id = file_select.value[0][-8:-4]
         if filename_id in roi_selection:
             roi_selection[f"{filename_id}"].append(selection)
         else:
@@ -564,6 +577,7 @@ def create():
     geometry_textinput = TextInput(title="Geometry:", width=120, disabled=True)
 
     # Final layout
+    import_layout = column(proposal_textinput, upload_div, upload_button, file_select)
     layout_image = column(gridplot([[proj_v, None], [plot, proj_h]], merge_tools=False))
     colormap_layout = column(
         colormap,
@@ -575,9 +589,6 @@ def create():
 
     layout_controls = row(
         column(selection_button, selection_list),
-        Spacer(width=20),
-        column(colormap_layout),
-        Spacer(width=20),
         column(row(mf_spinner, temp_spinner), row(geometry_textinput, index_spinner), hkl_button),
     )
 
@@ -591,13 +602,8 @@ def create():
     )
 
     tab_layout = row(
-        column(
-            row(
-                proposal_textinput, filelist, Spacer(width=100), column(upload_div, upload_button),
-            ),
-            layout_overview,
-            layout_controls,
-        ),
+        column(import_layout, colormap_layout),
+        column(layout_overview, layout_controls),
         column(roi_avg_plot, layout_image),
     )
 

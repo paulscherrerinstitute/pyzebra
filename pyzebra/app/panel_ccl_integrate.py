@@ -97,11 +97,7 @@ def create():
         merge_dest_select.options = merge_options
         merge_dest_select.value = merge_options[0][0]
 
-    def ccl_file_select_callback(_attr, _old, _new):
-        pass
-
     file_select = MultiSelect(title="Available .ccl/.dat files:", width=210, height=250)
-    file_select.on_change("value", ccl_file_select_callback)
 
     def file_open_button_callback():
         nonlocal det_data
