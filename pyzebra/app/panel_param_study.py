@@ -520,7 +520,7 @@ def create():
 
         if function == "linear":
             fitparams["value"] = [0, 0]
-            fitparams["vary"] = [False, False]
+            fitparams["vary"] = [False, True]
 
         return fitparams
 
