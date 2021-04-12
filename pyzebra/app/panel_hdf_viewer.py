@@ -12,10 +12,12 @@ from bokeh.models import (
     CheckboxGroup,
     ColumnDataSource,
     DataRange1d,
+    DataTable,
     Div,
     FileInput,
     Grid,
     MultiSelect,
+    NumberFormatter,
     HoverTool,
     Image,
     Line,
@@ -28,8 +30,8 @@ from bokeh.models import (
     Rect,
     ResetTool,
     Select,
-    Spacer,
     Spinner,
+    TableColumn,
     TextAreaInput,
     TextInput,
     Title,
@@ -100,14 +102,14 @@ def create():
             image_glyph.color_mapper.high = im_max
 
         if "mf" in det_data:
-            mf_spinner.value = det_data["mf"][index]
+            metadata_table_source.data.update(mf=[det_data["mf"][index]])
         else:
-            mf_spinner.value = None
+            metadata_table_source.data.update(mf=[None])
 
         if "temp" in det_data:
-            temp_spinner.value = det_data["temp"][index]
+            metadata_table_source.data.update(temp=[det_data["temp"][index]])
         else:
-            temp_spinner.value = None
+            metadata_table_source.data.update(temp=[None])
 
         gamma, nu = calculate_pol(det_data, index)
         omega = np.ones((IMAGE_H, IMAGE_W)) * det_data["omega"][index]
@@ -176,9 +178,9 @@ def create():
 
         zebra_mode = det_data["zebra_mode"]
         if zebra_mode == "nb":
-            geometry_textinput.value = "normal beam"
+            metadata_table_source.data.update(geom=["normal beam"])
         else:  # zebra_mode == "bi"
-            geometry_textinput.value = "bisecting"
+            metadata_table_source.data.update(geom=["bisecting"])
 
         update_image(0)
         update_overview_plot()
@@ -572,9 +574,20 @@ def create():
     selection_button = Button(label="Add selection")
     selection_button.on_click(selection_button_callback)
 
-    mf_spinner = Spinner(title="Magnetic field:", format="0.00", width=100, disabled=True)
-    temp_spinner = Spinner(title="Temperature:", format="0.00", width=100, disabled=True)
-    geometry_textinput = TextInput(title="Geometry:", width=120, disabled=True)
+    metadata_table_source = ColumnDataSource(dict(geom=[""], temp=[None], mf=[None]))
+    num_formatter = NumberFormatter(format="0.00", nan_format="")
+    metadata_table = DataTable(
+        source=metadata_table_source,
+        columns=[
+            TableColumn(field="geom", title="Geometry", width=100),
+            TableColumn(field="temp", title="Temperature", formatter=num_formatter, width=100),
+            TableColumn(field="mf", title="Magnetic Field", formatter=num_formatter, width=100),
+        ],
+        width=300,
+        height=50,
+        autosize_mode="none",
+        index_position=None,
+    )
 
     # Final layout
     import_layout = column(proposal_textinput, upload_div, upload_button, file_select)
@@ -588,8 +601,7 @@ def create():
     )
 
     layout_controls = row(
-        column(selection_button, selection_list),
-        column(row(mf_spinner, temp_spinner), row(geometry_textinput, index_spinner), hkl_button),
+        column(selection_button, selection_list), column(metadata_table, index_spinner, hkl_button),
     )
 
     layout_overview = column(
