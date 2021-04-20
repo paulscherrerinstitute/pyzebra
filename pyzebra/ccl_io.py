@@ -261,7 +261,7 @@ def export_1D(data, path, area_method=AREA_METHODS[0], lorentz=False, hkl_precis
         h, k, l = scan["h"], scan["k"], scan["l"]
         hkl_are_integers = isinstance(h, int)  # if True, other indices are of type 'int' too
         if hkl_are_integers:
-            hkl_str = f"{h:6}{k:6}{l:6}"
+            hkl_str = f"{h:4}{k:4}{l:4}"
         else:
             hkl_str = f"{h:8.{hkl_precision}f}{k:8.{hkl_precision}f}{l:8.{hkl_precision}f}"
 
