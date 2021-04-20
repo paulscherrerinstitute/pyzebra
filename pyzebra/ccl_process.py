@@ -128,6 +128,17 @@ def fit_scan(scan, model_dict, fit_from=None, fit_to=None):
                 else:
                     param_hints[hint_name] = tmp
 
+            if "center" in param_name:
+                if np.isneginf(param_hints["min"]):
+                    param_hints["min"] = np.min(x_fit)
+
+                if np.isposinf(param_hints["max"]):
+                    param_hints["max"] = np.max(x_fit)
+
+            if "sigma" in param_name:
+                if np.isposinf(param_hints["max"]):
+                    param_hints["max"] = np.max(x_fit) - np.min(x_fit)
+
             _model.set_param_hint(param_name, **param_hints)
 
         if model is None:
