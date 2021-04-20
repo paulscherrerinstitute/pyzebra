@@ -515,8 +515,12 @@ def create():
         )
 
         if function == "linear":
-            fitparams["value"] = [0, 0]
+            fitparams["value"] = [0, 1]
             fitparams["vary"] = [False, True]
+            fitparams["min"] = [None, 0]
+
+        elif function == "gaussian":
+            fitparams["min"] = [0, None, None]
 
         return fitparams
 
