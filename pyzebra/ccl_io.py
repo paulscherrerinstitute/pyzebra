@@ -267,16 +267,18 @@ def export_1D(data, path, area_method=AREA_METHODS[0], lorentz=False, hkl_precis
 
         for name, param in scan["fit"].params.items():
             if "amplitude" in name:
-                area_n = param.value
-                area_s = param.stderr
+                if param.stderr is None:
+                    area_n = np.nan
+                    area_s = np.nan
+                else:
+                    area_n = param.value
+                    area_s = param.stderr
+                # TODO: take into account multiple peaks
                 break
         else:
-            area_n = 0
-            area_s = 0
-
-        if area_n is None or area_s is None:
-            print(f"Couldn't export scan: {scan['idx']}")
-            continue
+            # no peak functions in a fit model
+            area_n = np.nan
+            area_s = np.nan
 
         # apply lorentz correction to area
         if lorentz:
