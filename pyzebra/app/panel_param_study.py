@@ -81,11 +81,11 @@ def create():
         proposal = new.strip()
         year = new[:4]
         proposal_path = f"/afs/psi.ch/project/sinqdata/{year}/zebra/{proposal}"
-        dat_file_list = []
+        file_list = []
         for file in os.listdir(proposal_path):
-            if file.endswith(".dat"):
-                dat_file_list.append((os.path.join(proposal_path, file), file))
-        file_select.options = dat_file_list
+            if file.endswith((".ccl", ".dat")):
+                file_list.append((os.path.join(proposal_path, file), file))
+        file_select.options = file_list
 
     proposal_textinput = TextInput(title="Proposal number:", width=210)
     proposal_textinput.on_change("value", proposal_textinput_callback)
@@ -108,7 +108,7 @@ def create():
 
         param_select.value = "user defined"
 
-    file_select = MultiSelect(title="Available .dat files:", width=210, height=250)
+    file_select = MultiSelect(title="Available .ccl/.dat files:", width=210, height=250)
 
     def file_open_button_callback():
         nonlocal det_data
@@ -163,8 +163,8 @@ def create():
         _init_datatable()
         _update_preview()
 
-    upload_div = Div(text="or upload new .dat files:", margin=(5, 5, 0, 5))
-    upload_button = FileInput(accept=".dat", multiple=True, width=200)
+    upload_div = Div(text="or upload new .ccl/.dat files:", margin=(5, 5, 0, 5))
+    upload_button = FileInput(accept=".ccl,.dat", multiple=True, width=200)
     upload_button.on_change("value", upload_button_callback)
 
     def append_upload_button_callback(_attr, _old, new):
@@ -179,7 +179,7 @@ def create():
         _init_datatable()
 
     append_upload_div = Div(text="append extra files:", margin=(5, 5, 0, 5))
-    append_upload_button = FileInput(accept=".dat", multiple=True, width=200)
+    append_upload_button = FileInput(accept=".ccl,.dat", multiple=True, width=200)
     append_upload_button.on_change("value", append_upload_button_callback)
 
     def monitor_spinner_callback(_attr, _old, new):

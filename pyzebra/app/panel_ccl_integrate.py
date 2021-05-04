@@ -72,11 +72,11 @@ def create():
         proposal = new.strip()
         year = new[:4]
         proposal_path = f"/afs/psi.ch/project/sinqdata/{year}/zebra/{proposal}"
-        ccl_file_list = []
+        file_list = []
         for file in os.listdir(proposal_path):
             if file.endswith((".ccl", ".dat")):
-                ccl_file_list.append((os.path.join(proposal_path, file), file))
-        file_select.options = ccl_file_list
+                file_list.append((os.path.join(proposal_path, file), file))
+        file_select.options = file_list
 
     proposal_textinput = TextInput(title="Proposal number:", width=210)
     proposal_textinput.on_change("value", proposal_textinput_callback)
