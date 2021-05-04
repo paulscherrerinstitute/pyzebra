@@ -78,7 +78,7 @@ def create():
 
     def update_image(index=None):
         if index is None:
-            index = index_slider.value
+            index = index_spinner.value
 
         current_image = det_data["data"][index]
         proj_v_line_source.data.update(
@@ -175,7 +175,8 @@ def create():
 
         det_data = pyzebra.read_detector_data(new[0])
 
-        index_slider.value = 0
+        index_spinner.value = 0
+        index_spinner.high = det_data["data"].shape[0] - 1
         index_slider.end = det_data["data"].shape[0] - 1
 
         zebra_mode = det_data["zebra_mode"]
@@ -190,11 +191,16 @@ def create():
     file_select = MultiSelect(title="Available .hdf files:", width=210, height=250)
     file_select.on_change("value", file_select_callback)
 
-    def index_slider_callback(_attr, _old, new):
+    def index_callback(_attr, _old, new):
         update_image(new)
 
-    index_slider = Slider(title="Image index", value=0, start=0, end=1, width=300)
-    index_slider.on_change("value_throttled", index_slider_callback)
+    index_slider = Slider(value=0, start=0, end=1, show_value=False, width=400)
+
+    index_spinner = Spinner(title="Image index:", value=0, low=0, width=100)
+    index_spinner.on_change("value", index_callback)
+
+    index_slider.js_link("value_throttled", index_spinner, "value")
+    index_spinner.js_link("value", index_slider, "value")
 
     plot = Plot(
         x_range=Range1d(0, IMAGE_W, bounds=(0, IMAGE_W)),
@@ -545,7 +551,7 @@ def create():
     proj_display_min_spinner.on_change("value", proj_display_min_spinner_callback)
 
     def hkl_button_callback():
-        index = index_slider.value
+        index = index_spinner.value
         h, k, l = calculate_hkl(det_data, index)
         image_source.data.update(h=[h], k=[k], l=[l])
 
@@ -605,7 +611,9 @@ def create():
     layout_controls = row(
         column(selection_button, selection_list),
         Spacer(width=20),
-        column(index_slider, metadata_table, hkl_button),
+        column(
+            row(index_spinner, column(Spacer(height=25), index_slider)), metadata_table, hkl_button
+        ),
     )
 
     layout_overview = column(
