@@ -47,18 +47,23 @@ from pyzebra.ccl_io import AREA_METHODS
 
 
 javaScript = """
+let j = 0;
 for (let i = 0; i < js_data.data['fname'].length; i++) {
     if (js_data.data['content'][i] === "") continue;
 
-    const blob = new Blob([js_data.data['content'][i]], {type: 'text/plain'})
-    const link = document.createElement('a');
-    document.body.appendChild(link);
-    const url = window.URL.createObjectURL(blob);
-    link.href = url;
-    link.download = js_data.data['fname'][i];
-    link.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(link);
+    setTimeout(function() {
+        const blob = new Blob([js_data.data['content'][i]], {type: 'text/plain'})
+        const link = document.createElement('a');
+        document.body.appendChild(link);
+        const url = window.URL.createObjectURL(blob);
+        link.href = url;
+        link.download = js_data.data['fname'][i];
+        link.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(link);
+    }, 100 * j)
+
+    j++;
 }
 """
 
