@@ -121,7 +121,6 @@ def create():
                     js_data.data.update(fname=[base + ".comm", base + ".incomm"])
 
         _init_datatable()
-        _update_preview()
 
     file_open_button = Button(label="Open New", width=100)
     file_open_button.on_click(file_open_button_callback)
@@ -157,7 +156,6 @@ def create():
                     js_data.data.update(fname=[base + ".comm", base + ".incomm"])
 
         _init_datatable()
-        _update_preview()
 
     upload_div = Div(text="or upload new .ccl/.dat files:", margin=(5, 5, 0, 5))
     upload_button = FileInput(accept=".ccl,.dat", multiple=True, width=200)
@@ -302,7 +300,12 @@ def create():
 
         _update_plot(det_data[new[0]])
 
+    def scan_table_source_callback(_attr, _old, _new):
+        _update_preview()
+
     scan_table_source = ColumnDataSource(dict(scan=[], hkl=[], fit=[], export=[]))
+    scan_table_source.on_change("data", scan_table_source_callback)
+
     scan_table = DataTable(
         source=scan_table_source,
         columns=[
@@ -468,7 +471,6 @@ def create():
 
         _update_plot(_get_selected_scan())
         _update_table()
-        _update_preview()
 
     fit_all_button = Button(label="Fit All", button_type="primary", width=145)
     fit_all_button.on_click(fit_all_button_callback)
@@ -481,7 +483,6 @@ def create():
 
         _update_plot(scan)
         _update_table()
-        _update_preview()
 
     fit_button = Button(label="Fit Current", width=145)
     fit_button.on_click(fit_button_callback)
