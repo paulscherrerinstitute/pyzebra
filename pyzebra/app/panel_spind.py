@@ -115,10 +115,10 @@ def create():
 
                         # last digits are spind UB matrix
                         vals = list(map(float, c_rest))
-                        ub_matrix_spind = np.array(vals).reshape(3, 3)
-                        ub_matrix = np.linalg.inv(np.transpose(ub_matrix_spind))
+                        ub_matrix_spind = np.transpose(np.array(vals).reshape(3, 3))
+                        ub_matrix = np.linalg.inv(ub_matrix_spind)
                         ub_matrices.append(ub_matrix)
-                        spind_res["ub_matrix"].append(ub_matrix_spind)
+                        spind_res["ub_matrix"].append(str(ub_matrix_spind * 1e-10))
 
                     results_table_source.data.update(spind_res)
 
