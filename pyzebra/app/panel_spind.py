@@ -3,7 +3,6 @@ import math
 import os
 import subprocess
 import tempfile
-from collections import defaultdict
 
 import numpy as np
 from bokeh.layouts import column, row
@@ -38,6 +37,9 @@ def create():
     ub_matrices = []
 
     def process_button_callback():
+        # drop table selection to clear result fields
+        results_table_source.selected.indices = []
+
         nonlocal diff_vec
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_peak_list_dir = os.path.join(temp_dir, "peak_list")
@@ -102,9 +104,11 @@ def create():
             print(comp_proc.stdout)
 
             spind_out_file = os.path.join(temp_dir, "spind.txt")
+            spind_res = dict(
+                label=[], crystal_id=[], match_rate=[], matched_peaks=[], column_5=[], ub_matrix=[],
+            )
             try:
                 with open(spind_out_file) as f_out:
-                    spind_res = defaultdict(list)
                     for line in f_out:
                         c1, c2, c3, c4, c5, *c_rest = line.split()
                         spind_res["label"].append(c1)
@@ -120,14 +124,14 @@ def create():
                         ub_matrices.append(ub_matrix)
                         spind_res["ub_matrix"].append(str(ub_matrix_spind * 1e-10))
 
-                    results_table_source.data.update(spind_res)
-
                 print(f"Content of {spind_out_file}:")
                 with open(spind_out_file) as f:
                     print(f.read())
 
             except FileNotFoundError:
                 print("No results from spind")
+
+            results_table_source.data.update(spind_res)
 
     process_button = Button(label="Process", button_type="primary")
     process_button.on_click(process_button_callback)
@@ -145,10 +149,12 @@ def create():
             ub_matrix_textareainput.value = str(ub_matrix * 1e10)
             hkl_textareainput.value = res
         else:
-            ub_matrix_textareainput.value = None
-            hkl_textareainput.value = None
+            ub_matrix_textareainput.value = ""
+            hkl_textareainput.value = ""
 
-    results_table_source = ColumnDataSource(dict())
+    results_table_source = ColumnDataSource(
+        dict(label=[], crystal_id=[], match_rate=[], matched_peaks=[], column_5=[], ub_matrix=[])
+    )
     results_table = DataTable(
         source=results_table_source,
         columns=[
