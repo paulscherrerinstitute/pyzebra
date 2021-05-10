@@ -1,5 +1,6 @@
 import base64
 import io
+import os
 import re
 import tempfile
 
@@ -347,14 +348,14 @@ def create():
             temp_file = temp_dir + "/config.xml"
             config.save_as(temp_file)
             if doc.anatric_path:
-                pyzebra.anatric(temp_file, anatric_path=doc.anatric_path)
+                pyzebra.anatric(temp_file, anatric_path=doc.anatric_path, cwd=temp_dir)
             else:
-                pyzebra.anatric(temp_file)
+                pyzebra.anatric(temp_file, cwd=temp_dir)
 
-            with open(config.logfile) as f_log:
+            with open(os.path.join(temp_dir, config.logfile)) as f_log:
                 output_log.value = f_log.read()
 
-            with open(config.reflectionPrinter_file) as f_res:
+            with open(os.path.join(temp_dir, config.reflectionPrinter_file)) as f_res:
                 output_res.value = f_res.read()
 
     process_button = Button(label="Process", button_type="primary")
