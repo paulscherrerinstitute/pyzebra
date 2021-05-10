@@ -66,7 +66,7 @@ class AnatricConfig:
     def _get_attr(self, name, tag, attr):
         elem = self._tree.find(name).find(tag)
         if elem is None:
-            return None
+            return ""
         return elem.attrib[attr]
 
     def _set_attr(self, name, tag, attr, value):
@@ -229,7 +229,7 @@ class AnatricConfig:
         elem = self._tree.find("crystal").find("UB")
         if elem is not None:
             return elem.text
-        return None
+        return ""
 
     @crystal_UB.setter
     def crystal_UB(self, value):
@@ -251,7 +251,7 @@ class AnatricConfig:
         elem = self._tree.find("DataFactory").find("dist1")
         if elem is not None:
             return elem.attrib["value"]
-        return None
+        return ""
 
     @dataFactory_dist1.setter
     def dataFactory_dist1(self, value):
@@ -262,7 +262,7 @@ class AnatricConfig:
         elem = self._tree.find("DataFactory").find("dist2")
         if elem is not None:
             return elem.attrib["value"]
-        return None
+        return ""
 
     @dataFactory_dist2.setter
     def dataFactory_dist2(self, value):
@@ -273,7 +273,7 @@ class AnatricConfig:
         elem = self._tree.find("DataFactory").find("dist3")
         if elem is not None:
             return elem.attrib["value"]
-        return None
+        return ""
 
     @dataFactory_dist3.setter
     def dataFactory_dist3(self, value):
@@ -314,7 +314,7 @@ class AnatricConfig:
     def _get_alg_attr(self, alg, tag, attr):
         param_elem = self._alg_elems[alg].find(tag)
         if param_elem is None:
-            return None
+            return ""
         return param_elem.attrib[attr]
 
     def _set_alg_attr(self, alg, tag, attr, value):
