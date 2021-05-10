@@ -389,11 +389,7 @@ def create():
     )
 
     async def update_config():
-        with tempfile.TemporaryDirectory() as temp_dir:
-            temp_file = temp_dir + "/config.xml"
-            config.save_as(temp_file)
-            with open(temp_file) as f_config:
-                output_config.value = f_config.read()
+        output_config.value = config.tostring()
 
     doc.add_periodic_callback(update_config, 1000)
 

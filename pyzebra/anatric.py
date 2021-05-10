@@ -59,6 +59,9 @@ class AnatricConfig:
     def save_as(self, filename):
         self._tree.write(filename)
 
+    def tostring(self):
+        return ET.tostring(self._tree.getroot(), encoding="unicode")
+
     def _get_attr(self, name, tag, attr):
         elem = self._tree.find(name).find(tag)
         if elem is None:
