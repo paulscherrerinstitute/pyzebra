@@ -5,6 +5,7 @@ import subprocess
 import tempfile
 
 import numpy as np
+from bokeh.io import curdoc
 from bokeh.layouts import column, row
 from bokeh.models import (
     Button,
@@ -22,6 +23,8 @@ import pyzebra
 
 
 def create():
+    doc = curdoc()
+
     path_prefix_textinput = TextInput(title="Path prefix:", value="")
     selection_list = TextAreaInput(title="ROIs:", rows=7)
     lattice_const_textinput = TextInput(
@@ -54,7 +57,7 @@ def create():
                     "-n",
                     "2",
                     "python",
-                    os.path.expanduser("~/spind/gen_hkl_table.py"),
+                    os.path.join(doc.spind_path, "gen_hkl_table.py"),
                     lattice_const_textinput.value,
                     "--max-res",
                     str(max_res_spinner.value),
@@ -81,7 +84,7 @@ def create():
                     "-n",
                     "2",
                     "python",
-                    os.path.expanduser("~/spind/SPIND.py"),
+                    os.path.join(doc.spind_path, "SPIND.py"),
                     temp_peak_list_dir,
                     temp_hkl_file,
                     "-o",
@@ -135,6 +138,9 @@ def create():
 
     process_button = Button(label="Process", button_type="primary")
     process_button.on_click(process_button_callback)
+
+    if doc.spind_path is None:
+        process_button.disabled = True
 
     ub_matrix_textareainput = TextAreaInput(title="UB matrix:", rows=7, width=400)
     hkl_textareainput = TextAreaInput(title="hkl values:", rows=7, width=400)

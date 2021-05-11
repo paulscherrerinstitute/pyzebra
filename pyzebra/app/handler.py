@@ -5,7 +5,7 @@ class PyzebraHandler(Handler):
     """Provides a mechanism for generic bokeh applications to build up new streamvis documents.
     """
 
-    def __init__(self, anatric_path):
+    def __init__(self, anatric_path, spind_path):
         """Initialize a pyzebra handler for bokeh applications.
 
         Args:
@@ -14,6 +14,7 @@ class PyzebraHandler(Handler):
         super().__init__()  # no-op
 
         self.anatric_path = anatric_path
+        self.spind_path = spind_path
 
     def modify_document(self, doc):
         """Modify an application document with pyzebra specific features.
@@ -26,5 +27,6 @@ class PyzebraHandler(Handler):
         """
         doc.title = "pyzebra"
         doc.anatric_path = self.anatric_path
+        doc.spind_path = self.spind_path
 
         return doc

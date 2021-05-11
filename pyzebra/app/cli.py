@@ -38,10 +38,11 @@ def main():
     )
 
     parser.add_argument(
-        "--anatric-path",
-        type=str,
-        default=None,
-        help="path to anatric executable",
+        "--anatric-path", type=str, default=None, help="path to anatric executable",
+    )
+
+    parser.add_argument(
+        "--spind-path", type=str, default=None, help="path to spind scripts folder",
     )
 
     parser.add_argument(
@@ -55,7 +56,7 @@ def main():
 
     logger.info(app_path)
 
-    pyzebra_handler = PyzebraHandler(args.anatric_path)
+    pyzebra_handler = PyzebraHandler(args.anatric_path, args.spind_path)
     handler = ScriptHandler(filename=app_path, argv=args.args)
     server = Server(
         {"/": Application(pyzebra_handler, handler)},
