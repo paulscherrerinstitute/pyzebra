@@ -7,6 +7,7 @@ DATA_FACTORY_IMPLEMENTATION = [
     "morph",
     "d10",
 ]
+
 REFLECTION_PRINTER_FORMATS = [
     "rafin",
     "rafinf",
@@ -20,10 +21,11 @@ REFLECTION_PRINTER_FORMATS = [
     "oksana",
 ]
 
+ANATRIC_PATH = "/afs/psi.ch/project/sinq/rhel7/bin/anatric"
 ALGORITHMS = ["adaptivemaxcog", "adaptivedynamic"]
 
 
-def anatric(config_file, anatric_path="/afs/psi.ch/project/sinq/rhel7/bin/anatric", cwd=None):
+def anatric(config_file, anatric_path=ANATRIC_PATH, cwd=None):
     comp_proc = subprocess.run(
         [anatric_path, config_file],
         stdout=subprocess.PIPE,

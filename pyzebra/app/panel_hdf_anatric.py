@@ -347,10 +347,7 @@ def create():
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_file = temp_dir + "/config.xml"
             config.save_as(temp_file)
-            if doc.anatric_path:
-                pyzebra.anatric(temp_file, anatric_path=doc.anatric_path, cwd=temp_dir)
-            else:
-                pyzebra.anatric(temp_file, cwd=temp_dir)
+            pyzebra.anatric(temp_file, anatric_path=doc.anatric_path, cwd=temp_dir)
 
             with open(os.path.join(temp_dir, config.logfile)) as f_log:
                 output_log.value = f_log.read()

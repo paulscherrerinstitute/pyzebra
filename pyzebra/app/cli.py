@@ -6,6 +6,7 @@ from bokeh.application.application import Application
 from bokeh.application.handlers import ScriptHandler
 from bokeh.server.server import Server
 
+from pyzebra.anatric import ANATRIC_PATH
 from pyzebra.app.handler import PyzebraHandler
 
 logging.basicConfig(format="%(asctime)s %(message)s", level=logging.INFO)
@@ -38,7 +39,7 @@ def main():
     )
 
     parser.add_argument(
-        "--anatric-path", type=str, default=None, help="path to anatric executable",
+        "--anatric-path", type=str, default=ANATRIC_PATH, help="path to anatric executable",
     )
 
     parser.add_argument(
