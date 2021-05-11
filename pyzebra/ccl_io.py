@@ -3,6 +3,7 @@ import re
 from collections import defaultdict
 
 import numpy as np
+from scipy.integrate import simpson, trapezoid
 
 META_VARS_STR = (
     "instrument",
@@ -277,8 +278,12 @@ def export_1D(data, path, area_method=AREA_METHODS[0], lorentz=False, hkl_precis
                 break
         else:
             # no peak functions in a fit model
-            area_n = np.nan
-            area_s = np.nan
+            # assume this is a background fit, so do numeric integration
+            y_val = scan["Counts"]
+            x_val = scan[scan["scan_motor"]]
+            y_bkg = scan["fit"].eval(x=x_val)
+            area_n = simpson(y_val, x=x_val) - trapezoid(y_bkg, x=x_val)
+            area_s = np.sqrt(area_n)
 
         # apply lorentz correction to area
         if lorentz:

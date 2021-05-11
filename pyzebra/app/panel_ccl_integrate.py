@@ -371,7 +371,6 @@ def create():
             # ("Pseudo Voigt1", "pseudovoigt1"),
         ],
         width=145,
-        disabled=True,
     )
     fitparams_add_dropdown.on_click(fitparams_add_dropdown_callback)
 
@@ -406,7 +405,7 @@ def create():
 
             fitparams_select.value = []
 
-    fitparams_remove_button = Button(label="Remove fit function", width=145, disabled=True)
+    fitparams_remove_button = Button(label="Remove fit function", width=145)
     fitparams_remove_button.on_click(fitparams_remove_button_callback)
 
     def fitparams_factory(function):
