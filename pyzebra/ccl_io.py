@@ -3,7 +3,6 @@ import re
 from collections import defaultdict
 
 import numpy as np
-from scipy.integrate import simpson, trapezoid
 
 META_VARS_STR = (
     "instrument",
@@ -76,8 +75,6 @@ CCL_SECOND_LINE = (
     ("time", str),
     ("scan_motor", str),
 )
-
-AREA_METHODS = ("fit_area", "int_area")
 
 
 def load_1D(filepath):
@@ -244,7 +241,7 @@ def parse_1D(fileobj, data_type):
     return scan
 
 
-def export_1D(data, path, area_method=AREA_METHODS[0], lorentz=False, hkl_precision=2):
+def export_1D(data, path, hkl_precision=2):
     """Exports data in the .comm/.incomm format
 
     Scans with integer/real hkl values are saved in .comm/.incomm files correspondingly. If no scans
@@ -266,38 +263,7 @@ def export_1D(data, path, area_method=AREA_METHODS[0], lorentz=False, hkl_precis
         else:
             hkl_str = f"{h:8.{hkl_precision}f}{k:8.{hkl_precision}f}{l:8.{hkl_precision}f}"
 
-        for name, param in scan["fit"].params.items():
-            if "amplitude" in name:
-                if param.stderr is None:
-                    area_n = np.nan
-                    area_s = np.nan
-                else:
-                    area_n = param.value
-                    area_s = param.stderr
-                # TODO: take into account multiple peaks
-                break
-        else:
-            # no peak functions in a fit model
-            # assume this is a background fit, so do numeric integration
-            y_val = scan["Counts"]
-            x_val = scan[scan["scan_motor"]]
-            y_bkg = scan["fit"].eval(x=x_val)
-            area_n = simpson(y_val, x=x_val) - trapezoid(y_bkg, x=x_val)
-            area_s = np.sqrt(area_n)
-
-        # apply lorentz correction to area
-        if lorentz:
-            if zebra_mode == "bi":
-                twotheta = np.deg2rad(scan["twotheta"])
-                corr_factor = np.sin(twotheta)
-            else:  # zebra_mode == "nb":
-                gamma = np.deg2rad(scan["gamma"])
-                nu = np.deg2rad(scan["nu"])
-                corr_factor = np.sin(gamma) * np.cos(nu)
-
-            area_n = np.abs(area_n * corr_factor)
-            area_s = np.abs(area_s * corr_factor)
-
+        area_n, area_s = scan["area"]
         area_str = f"{area_n:10.2f}{area_s:10.2f}"
 
         ang_str = ""

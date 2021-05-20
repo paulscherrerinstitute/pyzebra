@@ -48,7 +48,7 @@ from bokeh.palettes import Category10, Turbo256
 from bokeh.transform import linear_cmap
 
 import pyzebra
-from pyzebra.ccl_io import AREA_METHODS
+from pyzebra.ccl_process import AREA_METHODS
 
 javaScript = """
 for (let i = 0; i < js_data.data['fname'].length; i++) {
@@ -557,6 +557,11 @@ def create():
                 pyzebra.fit_scan(
                     scan, fit_params, fit_from=fit_from_spinner.value, fit_to=fit_to_spinner.value
                 )
+                pyzebra.get_area(
+                    scan,
+                    area_method=AREA_METHODS[area_method_radiobutton.active],
+                    lorentz=lorentz_checkbox.active,
+                )
 
         _update_plot()
         _update_table()
@@ -569,6 +574,11 @@ def create():
         pyzebra.fit_scan(
             scan, fit_params, fit_from=fit_from_spinner.value, fit_to=fit_to_spinner.value
         )
+        pyzebra.get_area(
+            scan,
+            area_method=AREA_METHODS[area_method_radiobutton.active],
+            lorentz=lorentz_checkbox.active,
+        )
 
         _update_plot()
         _update_table()
@@ -576,19 +586,9 @@ def create():
     fit_button = Button(label="Fit Current", width=145)
     fit_button.on_click(fit_button_callback)
 
-    def area_method_radiobutton_callback(_handler):
-        _update_preview()
-
-    area_method_radiobutton = RadioButtonGroup(
-        labels=["Fit area", "Int area"], active=0, width=145, disabled=True
-    )
-    area_method_radiobutton.on_click(area_method_radiobutton_callback)
-
-    def lorentz_checkbox_callback(_handler):
-        _update_preview()
+    area_method_radiobutton = RadioButtonGroup(labels=["Fit area", "Int area"], active=0, width=145)
 
     lorentz_checkbox = CheckboxGroup(labels=["Lorentz Correction"], width=145, margin=[13, 5, 5, 5])
-    lorentz_checkbox.on_click(lorentz_checkbox_callback)
 
     export_preview_textinput = TextAreaInput(title="Export file preview:", width=450, height=400)
 
@@ -600,12 +600,7 @@ def create():
                 if export:
                     export_data.append(s)
 
-            pyzebra.export_1D(
-                export_data,
-                temp_file,
-                area_method=AREA_METHODS[int(area_method_radiobutton.active)],
-                lorentz=bool(lorentz_checkbox.active),
-            )
+            pyzebra.export_1D(export_data, temp_file)
 
             exported_content = ""
             file_content = []

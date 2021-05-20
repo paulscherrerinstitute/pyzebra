@@ -3,6 +3,7 @@ import os
 
 import numpy as np
 from lmfit.models import GaussianModel, LinearModel, PseudoVoigtModel, VoigtModel
+from scipy.integrate import simpson, trapezoid
 
 from .ccl_io import CCL_ANGLES
 
@@ -21,6 +22,8 @@ PARAM_PRECISIONS = {
 MAX_RANGE_GAP = {
     "omega": 0.5,
 }
+
+AREA_METHODS = ("fit_area", "int_area")
 
 
 def normalize_dataset(dataset, monitor=100_000):
@@ -148,3 +151,45 @@ def fit_scan(scan, model_dict, fit_from=None, fit_to=None):
 
     weights = [1 / np.sqrt(val) if val != 0 else 1 for val in y_fit]
     scan["fit"] = model.fit(y_fit, x=x_fit, weights=weights)
+
+
+def get_area(scan, area_method, lorentz):
+    if area_method not in AREA_METHODS:
+        raise ValueError(f"Unknown area method: {area_method}.")
+
+    if area_method == "fit_area":
+        for name, param in scan["fit"].params.items():
+            if "amplitude" in name:
+                if param.stderr is None:
+                    area_n = np.nan
+                    area_s = np.nan
+                else:
+                    area_n = param.value
+                    area_s = param.stderr
+                # TODO: take into account multiple peaks
+                break
+        else:
+            area_n = np.nan
+            area_s = np.nan
+
+    else:  # area_method == "int_area"
+        y_val = scan["Counts"]
+        x_val = scan[scan["scan_motor"]]
+        y_bkg = scan["fit"].eval_components(x=x_val)["f0_"]
+        area_n = simpson(y_val, x=x_val) - trapezoid(y_bkg, x=x_val)
+        area_s = np.sqrt(area_n)
+
+    if lorentz:
+        # lorentz correction to area
+        if scan["zebra_mode"] == "bi":
+            twotheta = np.deg2rad(scan["twotheta"])
+            corr_factor = np.sin(twotheta)
+        else:  # zebra_mode == "nb":
+            gamma = np.deg2rad(scan["gamma"])
+            nu = np.deg2rad(scan["nu"])
+            corr_factor = np.sin(gamma) * np.cos(nu)
+
+        area_n = np.abs(area_n * corr_factor)
+        area_s = np.abs(area_s * corr_factor)
+
+    scan["area"] = (area_n, area_s)
