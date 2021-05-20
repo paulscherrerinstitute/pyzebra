@@ -461,7 +461,7 @@ def create():
 
     fit_output_textinput = TextAreaInput(title="Fit results:", width=750, height=200)
 
-    def fit_all_button_callback():
+    def proc_all_button_callback():
         for scan, export in zip(det_data, scan_table_source.data["export"]):
             if export:
                 pyzebra.fit_scan(
@@ -476,10 +476,10 @@ def create():
         _update_plot(_get_selected_scan())
         _update_table()
 
-    fit_all_button = Button(label="Fit All", button_type="primary", width=145)
-    fit_all_button.on_click(fit_all_button_callback)
+    proc_all_button = Button(label="Process All", button_type="primary", width=145)
+    proc_all_button.on_click(proc_all_button_callback)
 
-    def fit_button_callback():
+    def proc_button_callback():
         scan = _get_selected_scan()
         pyzebra.fit_scan(
             scan, fit_params, fit_from=fit_from_spinner.value, fit_to=fit_to_spinner.value
@@ -493,8 +493,8 @@ def create():
         _update_plot(scan)
         _update_table()
 
-    fit_button = Button(label="Fit Current", width=145)
-    fit_button.on_click(fit_button_callback)
+    proc_button = Button(label="Process Current", width=145)
+    proc_button.on_click(proc_button_callback)
 
     area_method_radiobutton = RadioButtonGroup(labels=["Fit area", "Int area"], active=0, width=145)
 
@@ -537,7 +537,7 @@ def create():
     )
     hkl_precision_select.on_change("value", hkl_precision_select_callback)
 
-    save_button = Button(label="Download File", button_type="success", width=200)
+    save_button = Button(label="Download File(s)", button_type="success", width=200)
     save_button.js_on_click(CustomJS(args={"js_data": js_data}, code=javaScript))
 
     fitpeak_controls = row(
@@ -547,7 +547,7 @@ def create():
         column(
             row(fit_from_spinner, fit_to_spinner),
             row(area_method_radiobutton, lorentz_checkbox),
-            row(fit_button, fit_all_button),
+            row(proc_button, proc_all_button),
         ),
     )
 
