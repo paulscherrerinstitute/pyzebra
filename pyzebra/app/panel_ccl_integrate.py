@@ -43,6 +43,7 @@ from bokeh.models import (
 )
 
 import pyzebra
+from pyzebra.ccl_io import EXPORT_TARGETS
 from pyzebra.ccl_process import AREA_METHODS
 
 
@@ -57,7 +58,7 @@ for (let i = 0; i < js_data.data['fname'].length; i++) {
         document.body.appendChild(link);
         const url = window.URL.createObjectURL(blob);
         link.href = url;
-        link.download = js_data.data['fname'][i];
+        link.download = js_data.data['fname'][i] + js_data.data['ext'][i];
         link.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(link);
@@ -71,7 +72,7 @@ for (let i = 0; i < js_data.data['fname'].length; i++) {
 def create():
     det_data = {}
     fit_params = {}
-    js_data = ColumnDataSource(data=dict(content=["", ""], fname=["", ""]))
+    js_data = ColumnDataSource(data=dict(content=["", ""], fname=["", ""], ext=["", ""]))
 
     def proposal_textinput_callback(_attr, _old, new):
         proposal = new.strip()
@@ -118,7 +119,7 @@ def create():
                     det_data = pyzebra.parse_1D(file, ext)
                     pyzebra.normalize_dataset(det_data, monitor_spinner.value)
                     pyzebra.merge_duplicates(det_data)
-                    js_data.data.update(fname=[base + ".comm", base + ".incomm"])
+                    js_data.data.update(fname=[base, base])
 
         _init_datatable()
 
@@ -153,7 +154,7 @@ def create():
                     det_data = pyzebra.parse_1D(file, ext)
                     pyzebra.normalize_dataset(det_data, monitor_spinner.value)
                     pyzebra.merge_duplicates(det_data)
-                    js_data.data.update(fname=[base + ".comm", base + ".incomm"])
+                    js_data.data.update(fname=[base, base])
 
         _init_datatable()
 
@@ -511,12 +512,15 @@ def create():
                     export_data.append(s)
 
             pyzebra.export_1D(
-                export_data, temp_file, hkl_precision=int(hkl_precision_select.value),
+                export_data,
+                temp_file,
+                export_target_select.value,
+                hkl_precision=int(hkl_precision_select.value),
             )
 
             exported_content = ""
             file_content = []
-            for ext in (".comm", ".incomm"):
+            for ext in EXPORT_TARGETS[export_target_select.value]:
                 fname = temp_file + ext
                 if os.path.isfile(fname):
                     with open(fname) as f:
@@ -528,6 +532,16 @@ def create():
 
             js_data.data.update(content=file_content)
             export_preview_textinput.value = exported_content
+
+    def export_target_select_callback(_attr, _old, new):
+        js_data.data.update(ext=EXPORT_TARGETS[new])
+        _update_preview()
+
+    export_target_select = Select(
+        title="Export target:", options=list(EXPORT_TARGETS.keys()), value="fullprof", width=80
+    )
+    export_target_select.on_change("value", export_target_select_callback)
+    js_data.data.update(ext=EXPORT_TARGETS[export_target_select.value])
 
     def hkl_precision_select_callback(_attr, _old, _new):
         _update_preview()
@@ -569,7 +583,9 @@ def create():
 
     export_layout = column(
         export_preview_textinput,
-        row(hkl_precision_select, column(Spacer(height=19), row(save_button))),
+        row(
+            export_target_select, hkl_precision_select, column(Spacer(height=19), row(save_button))
+        ),
     )
 
     tab_layout = column(

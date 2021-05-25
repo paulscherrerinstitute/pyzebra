@@ -76,6 +76,8 @@ CCL_SECOND_LINE = (
     ("scan_motor", str),
 )
 
+EXPORT_TARGETS = {"fullprof": (".comm", ".incomm"), "jana": (".col", ".incol")}
+
 
 def load_1D(filepath):
     """
@@ -241,14 +243,19 @@ def parse_1D(fileobj, data_type):
     return scan
 
 
-def export_1D(data, path, hkl_precision=2):
-    """Exports data in the .comm/.incomm format
+def export_1D(data, path, export_target, hkl_precision=2):
+    """Exports data in the .comm/.incomm format for fullprof or .col/.incol format for jana.
 
-    Scans with integer/real hkl values are saved in .comm/.incomm files correspondingly. If no scans
-    are present for a particular output format, that file won't be created.
+    Scans with integer/real hkl values are saved in .comm/.incomm or .col/.incol files
+    correspondingly. If no scans are present for a particular output format, that file won't be
+    created.
     """
+    if export_target not in EXPORT_TARGETS:
+        raise ValueError(f"Unknown export target: {export_target}.")
+
     zebra_mode = data[0]["zebra_mode"]
-    file_content = {".comm": [], ".incomm": []}
+    exts = EXPORT_TARGETS[export_target]
+    file_content = {ext: [] for ext in exts}
 
     for scan in data:
         if "fit" not in scan:
@@ -272,9 +279,16 @@ def export_1D(data, path, hkl_precision=2):
                 angle_center = (np.min(scan[angle]) + np.max(scan[angle])) / 2
             else:
                 angle_center = scan[angle]
+
+            if angle == "twotheta" and export_target == "jana":
+                angle_center /= 2
+
             ang_str = ang_str + f"{angle_center:8g}"
 
-        ref = file_content[".comm"] if hkl_are_integers else file_content[".incomm"]
+        if export_target == "jana":
+            ang_str = ang_str + f"{scan['temp']:8}" + f"{scan['monitor']:8}"
+
+        ref = file_content[exts[0]] if hkl_are_integers else file_content[exts[1]]
         ref.append(idx_str + hkl_str + area_str + ang_str + "\n")
 
     for ext, content in file_content.items():
