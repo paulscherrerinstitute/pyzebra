@@ -98,10 +98,10 @@ def create():
         scan_table_source.selected.indices = [0]
 
         merge_options = [(str(i), f"{i} ({idx})") for i, idx in enumerate(scan_list)]
-        merge_source_select.options = merge_options
-        merge_source_select.value = merge_options[0][0]
-        merge_dest_select.options = merge_options
-        merge_dest_select.value = merge_options[0][0]
+        merge_from_select.options = merge_options
+        merge_from_select.value = merge_options[0][0]
+        merge_into_select.options = merge_options
+        merge_into_select.value = merge_options[0][0]
 
     file_select = MultiSelect(title="Available .ccl/.dat files:", width=210, height=250)
 
@@ -192,7 +192,7 @@ def create():
     def _update_plot(scan):
         scan_motor = scan["scan_motor"]
 
-        y = scan["Counts"]
+        y = scan["counts"]
         x = scan[scan_motor]
 
         plot.axis[0].axis_label = scan_motor
@@ -326,18 +326,18 @@ def create():
     def _get_selected_scan():
         return det_data[scan_table_source.selected.indices[0]]
 
-    merge_dest_select = Select(title="destination:", width=100)
-    merge_source_select = Select(title="source:", width=100)
+    merge_into_select = Select(title="into:", width=100)
+    merge_from_select = Select(title="from:", width=100)
 
     def merge_button_callback():
-        scan_dest_ind = int(merge_dest_select.value)
-        scan_source_ind = int(merge_source_select.value)
+        scan_into_ind = int(merge_into_select.value)
+        scan_from_ind = int(merge_from_select.value)
 
-        if scan_dest_ind == scan_source_ind:
+        if scan_into_ind == scan_from_ind:
             print("WARNING: Selected scans for merging are identical")
             return
 
-        pyzebra.merge_scans(det_data[scan_dest_ind], det_data[scan_source_ind])
+        pyzebra.merge_scans(det_data[scan_into_ind], det_data[scan_from_ind])
         _update_plot(_get_selected_scan())
 
     merge_button = Button(label="Merge scans", width=145)
@@ -568,7 +568,7 @@ def create():
     scan_layout = column(
         scan_table,
         monitor_spinner,
-        row(column(Spacer(height=19), merge_button), merge_dest_select, merge_source_select),
+        row(column(Spacer(height=19), merge_button), merge_into_select, merge_from_select),
     )
 
     import_layout = column(

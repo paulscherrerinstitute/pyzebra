@@ -199,7 +199,7 @@ def create():
     def _update_single_scan_plot(scan):
         scan_motor = scan["scan_motor"]
 
-        y = scan["Counts"]
+        y = scan["counts"]
         x = scan[scan_motor]
 
         plot.axis[0].axis_label = scan_motor
@@ -248,10 +248,10 @@ def create():
                 scan_motor = scan["scan_motor"]
                 xs.append(scan[scan_motor])
                 x.extend(scan[scan_motor])
-                ys.append(scan["Counts"])
+                ys.append(scan["counts"])
                 y.extend([float(p)] * len(scan[scan_motor]))
                 param.append(float(p))
-                par.extend(scan["Counts"])
+                par.extend(scan["counts"])
 
         if det_data:
             scan_motor = det_data[0]["scan_motor"]

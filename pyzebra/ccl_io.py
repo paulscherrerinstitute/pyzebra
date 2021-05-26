@@ -167,7 +167,7 @@ def parse_1D(fileobj, data_type):
             counts = []
             while len(counts) < s["n_points"]:
                 counts.extend(map(float, next(fileobj).split()))
-            s["Counts"] = np.array(counts)
+            s["counts"] = np.array(counts)
 
             if s["h"].is_integer() and s["k"].is_integer() and s["l"].is_integer():
                 s["h"], s["k"], s["l"] = map(int, (s["h"], s["k"], s["l"]))

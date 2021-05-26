@@ -29,7 +29,7 @@ AREA_METHODS = ("fit_area", "int_area")
 def normalize_dataset(dataset, monitor=100_000):
     for scan in dataset:
         monitor_ratio = monitor / scan["monitor"]
-        scan["Counts"] *= monitor_ratio
+        scan["counts"] *= monitor_ratio
         scan["monitor"] = monitor
 
 
@@ -64,30 +64,31 @@ def _parameters_match(scan1, scan2):
     return True
 
 
-def merge_datasets(dataset1, dataset2):
-    for scan_j in dataset2:
-        for scan_i in dataset1:
-            if _parameters_match(scan_i, scan_j):
-                merge_scans(scan_i, scan_j)
+def merge_datasets(dataset_into, dataset_from):
+    for scan_from in dataset_from:
+        for scan_into in dataset_into:
+            if _parameters_match(scan_into, scan_from):
+                merge_scans(scan_into, scan_from)
                 break
 
-        dataset1.append(scan_j)
+        dataset_into.append(scan_from)
 
 
-def merge_scans(scan1, scan2):
-    omega = np.concatenate((scan1["omega"], scan2["omega"]))
-    counts = np.concatenate((scan1["Counts"], scan2["Counts"]))
+def merge_scans(scan_into, scan_from):
+    # TODO: does it need to be "scan_motor" instead of omega for a generalized solution?
+    omega = np.concatenate((scan_into["omega"], scan_from["omega"]))
+    counts = np.concatenate((scan_into["counts"], scan_from["counts"]))
 
     index = np.argsort(omega)
 
-    scan1["omega"] = omega[index]
-    scan1["Counts"] = counts[index]
+    scan_into["omega"] = omega[index]
+    scan_into["counts"] = counts[index]
 
-    scan2["active"] = False
+    scan_from["active"] = False
 
-    fname1 = os.path.basename(scan1["original_filename"])
-    fname2 = os.path.basename(scan2["original_filename"])
-    print(f'Merging scans: {scan1["idx"]} ({fname1}) <-- {scan2["idx"]} ({fname2})')
+    fname1 = os.path.basename(scan_into["original_filename"])
+    fname2 = os.path.basename(scan_from["original_filename"])
+    print(f'Merging scans: {scan_into["idx"]} ({fname1}) <-- {scan_from["idx"]} ({fname2})')
 
 
 def fit_scan(scan, model_dict, fit_from=None, fit_to=None):
@@ -96,7 +97,7 @@ def fit_scan(scan, model_dict, fit_from=None, fit_to=None):
     if fit_to is None:
         fit_to = np.inf
 
-    y_fit = scan["Counts"]
+    y_fit = scan["counts"]
     x_fit = scan[scan["scan_motor"]]
 
     # apply fitting range
@@ -173,7 +174,7 @@ def get_area(scan, area_method, lorentz):
             area_s = np.nan
 
     else:  # area_method == "int_area"
-        y_val = scan["Counts"]
+        y_val = scan["counts"]
         x_val = scan[scan["scan_motor"]]
         y_bkg = scan["fit"].eval_components(x=x_val)["f0_"]
         area_n = simpson(y_val, x=x_val) - trapezoid(y_bkg, x=x_val)
