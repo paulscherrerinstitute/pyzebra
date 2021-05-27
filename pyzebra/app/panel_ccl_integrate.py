@@ -343,6 +343,13 @@ def create():
     merge_button = Button(label="Merge scans", width=145)
     merge_button.on_click(merge_button_callback)
 
+    def restore_button_callback():
+        pyzebra.restore_scan(_get_selected_scan())
+        _update_plot(_get_selected_scan())
+
+    restore_button = Button(label="Restore scan", width=145)
+    restore_button.on_click(restore_button_callback)
+
     def fit_from_spinner_callback(_attr, _old, new):
         fit_from_span.location = new
 
@@ -567,7 +574,7 @@ def create():
 
     scan_layout = column(
         scan_table,
-        monitor_spinner,
+        row(monitor_spinner, column(Spacer(height=19), restore_button)),
         row(column(Spacer(height=19), merge_button), merge_into_select, merge_from_select),
     )
 

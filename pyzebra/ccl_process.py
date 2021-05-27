@@ -76,6 +76,10 @@ def merge_datasets(dataset_into, dataset_from):
 
 def merge_scans(scan_into, scan_from):
     # TODO: does it need to be "scan_motor" instead of omega for a generalized solution?
+    if "init_omega" not in scan_into:
+        scan_into["init_omega"] = scan_into["omega"]
+        scan_into["init_counts"] = scan_into["counts"]
+
     omega = np.concatenate((scan_into["omega"], scan_from["omega"]))
     counts = np.concatenate((scan_into["counts"], scan_from["counts"]))
 
@@ -89,6 +93,14 @@ def merge_scans(scan_into, scan_from):
     fname1 = os.path.basename(scan_into["original_filename"])
     fname2 = os.path.basename(scan_from["original_filename"])
     print(f'Merging scans: {scan_into["idx"]} ({fname1}) <-- {scan_from["idx"]} ({fname2})')
+
+
+def restore_scan(scan):
+    if "init_omega" in scan:
+        scan["omega"] = scan["init_omega"]
+        scan["counts"] = scan["init_counts"]
+        del scan["init_omega"]
+        del scan["init_counts"]
 
 
 def fit_scan(scan, model_dict, fit_from=None, fit_to=None):
