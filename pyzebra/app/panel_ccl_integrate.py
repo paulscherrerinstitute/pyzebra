@@ -83,6 +83,8 @@ def create():
             if file.endswith((".ccl", ".dat")):
                 file_list.append((os.path.join(proposal_path, file), file))
         file_select.options = file_list
+        file_open_button.disabled = False
+        file_append_button.disabled = False
 
     proposal_textinput = TextInput(title="Proposal number:", width=210)
     proposal_textinput.on_change("value", proposal_textinput_callback)
@@ -120,8 +122,9 @@ def create():
                     js_data.data.update(fname=[base, base])
 
         _init_datatable()
+        append_upload_button.disabled = False
 
-    file_open_button = Button(label="Open New", width=100)
+    file_open_button = Button(label="Open New", width=100, disabled=True)
     file_open_button.on_click(file_open_button_callback)
 
     def file_append_button_callback():
@@ -135,7 +138,7 @@ def create():
 
         _init_datatable()
 
-    file_append_button = Button(label="Append", width=100)
+    file_append_button = Button(label="Append", width=100, disabled=True)
     file_append_button.on_click(file_append_button_callback)
 
     def upload_button_callback(_attr, _old, new):
@@ -155,6 +158,7 @@ def create():
                     js_data.data.update(fname=[base, base])
 
         _init_datatable()
+        append_upload_button.disabled = False
 
     upload_div = Div(text="or upload new .ccl/.dat files:", margin=(5, 5, 0, 5))
     upload_button = FileInput(accept=".ccl,.dat", multiple=True, width=200)
@@ -172,7 +176,7 @@ def create():
         _init_datatable()
 
     append_upload_div = Div(text="append extra files:", margin=(5, 5, 0, 5))
-    append_upload_button = FileInput(accept=".ccl,.dat", multiple=True, width=200)
+    append_upload_button = FileInput(accept=".ccl,.dat", multiple=True, width=200, disabled=True)
     append_upload_button.on_change("value", append_upload_button_callback)
 
     def monitor_spinner_callback(_attr, old, new):
