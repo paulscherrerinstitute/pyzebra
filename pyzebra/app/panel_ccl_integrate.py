@@ -100,8 +100,6 @@ def create():
         merge_options = [(str(i), f"{i} ({idx})") for i, idx in enumerate(scan_list)]
         merge_from_select.options = merge_options
         merge_from_select.value = merge_options[0][0]
-        merge_into_select.options = merge_options
-        merge_into_select.value = merge_options[0][0]
 
     file_select = MultiSelect(title="Available .ccl/.dat files:", width=210, height=250)
 
@@ -326,21 +324,20 @@ def create():
     def _get_selected_scan():
         return det_data[scan_table_source.selected.indices[0]]
 
-    merge_into_select = Select(title="into:", width=100)
-    merge_from_select = Select(title="from:", width=100)
+    merge_from_select = Select(title="scan:", width=145)
 
     def merge_button_callback():
-        scan_into_ind = int(merge_into_select.value)
-        scan_from_ind = int(merge_from_select.value)
+        scan_into = _get_selected_scan()
+        scan_from = det_data[int(merge_from_select.value)]
 
-        if scan_into_ind == scan_from_ind:
+        if scan_into is scan_from:
             print("WARNING: Selected scans for merging are identical")
             return
 
-        pyzebra.merge_scans(det_data[scan_into_ind], det_data[scan_from_ind])
+        pyzebra.merge_scans(scan_into, scan_from)
         _update_plot(_get_selected_scan())
 
-    merge_button = Button(label="Merge scans", width=145)
+    merge_button = Button(label="Merge into current", width=145)
     merge_button.on_click(merge_button_callback)
 
     def restore_button_callback():
@@ -575,7 +572,7 @@ def create():
     scan_layout = column(
         scan_table,
         row(monitor_spinner, column(Spacer(height=19), restore_button)),
-        row(column(Spacer(height=19), merge_button), merge_into_select, merge_from_select),
+        row(column(Spacer(height=19), merge_button), merge_from_select),
     )
 
     import_layout = column(
