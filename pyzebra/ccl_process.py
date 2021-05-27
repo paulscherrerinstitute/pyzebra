@@ -34,9 +34,12 @@ def normalize_dataset(dataset, monitor=100_000):
 
 
 def merge_duplicates(dataset):
-    for scan_i, scan_j in itertools.combinations(dataset, 2):
-        if _parameters_match(scan_i, scan_j):
-            merge_scans(scan_i, scan_j)
+    merged = np.zeros(len(dataset), dtype=np.bool)
+    for ind_into, scan_into in enumerate(dataset):
+        for ind_from, scan_from in enumerate(dataset[ind_into + 1 :], start=ind_into + 1):
+            if _parameters_match(scan_into, scan_from) and not merged[ind_from]:
+                merge_scans(scan_into, scan_from)
+                merged[ind_from] = True
 
 
 def _parameters_match(scan1, scan2):
@@ -65,12 +68,14 @@ def _parameters_match(scan1, scan2):
 
 
 def merge_datasets(dataset_into, dataset_from):
-    for scan_from in dataset_from:
-        for scan_into in dataset_into:
-            if _parameters_match(scan_into, scan_from):
+    merged = np.zeros(len(dataset_from), dtype=np.bool)
+    for scan_into in dataset_into:
+        for ind, scan_from in enumerate(dataset_from):
+            if _parameters_match(scan_into, scan_from) and not merged[ind]:
                 merge_scans(scan_into, scan_from)
-                break
+                merged[ind] = True
 
+    for scan_from in dataset_from:
         dataset_into.append(scan_from)
 
 
