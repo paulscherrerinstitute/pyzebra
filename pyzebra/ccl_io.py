@@ -198,7 +198,7 @@ def parse_1D(fileobj, data_type):
             raise Exception("Unknown mode in dat file.")
         s["monitor"] = float(match.group(3))
 
-        col_names = next(fileobj).split()
+        col_names = list(map(str.lower, next(fileobj).split()))
 
         for line in fileobj:
             if "END-OF-DATA" in line:
