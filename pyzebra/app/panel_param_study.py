@@ -269,6 +269,17 @@ def create():
             mapper["transform"].high = np.max([np.max(y) for y in ys])
         ov_param_plot_scatter_source.data.update(x=x, y=y, param=par)
 
+    def _update_param_plot():
+        x = []
+        y = []
+        fit_param = fit_param_select.value
+        for s, p in zip(det_data, scan_table_source.data["param"]):
+            if "fit" in s and fit_param:
+                x.append(p)
+                y.append(s["fit"].values[fit_param])
+
+        param_plot_scatter_source.data.update(x=x, y=y)
+
     # Main plot
     plot = Plot(
         x_range=DataRange1d(),
@@ -325,7 +336,7 @@ def create():
     plot.toolbar.logo = None
 
     # Overview multilines plot
-    ov_plot = Plot(x_range=DataRange1d(), y_range=DataRange1d(), plot_height=400, plot_width=700)
+    ov_plot = Plot(x_range=DataRange1d(), y_range=DataRange1d(), plot_height=450, plot_width=700)
 
     ov_plot.add_layout(LinearAxis(axis_label="Counts"), place="left")
     ov_plot.add_layout(LinearAxis(axis_label="Scan motor"), place="below")
@@ -344,7 +355,7 @@ def create():
 
     # Overview perams plot
     ov_param_plot = Plot(
-        x_range=DataRange1d(), y_range=DataRange1d(), plot_height=400, plot_width=700
+        x_range=DataRange1d(), y_range=DataRange1d(), plot_height=450, plot_width=700
     )
 
     ov_param_plot.add_layout(LinearAxis(axis_label="Param"), place="left")
@@ -363,12 +374,34 @@ def create():
     ov_param_plot.add_tools(PanTool(), WheelZoomTool(), ResetTool())
     ov_param_plot.toolbar.logo = None
 
+    # Parameter plot
+    param_plot = Plot(x_range=DataRange1d(), y_range=DataRange1d(), plot_height=400, plot_width=700)
+
+    param_plot.add_layout(LinearAxis(axis_label="Fit parameter"), place="left")
+    param_plot.add_layout(LinearAxis(axis_label="Parameter"), place="below")
+
+    param_plot.add_layout(Grid(dimension=0, ticker=BasicTicker()))
+    param_plot.add_layout(Grid(dimension=1, ticker=BasicTicker()))
+
+    param_plot_scatter_source = ColumnDataSource(dict(x=[], y=[]))
+    param_plot.add_glyph(param_plot_scatter_source, Scatter(x="x", y="y"))
+
+    param_plot.add_tools(PanTool(), WheelZoomTool(), ResetTool())
+    param_plot.toolbar.logo = None
+
+    def fit_param_select_callback(_attr, _old, _new):
+        _update_param_plot()
+
+    fit_param_select = Select(title="Fit parameter", options=[], width=145)
+    fit_param_select.on_change("value", fit_param_select_callback)
+
     # Plot tabs
     plots = Tabs(
         tabs=[
             Panel(child=plot, title="single scan"),
             Panel(child=ov_plot, title="overview"),
             Panel(child=ov_param_plot, title="overview map"),
+            Panel(child=column(param_plot, row(fit_param_select)), title="parameter plot"),
         ]
     )
 
@@ -427,6 +460,7 @@ def create():
             param = [scan[new] for scan in det_data]
 
         scan_table_source.data["param"] = param
+        _update_param_plot()
 
     param_select = Select(
         title="Parameter:",
@@ -570,6 +604,14 @@ def create():
         _update_plot()
         _update_table()
 
+        for scan in det_data:
+            if "fit" in scan:
+                options = list(scan["fit"].params.keys())
+                fit_param_select.options = options
+                fit_param_select.value = options[0]
+                break
+        _update_param_plot()
+
     proc_all_button = Button(label="Process All", button_type="primary", width=145)
     proc_all_button.on_click(proc_all_button_callback)
 
@@ -586,6 +628,14 @@ def create():
 
         _update_plot()
         _update_table()
+
+        for scan in det_data:
+            if "fit" in scan:
+                options = list(scan["fit"].params.keys())
+                fit_param_select.options = options
+                fit_param_select.value = options[0]
+                break
+        _update_param_plot()
 
     proc_button = Button(label="Process Current", width=145)
     proc_button.on_click(proc_button_callback)
