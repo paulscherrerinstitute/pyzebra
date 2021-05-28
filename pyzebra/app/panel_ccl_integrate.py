@@ -28,7 +28,7 @@ from bokeh.models import (
     Panel,
     PanTool,
     Plot,
-    RadioButtonGroup,
+    RadioGroup,
     ResetTool,
     Scatter,
     Select,
@@ -505,9 +505,10 @@ def create():
     proc_button = Button(label="Process Current", width=145)
     proc_button.on_click(proc_button_callback)
 
-    area_method_radiobutton = RadioButtonGroup(labels=["Fit area", "Int area"], active=0, width=145)
+    area_method_div = Div(text="Intensity:", margin=(5, 5, 0, 5))
+    area_method_radiobutton = RadioGroup(labels=["Function", "Area"], active=0, width=145)
 
-    lorentz_checkbox = CheckboxGroup(labels=["Lorentz Correction"], width=145, margin=[13, 5, 5, 5])
+    lorentz_checkbox = CheckboxGroup(labels=["Lorentz Correction"], width=145, margin=(13, 5, 5, 5))
 
     export_preview_textinput = TextAreaInput(title="Export file preview:", width=500, height=400)
 
@@ -566,11 +567,8 @@ def create():
         column(fitparams_add_dropdown, fitparams_select, fitparams_remove_button),
         fitparams_table,
         Spacer(width=20),
-        column(
-            row(fit_from_spinner, fit_to_spinner),
-            row(area_method_radiobutton, lorentz_checkbox),
-            row(proc_button, proc_all_button),
-        ),
+        column(fit_from_spinner, lorentz_checkbox, area_method_div, area_method_radiobutton),
+        column(fit_to_spinner, proc_button, proc_all_button),
     )
 
     scan_layout = column(
