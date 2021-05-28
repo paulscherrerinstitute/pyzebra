@@ -655,7 +655,7 @@ def create():
                 if export:
                     export_data.append(s)
 
-            pyzebra.export_1D(export_data, temp_file, "fullprof")
+            # pyzebra.export_1D(export_data, temp_file, "fullprof")
 
             exported_content = ""
             file_content = []
