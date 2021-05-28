@@ -30,7 +30,7 @@ from bokeh.models import (
     Panel,
     PanTool,
     Plot,
-    RadioButtonGroup,
+    RadioGroup,
     ResetTool,
     Scatter,
     Select,
@@ -591,7 +591,7 @@ def create():
     proc_button.on_click(proc_button_callback)
 
     area_method_div = Div(text="Intensity:", margin=(5, 5, 0, 5))
-    area_method_radiobutton = RadioButtonGroup(labels=["Function", "Area"], active=0, width=145)
+    area_method_radiobutton = RadioGroup(labels=["Function", "Area"], active=0, width=145)
 
     lorentz_checkbox = CheckboxGroup(labels=["Lorentz Correction"], width=145, margin=(13, 5, 5, 5))
 
