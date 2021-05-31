@@ -176,26 +176,23 @@ def get_area(scan, area_method, lorentz):
         raise ValueError(f"Unknown area method: {area_method}.")
 
     if area_method == "fit_area":
+        area_v = 0
+        area_s = 0
         for name, param in scan["fit"].params.items():
             if "amplitude" in name:
                 if param.stderr is None:
-                    area_n = np.nan
+                    area_v = np.nan
                     area_s = np.nan
                 else:
-                    area_n = param.value
-                    area_s = param.stderr
-                # TODO: take into account multiple peaks
-                break
-        else:
-            area_n = np.nan
-            area_s = np.nan
+                    area_v += param.value
+                    area_s += param.stderr
 
     else:  # area_method == "int_area"
         y_val = scan["counts"]
         x_val = scan[scan["scan_motor"]]
         y_bkg = scan["fit"].eval_components(x=x_val)["f0_"]
-        area_n = simpson(y_val, x=x_val) - trapezoid(y_bkg, x=x_val)
-        area_s = np.sqrt(area_n)
+        area_v = simpson(y_val, x=x_val) - trapezoid(y_bkg, x=x_val)
+        area_s = np.sqrt(area_v)
 
     if lorentz:
         # lorentz correction to area
@@ -207,7 +204,7 @@ def get_area(scan, area_method, lorentz):
             nu = np.deg2rad(scan["nu"])
             corr_factor = np.sin(gamma) * np.cos(nu)
 
-        area_n = np.abs(area_n * corr_factor)
+        area_v = np.abs(area_v * corr_factor)
         area_s = np.abs(area_s * corr_factor)
 
-    scan["area"] = (area_n, area_s)
+    scan["area"] = (area_v, area_s)
