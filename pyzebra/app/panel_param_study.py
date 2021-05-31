@@ -21,6 +21,7 @@ from bokeh.models import (
     FileInput,
     Grid,
     HoverTool,
+    Image,
     Legend,
     Line,
     LinearAxis,
@@ -46,6 +47,7 @@ from bokeh.models import (
 )
 from bokeh.palettes import Category10, Turbo256
 from bokeh.transform import linear_cmap
+from scipy import interpolate
 
 import pyzebra
 from pyzebra.ccl_process import AREA_METHODS
@@ -269,6 +271,21 @@ def create():
             mapper["transform"].high = np.max([np.max(y) for y in ys])
         ov_param_plot_scatter_source.data.update(x=x, y=y, param=par)
 
+        if y:
+            interp_f = interpolate.interp2d(x, y, par)
+            x1, x2 = min(x), max(x)
+            y1, y2 = min(y), max(y)
+            image = interp_f(
+                np.linspace(x1, x2, ov_param_plot.inner_width // 10),
+                np.linspace(y1, y2, ov_param_plot.inner_height // 10),
+                assume_sorted=True,
+            )
+            ov_param_plot_image_source.data.update(
+                image=[image], x=[x1], y=[y1], dw=[x2 - x1], dh=[y2 - y1]
+            )
+        else:
+            ov_param_plot_image_source.data.update(image=[], x=[], y=[], dw=[], dh=[])
+
     def _update_param_plot():
         x = []
         y = []
@@ -363,6 +380,11 @@ def create():
 
     ov_param_plot.add_layout(Grid(dimension=0, ticker=BasicTicker()))
     ov_param_plot.add_layout(Grid(dimension=1, ticker=BasicTicker()))
+
+    ov_param_plot_image_source = ColumnDataSource(dict(image=[], x=[], y=[], dw=[], dh=[]))
+    ov_param_plot.add_glyph(
+        ov_param_plot_image_source, Image(image="image", x="x", y="y", dw="dw", dh="dh")
+    )
 
     ov_param_plot_scatter_source = ColumnDataSource(dict(x=[], y=[], param=[]))
     mapper = linear_cmap(field_name="param", palette=Turbo256, low=0, high=50)
