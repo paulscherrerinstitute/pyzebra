@@ -110,6 +110,8 @@ def create():
         scan_table_source.selected.indices = []
         scan_table_source.selected.indices = [0]
 
+        scan_motor_select.options = det_data[0]["scan_motors"]
+        scan_motor_select.value = det_data[0]["scan_motor"]
         param_select.value = "user defined"
 
     file_select = MultiSelect(title="Available .ccl/.dat files:", width=210, height=250)
@@ -193,6 +195,15 @@ def create():
 
     monitor_spinner = Spinner(title="Monitor:", mode="int", value=100_000, low=1, width=145)
     monitor_spinner.on_change("value", monitor_spinner_callback)
+
+    def scan_motor_select_callback(_attr, _old, new):
+        if det_data:
+            for scan in det_data:
+                scan["scan_motor"] = new
+            _update_plot()
+
+    scan_motor_select = Select(title="Scan motor:", options=[], width=145)
+    scan_motor_select.on_change("value", scan_motor_select_callback)
 
     def _update_table():
         fit_ok = [(1 if "fit" in scan else 0) for scan in det_data]
@@ -705,7 +716,7 @@ def create():
         column(fit_to_spinner, proc_button, proc_all_button),
     )
 
-    scan_layout = column(scan_table, row(monitor_spinner, param_select))
+    scan_layout = column(scan_table, row(monitor_spinner, scan_motor_select, param_select))
 
     import_layout = column(
         proposal_textinput,

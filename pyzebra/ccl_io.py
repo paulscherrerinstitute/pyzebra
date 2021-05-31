@@ -159,6 +159,7 @@ def parse_1D(fileobj, data_type):
 
             # "om" -> "omega"
             s["scan_motor"] = "omega"
+            s["scan_motors"] = ["omega", ]
             # overwrite metadata, because it only refers to the scan center
             half_dist = (s["n_points"] - 1) / 2 * s["angle_step"]
             s["omega"] = np.linspace(s["omega"] - half_dist, s["omega"] + half_dist, s["n_points"])
@@ -182,16 +183,8 @@ def parse_1D(fileobj, data_type):
         s = defaultdict(list)
 
         match = re.search("Scanning Variables: (.*), Steps: (.*)", next(fileobj))
-        if match.group(1) == "h, k, l":
-            steps = match.group(2).split()
-            for step, ind in zip(steps, "hkl"):
-                if float(step) != 0:
-                    scan_motor = ind
-                    break
-        else:
-            scan_motor = match.group(1)
-
-        s["scan_motor"] = scan_motor
+        s["scan_motors"] = [var.lower() for var in match.group(1).split(", ")]
+        s["scan_motor"] = s["scan_motors"][0]
 
         match = re.search("(.*) Points, Mode: (.*), Preset (.*)", next(fileobj))
         if match.group(2) != "Monitor":
@@ -212,14 +205,18 @@ def parse_1D(fileobj, data_type):
             s[name] = np.array(s[name])
 
         # "om" -> "omega"
-        if s["scan_motor"] == "om":
-            s["scan_motor"] = "omega"
+        if "om" in s["scan_motors"]:
+            s["scan_motors"][s["scan_motors"].index("om")] = "omega"
+            if s["scan_motor"] == "om":
+                s["scan_motor"] = "omega"
             s["omega"] = s["om"]
             del s["om"]
 
         # "tt" -> "temp"
-        elif s["scan_motor"] == "tt":
-            s["scan_motor"] = "temp"
+        elif "tt" in s["scan_motors"]:
+            s["scan_motors"][s["scan_motors"].index("tt")] = "temp"
+            if s["scan_motor"] == "tt":
+                s["scan_motor"] = "temp"
             s["temp"] = s["tt"]
             del s["tt"]
 
