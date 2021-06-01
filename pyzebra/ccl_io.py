@@ -183,8 +183,8 @@ def parse_1D(fileobj, data_type):
         s = defaultdict(list)
 
         match = re.search("Scanning Variables: (.*), Steps: (.*)", next(fileobj))
-        s["scan_motors"] = [var.lower() for var in match.group(1).split(", ")]
-        s["scan_motor"] = s["scan_motors"][0]
+        motors = [motor.lower() for motor in match.group(1).split(", ")]
+        steps = [float(step) for step in match.group(2).split()]
 
         match = re.search("(.*) Points, Mode: (.*), Preset (.*)", next(fileobj))
         if match.group(2) != "Monitor":
@@ -203,6 +203,15 @@ def parse_1D(fileobj, data_type):
 
         for name in col_names:
             s[name] = np.array(s[name])
+
+        s["scan_motors"] = []
+        for motor, step in zip(motors, steps):
+            if step == 0:
+                # it's not a scan motor, so keep only the median value
+                s[motor] = np.median(s[motor])
+            else:
+                s["scan_motors"].append(motor)
+        s["scan_motor"] = s["scan_motors"][0]
 
         # "om" -> "omega"
         if "om" in s["scan_motors"]:
