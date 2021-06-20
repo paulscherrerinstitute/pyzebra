@@ -161,7 +161,8 @@ def create():
         scanning_motor_range.end = var_end
         scanning_motor_range.reset_start = var_start
         scanning_motor_range.reset_end = var_end
-        scanning_motor_range.bounds = (var_start, var_end)
+        # handle both, ascending and descending sequences
+        scanning_motor_range.bounds = (min(var_start, var_end), max(var_start, var_end))
 
     def file_select_callback(_attr, old, new):
         nonlocal det_data
