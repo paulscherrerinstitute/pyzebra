@@ -81,8 +81,14 @@ def create():
 
     def proposal_textinput_callback(_attr, _old, new):
         proposal = new.strip()
-        year = new[:4]
-        proposal_path = f"/afs/psi.ch/project/sinqdata/{year}/zebra/{proposal}"
+        for zebra_proposals_path in pyzebra.ZEBRA_PROPOSALS_PATHS:
+            proposal_path = os.path.join(zebra_proposals_path, proposal)
+            if os.path.isdir(proposal_path):
+                # found it
+                break
+        else:
+            raise ValueError(f"Can not find data for proposal '{proposal}'.")
+
         file_list = []
         for file in os.listdir(proposal_path):
             if file.endswith((".ccl", ".dat")):
