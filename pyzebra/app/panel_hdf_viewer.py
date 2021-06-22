@@ -51,9 +51,11 @@ IMAGE_PLOT_H = int(IMAGE_H * 2) + 27
 
 def create():
     det_data = {}
+    cami_meta = {}
     roi_selection = {}
 
     def proposal_textinput_callback(_attr, _old, new):
+        nonlocal cami_meta
         proposal = new.strip()
         for zebra_proposals_path in pyzebra.ZEBRA_PROPOSALS_PATHS:
             proposal_path = os.path.join(zebra_proposals_path, proposal)
@@ -69,13 +71,16 @@ def create():
                 file_list.append((os.path.join(proposal_path, file), file))
         file_select.options = file_list
 
+        cami_meta = {}
+
     proposal_textinput = TextInput(title="Proposal number:", width=210)
     proposal_textinput.on_change("value", proposal_textinput_callback)
 
     def upload_button_callback(_attr, _old, new):
+        nonlocal cami_meta
         with io.StringIO(base64.b64decode(new).decode()) as file:
-            h5meta_list = pyzebra.parse_h5meta(file)
-            file_list = h5meta_list["filelist"]
+            cami_meta = pyzebra.parse_h5meta(file)
+            file_list = cami_meta["filelist"]
             file_select.options = [(entry, os.path.basename(entry)) for entry in file_list]
 
     upload_div = Div(text="or upload .cami file:", margin=(5, 5, 0, 5))
@@ -181,6 +186,9 @@ def create():
             return
 
         det_data = pyzebra.read_detector_data(new[0])
+
+        if cami_meta and "crystal" in cami_meta:
+            det_data["ub"] = cami_meta["crystal"]["UB"]
 
         index_spinner.value = 0
         index_spinner.high = det_data["data"].shape[0] - 1

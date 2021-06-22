@@ -1,5 +1,9 @@
 import h5py
+import numpy as np
 
+
+META_MATRIX = ("UB")
+META_STR = ("name")
 
 def read_h5meta(filepath):
     """Open and parse content of a h5meta file.
@@ -23,13 +27,30 @@ def parse_h5meta(file):
         line = line.strip()
         if line.startswith("#begin "):
             section = line[len("#begin ") :]
-            content[section] = []
+            if section in ("detector parameters", "crystal"):
+                content[section] = {}
+            else:
+                content[section] = []
 
         elif line.startswith("#end"):
             section = None
 
         elif section:
-            content[section].append(line)
+            if section in ("detector parameters", "crystal"):
+                if "=" in line:
+                    variable, value = line.split("=", 1)
+                    variable = variable.strip()
+                    value = value.strip()
+
+                    if variable in META_STR:
+                        content[section][variable] = value
+                    elif variable in META_MATRIX:
+                        ub_matrix = np.array(value.split(",")[:9], dtype=np.float).reshape(3, 3)
+                        content[section][variable] = ub_matrix
+                    else:  # default is a single float number
+                        content[section][variable] = float(value)
+            else:
+                content[section].append(line)
 
     return content
 
