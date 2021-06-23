@@ -1,8 +1,10 @@
 import base64
 import io
+import math
 import os
 
 import numpy as np
+from bokeh.io import curdoc
 from bokeh.layouts import column, gridplot, row
 from bokeh.models import (
     BasicTicker,
@@ -40,6 +42,7 @@ from bokeh.models import (
     WheelZoomTool,
 )
 from bokeh.palettes import Cividis256, Greys256, Plasma256  # pylint: disable=E0611
+from scipy.optimize import curve_fit
 
 import pyzebra
 
@@ -50,9 +53,9 @@ IMAGE_PLOT_H = int(IMAGE_H * 2) + 27
 
 
 def create():
+    doc = curdoc()
     det_data = {}
     cami_meta = {}
-    roi_selection = {}
 
     def proposal_textinput_callback(_attr, _old, new):
         nonlocal cami_meta
@@ -573,29 +576,91 @@ def create():
     hkl_button = Button(label="Calculate hkl (slow)", width=210)
     hkl_button.on_click(hkl_button_callback)
 
-    selection_list = TextAreaInput(rows=7)
+    def events_list_callback(_attr, _old, new):
+        doc.events_list_spind.value = new
 
-    def selection_button_callback():
-        nonlocal roi_selection
-        selection = [
-            int(np.floor(det_x_range.start)),
-            int(np.ceil(det_x_range.end)),
-            int(np.floor(det_y_range.start)),
-            int(np.ceil(det_y_range.end)),
-            int(np.floor(frame_range.start)),
-            int(np.ceil(frame_range.end)),
-        ]
+    events_list = TextAreaInput(rows=7, width=830)
+    events_list.on_change("value", events_list_callback)
+    doc.events_list_hdf_viewer = events_list
 
-        filename_id = file_select.value[0][-8:-4]
-        if filename_id in roi_selection:
-            roi_selection[f"{filename_id}"].append(selection)
-        else:
-            roi_selection[f"{filename_id}"] = [selection]
+    def add_event_button_callback():
+        diff_vec = []
+        p0 = [1.0, 0.0, 1.0]
+        maxfev = 100000
 
-        selection_list.value = str(roi_selection)
+        wave = det_data["wave"]
+        ddist = det_data["ddist"]
 
-    selection_button = Button(label="Add selection")
-    selection_button.on_click(selection_button_callback)
+        gamma = det_data["gamma"][0]
+        omega = det_data["omega"][0]
+        nu = det_data["nu"][0]
+        chi = det_data["chi"][0]
+        phi = det_data["phi"][0]
+
+        scan_motor = det_data["scan_motor"]
+        var_angle = det_data[scan_motor]
+
+        x0 = int(np.floor(det_x_range.start))
+        xN = int(np.ceil(det_x_range.end))
+        y0 = int(np.floor(det_y_range.start))
+        yN = int(np.ceil(det_y_range.end))
+        fr0 = int(np.floor(frame_range.start))
+        frN = int(np.ceil(frame_range.end))
+        data_roi = det_data["data"][fr0:frN, y0:yN, x0:xN]
+
+        cnts = np.sum(data_roi, axis=(1, 2))
+        coeff, _ = curve_fit(gauss, range(len(cnts)), cnts, p0=p0, maxfev=maxfev)
+
+        m = cnts.mean()
+        sd = cnts.std()
+        snr_cnts = np.where(sd == 0, 0, m / sd)
+
+        frC = fr0 + coeff[1]
+        var_F = var_angle[math.floor(frC)]
+        var_C = var_angle[math.ceil(frC)]
+        frStep = frC - math.floor(frC)
+        var_step = var_C - var_F
+        var_p = var_F + var_step * frStep
+
+        if scan_motor == "gamma":
+            gamma = var_p
+        elif scan_motor == "omega":
+            omega = var_p
+        elif scan_motor == "nu":
+            nu = var_p
+        elif scan_motor == "chi":
+            chi = var_p
+        elif scan_motor == "phi":
+            phi = var_p
+
+        intensity = coeff[1] * abs(coeff[2] * var_step) * math.sqrt(2) * math.sqrt(np.pi)
+
+        projX = np.sum(data_roi, axis=(0, 1))
+        coeff, _ = curve_fit(gauss, range(len(projX)), projX, p0=p0, maxfev=maxfev)
+        x_pos = x0 + coeff[1]
+
+        projY = np.sum(data_roi, axis=(0, 2))
+        coeff, _ = curve_fit(gauss, range(len(projY)), projY, p0=p0, maxfev=maxfev)
+        y_pos = y0 + coeff[1]
+
+        ga, nu = pyzebra.det2pol(ddist, gamma, nu, x_pos, y_pos)
+        diff_vector = pyzebra.z1frmd(wave, ga, omega, chi, phi, nu)
+        d_spacing = float(pyzebra.dandth(wave, diff_vector)[0])
+        diff_vector = diff_vector.flatten() * 1e10
+        dv1, dv2, dv3 = diff_vector
+
+        diff_vec.append(diff_vector)
+
+        if events_list.value and not events_list.value.endswith("\n"):
+            events_list.value = events_list.value + "\n"
+
+        events_list.value = (
+            events_list.value
+            + f"{x_pos} {y_pos} {intensity} {snr_cnts} {dv1} {dv2} {dv3} {d_spacing}"
+        )
+
+    add_event_button = Button(label="Add spind event")
+    add_event_button.on_click(add_event_button_callback)
 
     metadata_table_source = ColumnDataSource(dict(geom=[""], temp=[None], mf=[None]))
     num_formatter = NumberFormatter(format="0.00", nan_format="")
@@ -623,12 +688,10 @@ def create():
         row(proj_display_min_spinner, proj_display_max_spinner),
     )
 
-    layout_controls = row(
-        column(selection_button, selection_list),
-        Spacer(width=20),
-        column(
-            row(index_spinner, column(Spacer(height=25), index_slider)), metadata_table, hkl_button
-        ),
+    layout_controls = column(
+        row(metadata_table, index_spinner, column(Spacer(height=25), index_slider)),
+        row(add_event_button, hkl_button),
+        row(events_list),
     )
 
     layout_overview = column(
@@ -647,6 +710,17 @@ def create():
     )
 
     return Panel(child=tab_layout, title="hdf viewer")
+
+
+def gauss(x, *p):
+    """Defines Gaussian function
+    Args:
+        A - amplitude, mu - position of the center, sigma - width
+    Returns:
+        Gaussian function
+    """
+    A, mu, sigma = p
+    return A * np.exp(-((x - mu) ** 2) / (2.0 * sigma ** 2))
 
 
 def calculate_hkl(det_data, index):

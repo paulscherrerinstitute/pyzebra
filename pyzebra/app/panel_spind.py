@@ -1,5 +1,3 @@
-import ast
-import math
 import os
 import subprocess
 import tempfile
@@ -17,16 +15,18 @@ from bokeh.models import (
     TextAreaInput,
     TextInput,
 )
-from scipy.optimize import curve_fit
-
-import pyzebra
 
 
 def create():
     doc = curdoc()
 
-    path_prefix_textinput = TextInput(title="Path prefix:", value="")
-    selection_list = TextAreaInput(title="ROIs:", rows=7)
+    def events_list_callback(_attr, _old, new):
+        doc.events_list_hdf_viewer.value = new
+
+    events_list = TextAreaInput(title="Spind events:", rows=7, width=1500)
+    events_list.on_change("value", events_list_callback)
+    doc.events_list_spind = events_list
+
     lattice_const_textinput = TextInput(
         title="Lattice constants:", value="8.3211,8.3211,8.3211,90.00,90.00,90.00"
     )
@@ -49,7 +49,6 @@ def create():
             os.mkdir(temp_peak_list_dir)
             temp_event_file = os.path.join(temp_peak_list_dir, "event-0.txt")
             temp_hkl_file = os.path.join(temp_dir, "hkl.h5")
-            roi_dict = ast.literal_eval(selection_list.value)
 
             comp_proc = subprocess.run(
                 [
@@ -72,7 +71,12 @@ def create():
             print(" ".join(comp_proc.args))
             print(comp_proc.stdout)
 
-            diff_vec = prepare_event_file(temp_event_file, roi_dict, path_prefix_textinput.value)
+            # prepare an event file
+            diff_vec = []
+            with open(temp_event_file, "w") as f:
+                for event in events_list.value.splitlines():
+                    diff_vec.append(np.array(event.split()[4:7], dtype=float))
+                    f.write(event + "\n")
 
             print(f"Content of {temp_event_file}:")
             with open(temp_event_file) as f:
@@ -179,100 +183,18 @@ def create():
 
     results_table_source.selected.on_change("indices", results_table_select_callback)
 
-    tab_layout = row(
-        column(
-            path_prefix_textinput,
-            selection_list,
-            lattice_const_textinput,
-            row(max_res_spinner, seed_pool_size_spinner),
-            row(seed_len_tol_spinner, seed_angle_tol_spinner),
-            row(eval_hkl_tol_spinner),
-            process_button,
+    tab_layout = column(
+        events_list,
+        row(
+            column(
+                lattice_const_textinput,
+                row(max_res_spinner, seed_pool_size_spinner),
+                row(seed_len_tol_spinner, seed_angle_tol_spinner),
+                row(eval_hkl_tol_spinner),
+                process_button,
+            ),
+            column(results_table, row(ub_matrix_textareainput, hkl_textareainput)),
         ),
-        column(results_table, row(ub_matrix_textareainput, hkl_textareainput)),
     )
 
     return Panel(child=tab_layout, title="spind")
-
-
-def gauss(x, *p):
-    """Defines Gaussian function
-    Args:
-        A - amplitude, mu - position of the center, sigma - width
-    Returns:
-        Gaussian function
-    """
-    A, mu, sigma = p
-    return A * np.exp(-((x - mu) ** 2) / (2.0 * sigma ** 2))
-
-
-def prepare_event_file(export_filename, roi_dict, path_prefix=""):
-    diff_vec = []
-    p0 = [1.0, 0.0, 1.0]
-    maxfev = 100000
-    with open(export_filename, "w") as f:
-        for file, rois in roi_dict.items():
-            dat = pyzebra.read_detector_data(path_prefix + file + ".hdf")
-
-            wave = dat["wave"]
-            ddist = dat["ddist"]
-
-            gamma = dat["gamma"][0]
-            omega = dat["omega"][0]
-            nu = dat["nu"][0]
-            chi = dat["chi"][0]
-            phi = dat["phi"][0]
-
-            scan_motor = dat["scan_motor"]
-            var_angle = dat[scan_motor]
-
-            for roi in rois:
-                x0, xN, y0, yN, fr0, frN = roi
-                data_roi = dat["data"][fr0:frN, y0:yN, x0:xN]
-
-                cnts = np.sum(data_roi, axis=(1, 2))
-                coeff, _ = curve_fit(gauss, range(len(cnts)), cnts, p0=p0, maxfev=maxfev)
-
-                m = cnts.mean()
-                sd = cnts.std()
-                snr_cnts = np.where(sd == 0, 0, m / sd)
-
-                frC = fr0 + coeff[1]
-                var_F = var_angle[math.floor(frC)]
-                var_C = var_angle[math.ceil(frC)]
-                frStep = frC - math.floor(frC)
-                var_step = var_C - var_F
-                var_p = var_F + var_step * frStep
-
-                if scan_motor == "gamma":
-                    gamma = var_p
-                elif scan_motor == "omega":
-                    omega = var_p
-                elif scan_motor == "nu":
-                    nu = var_p
-                elif scan_motor == "chi":
-                    chi = var_p
-                elif scan_motor == "phi":
-                    phi = var_p
-
-                intensity = coeff[1] * abs(coeff[2] * var_step) * math.sqrt(2) * math.sqrt(np.pi)
-
-                projX = np.sum(data_roi, axis=(0, 1))
-                coeff, _ = curve_fit(gauss, range(len(projX)), projX, p0=p0, maxfev=maxfev)
-                x_pos = x0 + coeff[1]
-
-                projY = np.sum(data_roi, axis=(0, 2))
-                coeff, _ = curve_fit(gauss, range(len(projY)), projY, p0=p0, maxfev=maxfev)
-                y_pos = y0 + coeff[1]
-
-                ga, nu = pyzebra.det2pol(ddist, gamma, nu, x_pos, y_pos)
-                diff_vector = pyzebra.z1frmd(wave, ga, omega, chi, phi, nu)
-                d_spacing = float(pyzebra.dandth(wave, diff_vector)[0])
-                diff_vector = diff_vector.flatten() * 1e10
-                dv1, dv2, dv3 = diff_vector
-
-                diff_vec.append(diff_vector)
-
-                f.write(f"{x_pos} {y_pos} {intensity} {snr_cnts} {dv1} {dv2} {dv3} {d_spacing}\n")
-
-    return diff_vec
