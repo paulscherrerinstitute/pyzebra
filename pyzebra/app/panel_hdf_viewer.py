@@ -577,6 +577,7 @@ def create():
     events_data = dict(
         wave=[],
         ddist=[],
+        cell=[],
         frame=[],
         x_pos=[],
         y_pos=[],
@@ -616,6 +617,7 @@ def create():
 
         wave = det_data["wave"]
         ddist = det_data["ddist"]
+        cell = det_data["cell"]
 
         gamma = det_data["gamma"][0]
         omega = det_data["omega"][0]
@@ -671,6 +673,7 @@ def create():
 
         events_data["wave"].append(wave)
         events_data["ddist"].append(ddist)
+        events_data["cell"].append(cell)
         events_data["frame"].append(frC)
         events_data["x_pos"].append(x_pos)
         events_data["y_pos"].append(y_pos)
