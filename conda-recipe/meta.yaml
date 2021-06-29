@@ -23,10 +23,8 @@ requirements:
     - scipy
     - h5py
     - bokeh =2.3
-    - matplotlib
     - numba
     - lmfit
-    - uncertainties
 
 
 about:
