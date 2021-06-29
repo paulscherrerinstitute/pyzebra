@@ -16,17 +16,14 @@ from bokeh.models import (
     TextInput,
 )
 
+import pyzebra
+
 
 def create():
     doc = curdoc()
+    events_data = doc.events_data
 
-    def events_list_callback(_attr, _old, new):
-        doc.events_list_hdf_viewer.value = new
-
-    events_list = TextAreaInput(title="Spind events:", rows=7, width=1500)
-    events_list.on_change("value", events_list_callback)
-    doc.events_list_spind = events_list
-
+    npeaks_spinner = Spinner(title="Number of peaks from hdf_view panel:", disabled=True)
     lattice_const_textinput = TextInput(
         title="Lattice constants:", value="8.3211,8.3211,8.3211,90.00,90.00,90.00"
     )
@@ -74,9 +71,30 @@ def create():
             # prepare an event file
             diff_vec = []
             with open(temp_event_file, "w") as f:
-                for event in events_list.value.splitlines():
-                    diff_vec.append(np.array(event.split()[4:7], dtype=float))
-                    f.write(event + "\n")
+                npeaks = len(next(iter(doc.events_data.values())))
+                for ind in range(npeaks):
+                    wave = events_data["wave"][ind]
+                    ddist = events_data["ddist"][ind]
+                    x_pos = events_data["x_pos"][ind]
+                    y_pos = events_data["y_pos"][ind]
+                    intensity = events_data["intensity"][ind]
+                    snr_cnts = events_data["snr_cnts"][ind]
+                    gamma = events_data["gamma"][ind]
+                    omega = events_data["omega"][ind]
+                    chi = events_data["chi"][ind]
+                    phi = events_data["phi"][ind]
+                    nu = events_data["nu"][ind]
+
+                    ga, nu = pyzebra.det2pol(ddist, gamma, nu, x_pos, y_pos)
+                    diff_vector = pyzebra.z1frmd(wave, ga, omega, chi, phi, nu)
+                    d_spacing = float(pyzebra.dandth(wave, diff_vector)[0])
+                    diff_vector = diff_vector.flatten() * 1e10
+                    dv1, dv2, dv3 = diff_vector
+
+                    diff_vec.append(diff_vector)
+                    f.write(
+                        f"{x_pos} {y_pos} {intensity} {snr_cnts} {dv1} {dv2} {dv3} {d_spacing}\n"
+                    )
 
             print(f"Content of {temp_event_file}:")
             with open(temp_event_file) as f:
@@ -183,18 +201,21 @@ def create():
 
     results_table_source.selected.on_change("indices", results_table_select_callback)
 
-    tab_layout = column(
-        events_list,
-        row(
-            column(
-                lattice_const_textinput,
-                row(max_res_spinner, seed_pool_size_spinner),
-                row(seed_len_tol_spinner, seed_angle_tol_spinner),
-                row(eval_hkl_tol_spinner),
-                process_button,
-            ),
-            column(results_table, row(ub_matrix_textareainput, hkl_textareainput)),
+    tab_layout = row(
+        column(
+            npeaks_spinner,
+            lattice_const_textinput,
+            row(max_res_spinner, seed_pool_size_spinner),
+            row(seed_len_tol_spinner, seed_angle_tol_spinner),
+            row(eval_hkl_tol_spinner),
+            process_button,
         ),
+        column(results_table, row(ub_matrix_textareainput, hkl_textareainput)),
     )
+
+    async def update_npeaks_spinner():
+        npeaks_spinner.value = len(next(iter(doc.events_data.values())))
+
+    doc.add_periodic_callback(update_npeaks_spinner, 1000)
 
     return Panel(child=tab_layout, title="spind")

@@ -36,7 +36,6 @@ from bokeh.models import (
     Spacer,
     Spinner,
     TableColumn,
-    TextAreaInput,
     TextInput,
     Title,
     WheelZoomTool,
@@ -56,6 +55,8 @@ def create():
     doc = curdoc()
     det_data = {}
     cami_meta = {}
+
+    num_formatter = NumberFormatter(format="0.00", nan_format="")
 
     def proposal_textinput_callback(_attr, _old, new):
         nonlocal cami_meta
@@ -570,18 +571,46 @@ def create():
         h, k, l = calculate_hkl(det_data, index)
         image_source.data.update(h=[h], k=[k], l=[l])
 
-    hkl_button = Button(label="Calculate hkl (slow)", width=210)
+    hkl_button = Button(label="Calculate hkl (slow)", width=145)
     hkl_button.on_click(hkl_button_callback)
 
-    def events_list_callback(_attr, _old, new):
-        doc.events_list_spind.value = new
+    events_data = dict(
+        wave=[],
+        ddist=[],
+        frame=[],
+        x_pos=[],
+        y_pos=[],
+        intensity=[],
+        snr_cnts=[],
+        gamma=[],
+        omega=[],
+        chi=[],
+        phi=[],
+        nu=[],
+    )
+    doc.events_data = events_data
 
-    events_list = TextAreaInput(rows=7, width=830)
-    events_list.on_change("value", events_list_callback)
-    doc.events_list_hdf_viewer = events_list
+    events_table_source = ColumnDataSource(events_data)
+    events_table = DataTable(
+        source=events_table_source,
+        columns=[
+            TableColumn(field="frame", title="Frame", formatter=num_formatter, width=70),
+            TableColumn(field="x_pos", title="X", formatter=num_formatter, width=70),
+            TableColumn(field="y_pos", title="Y", formatter=num_formatter, width=70),
+            TableColumn(field="intensity", title="Intensity", formatter=num_formatter, width=70),
+            TableColumn(field="gamma", title="Gamma", formatter=num_formatter, width=70),
+            TableColumn(field="omega", title="Omega", formatter=num_formatter, width=70),
+            TableColumn(field="chi", title="Chi", formatter=num_formatter, width=70),
+            TableColumn(field="phi", title="Phi", formatter=num_formatter, width=70),
+            TableColumn(field="nu", title="Nu", formatter=num_formatter, width=70),
+        ],
+        height=150,
+        width=630,
+        autosize_mode="none",
+        index_position=None,
+    )
 
     def add_event_button_callback():
-        diff_vec = []
         p0 = [1.0, 0.0, 1.0]
         maxfev = 100000
 
@@ -640,27 +669,36 @@ def create():
         coeff, _ = curve_fit(gauss, range(len(projY)), projY, p0=p0, maxfev=maxfev)
         y_pos = y0 + coeff[1]
 
-        ga, nu = pyzebra.det2pol(ddist, gamma, nu, x_pos, y_pos)
-        diff_vector = pyzebra.z1frmd(wave, ga, omega, chi, phi, nu)
-        d_spacing = float(pyzebra.dandth(wave, diff_vector)[0])
-        diff_vector = diff_vector.flatten() * 1e10
-        dv1, dv2, dv3 = diff_vector
+        events_data["wave"].append(wave)
+        events_data["ddist"].append(ddist)
+        events_data["frame"].append(frC)
+        events_data["x_pos"].append(x_pos)
+        events_data["y_pos"].append(y_pos)
+        events_data["intensity"].append(intensity)
+        events_data["snr_cnts"].append(snr_cnts)
+        events_data["gamma"].append(gamma)
+        events_data["omega"].append(omega)
+        events_data["chi"].append(chi)
+        events_data["phi"].append(phi)
+        events_data["nu"].append(nu)
 
-        diff_vec.append(diff_vector)
+        events_table_source.data = events_data
 
-        if events_list.value and not events_list.value.endswith("\n"):
-            events_list.value = events_list.value + "\n"
-
-        events_list.value = (
-            events_list.value
-            + f"{x_pos} {y_pos} {intensity} {snr_cnts} {dv1} {dv2} {dv3} {d_spacing}"
-        )
-
-    add_event_button = Button(label="Add spind event")
+    add_event_button = Button(label="Add spind event", width=145)
     add_event_button.on_click(add_event_button_callback)
 
+    def remove_event_button_callback():
+        ind2remove = events_table_source.selected.indices
+        for value in events_data.values():
+            for ind in reversed(ind2remove):
+                del value[ind]
+
+        events_table_source.data = events_data
+
+    remove_event_button = Button(label="Remove spind event", width=145)
+    remove_event_button.on_click(remove_event_button_callback)
+
     metadata_table_source = ColumnDataSource(dict(geom=[""], temp=[None], mf=[None]))
-    num_formatter = NumberFormatter(format="0.00", nan_format="")
     metadata_table = DataTable(
         source=metadata_table_source,
         columns=[
@@ -687,8 +725,7 @@ def create():
 
     layout_controls = column(
         row(metadata_table, index_spinner, column(Spacer(height=25), index_slider)),
-        row(add_event_button, hkl_button),
-        row(events_list),
+        row(column(add_event_button, remove_event_button), events_table),
     )
 
     layout_overview = column(
@@ -703,7 +740,7 @@ def create():
     tab_layout = row(
         column(import_layout, colormap_layout),
         column(layout_overview, layout_controls),
-        column(roi_avg_plot, layout_image),
+        column(roi_avg_plot, layout_image, hkl_button),
     )
 
     return Panel(child=tab_layout, title="hdf viewer")
