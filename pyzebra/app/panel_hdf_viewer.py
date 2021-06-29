@@ -188,10 +188,7 @@ def create():
             # skip unnecessary update caused by selection drop
             return
 
-        det_data = pyzebra.read_detector_data(new[0])
-
-        if cami_meta and "crystal" in cami_meta:
-            det_data["ub"] = cami_meta["crystal"]["UB"]
+        det_data = pyzebra.read_detector_data(new[0], cami_meta)
 
         index_spinner.value = 0
         index_spinner.high = det_data["data"].shape[0] - 1
