@@ -4,6 +4,7 @@ import math
 import os
 
 import numpy as np
+from bokeh.events import MouseEnter
 from bokeh.io import curdoc
 from bokeh.layouts import column, gridplot, row
 from bokeh.models import (
@@ -278,6 +279,15 @@ def create():
 
     image_glyph = Image(image="image", x="x", y="y", dw="dw", dh="dh")
     plot.add_glyph(image_source, image_glyph, name="image_glyph")
+
+    # calculate hkl-indices of first mouse entry
+    def mouse_enter_callback(_event):
+        if det_data and np.array_equal(image_source.data["h"][0], np.zeros((1, 1))):
+            index = index_spinner.value
+            h, k, l = calculate_hkl(det_data, index)
+            image_source.data.update(h=[h], k=[k], l=[l])
+
+    plot.on_event(MouseEnter, mouse_enter_callback)
 
     # ---- projections
     proj_v = Plot(
@@ -574,14 +584,6 @@ def create():
     )
     proj_display_min_spinner.on_change("value", proj_display_min_spinner_callback)
 
-    def hkl_button_callback():
-        index = index_spinner.value
-        h, k, l = calculate_hkl(det_data, index)
-        image_source.data.update(h=[h], k=[k], l=[l])
-
-    hkl_button = Button(label="Calculate hkl (slow)", width=145)
-    hkl_button.on_click(hkl_button_callback)
-
     events_data = dict(
         wave=[],
         ddist=[],
@@ -751,7 +753,7 @@ def create():
     tab_layout = row(
         column(import_layout, colormap_layout),
         column(layout_overview, layout_controls),
-        column(roi_avg_plot, layout_image, hkl_button),
+        column(roi_avg_plot, layout_image),
     )
 
     return Panel(child=tab_layout, title="hdf viewer")
