@@ -58,9 +58,11 @@ def create():
 
     num_formatter = NumberFormatter(format="0.00", nan_format="")
 
-    def proposal_textinput_callback(_attr, _old, new):
-        nonlocal cami_meta
-        proposal = new.strip()
+    def file_select_update_for_proposal():
+        proposal = proposal_textinput.value.strip()
+        if not proposal:
+            return
+
         for zebra_proposals_path in pyzebra.ZEBRA_PROPOSALS_PATHS:
             proposal_path = os.path.join(zebra_proposals_path, proposal)
             if os.path.isdir(proposal_path):
@@ -75,13 +77,19 @@ def create():
                 file_list.append((os.path.join(proposal_path, file), file))
         file_select.options = file_list
 
+    doc.add_periodic_callback(file_select_update_for_proposal, 5000)
+
+    def proposal_textinput_callback(_attr, _old, _new):
+        nonlocal cami_meta
         cami_meta = {}
+        file_select_update_for_proposal()
 
     proposal_textinput = TextInput(title="Proposal number:", width=210)
     proposal_textinput.on_change("value", proposal_textinput_callback)
 
     def upload_button_callback(_attr, _old, new):
         nonlocal cami_meta
+        proposal_textinput.value = ""
         with io.StringIO(base64.b64decode(new).decode()) as file:
             cami_meta = pyzebra.parse_h5meta(file)
             file_list = cami_meta["filelist"]

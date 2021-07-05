@@ -5,6 +5,7 @@ import tempfile
 import types
 
 import numpy as np
+from bokeh.io import curdoc
 from bokeh.layouts import column, row
 from bokeh.models import (
     BasicTicker,
@@ -70,12 +71,19 @@ for (let i = 0; i < js_data.data['fname'].length; i++) {
 
 
 def create():
+    doc = curdoc()
     det_data = {}
     fit_params = {}
     js_data = ColumnDataSource(data=dict(content=["", ""], fname=["", ""], ext=["", ""]))
 
-    def proposal_textinput_callback(_attr, _old, new):
-        proposal = new.strip()
+    def file_select_update_for_proposal():
+        proposal = proposal_textinput.value.strip()
+        if not proposal:
+            file_select.options = []
+            file_open_button.disabled = True
+            file_append_button.disabled = True
+            return
+
         for zebra_proposals_path in pyzebra.ZEBRA_PROPOSALS_PATHS:
             proposal_path = os.path.join(zebra_proposals_path, proposal)
             if os.path.isdir(proposal_path):
@@ -91,6 +99,11 @@ def create():
         file_select.options = file_list
         file_open_button.disabled = False
         file_append_button.disabled = False
+
+    doc.add_periodic_callback(file_select_update_for_proposal, 5000)
+
+    def proposal_textinput_callback(_attr, _old, _new):
+        file_select_update_for_proposal()
 
     proposal_textinput = TextInput(title="Proposal number:", width=210)
     proposal_textinput.on_change("value", proposal_textinput_callback)
@@ -150,6 +163,7 @@ def create():
     def upload_button_callback(_attr, _old, new):
         nonlocal det_data
         det_data = []
+        proposal_textinput.value = ""
         for f_str, f_name in zip(new, upload_button.filename):
             with io.StringIO(base64.b64decode(f_str).decode()) as file:
                 base, ext = os.path.splitext(f_name)
