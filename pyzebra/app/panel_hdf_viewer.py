@@ -485,7 +485,7 @@ def create():
         update_image()
 
     main_auto_checkbox = CheckboxGroup(
-        labels=["Main Auto Range"], active=[0], width=145, margin=[10, 5, 0, 5]
+        labels=["Frame Intensity Range"], active=[0], width=145, margin=[10, 5, 0, 5]
     )
     main_auto_checkbox.on_click(main_auto_checkbox_callback)
 
@@ -531,7 +531,7 @@ def create():
         update_overview_plot()
 
     proj_auto_checkbox = CheckboxGroup(
-        labels=["Projections Auto Range"], active=[0], width=145, margin=[10, 5, 0, 5]
+        labels=["Projections Intensity Range"], active=[0], width=145, margin=[10, 5, 0, 5]
     )
     proj_auto_checkbox.on_click(proj_auto_checkbox_callback)
 

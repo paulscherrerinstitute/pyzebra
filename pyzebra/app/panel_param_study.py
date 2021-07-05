@@ -684,7 +684,7 @@ def create():
 
     lorentz_checkbox = CheckboxGroup(labels=["Lorentz Correction"], width=145, margin=(13, 5, 5, 5))
 
-    export_preview_textinput = TextAreaInput(title="Export file preview:", width=450, height=400)
+    export_preview_textinput = TextAreaInput(title="Export file(s) preview:", width=450, height=400)
 
     def _update_preview():
         with tempfile.TemporaryDirectory() as temp_dir:
