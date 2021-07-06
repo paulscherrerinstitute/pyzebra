@@ -8,4 +8,4 @@ ZEBRA_PROPOSALS_PATHS = [
     f"/afs/psi.ch/project/sinqdata/{year}/zebra/" for year in (2016, 2017, 2018, 2020, 2021)
 ]
 
-__version__ = "0.3.2"
+__version__ = "0.4.0"
