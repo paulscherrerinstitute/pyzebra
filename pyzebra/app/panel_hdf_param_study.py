@@ -4,12 +4,10 @@ import math
 import os
 
 import numpy as np
-from bokeh.events import MouseEnter
 from bokeh.io import curdoc
 from bokeh.layouts import column, gridplot, row
 from bokeh.models import (
     BasicTicker,
-    BoxEditTool,
     BoxZoomTool,
     Button,
     CheckboxGroup,
@@ -20,23 +18,21 @@ from bokeh.models import (
     FileInput,
     Grid,
     MultiSelect,
+    NumberEditor,
     NumberFormatter,
-    HoverTool,
     Image,
-    Line,
     LinearAxis,
     LinearColorMapper,
     Panel,
     PanTool,
     Plot,
     Range1d,
-    Rect,
     ResetTool,
+    Scatter,
     Select,
-    Slider,
-    Spacer,
     Spinner,
     TableColumn,
+    Tabs,
     TextInput,
     Title,
     WheelZoomTool,
@@ -54,6 +50,7 @@ IMAGE_PLOT_H = int(IMAGE_H * 2) + 27
 
 def create():
     doc = curdoc()
+    zebra_data = []
     det_data = {}
     cami_meta = {}
 
@@ -100,33 +97,133 @@ def create():
     upload_button = FileInput(accept=".cami", width=200)
     upload_button.on_change("value", upload_button_callback)
 
+    file_select = MultiSelect(title="Available .hdf files:", width=210, height=320)
+
+    def _init_datatable():
+        file_list = []
+        for scan in zebra_data:
+            file_list.append(os.path.basename(scan["original_filename"]))
+
+        scan_table_source.data.update(
+            file=file_list,
+            param=[None] * len(zebra_data),
+            frame=[None] * len(zebra_data),
+            x_pos=[None] * len(zebra_data),
+            y_pos=[None] * len(zebra_data),
+        )
+        scan_table_source.selected.indices = []
+        scan_table_source.selected.indices = [0]
+
+        param_select.value = "user defined"
+
+    def _update_table():
+        frame = []
+        x_pos = []
+        y_pos = []
+        for scan in zebra_data:
+            if "fit" in scan:
+                framei = scan["fit"]["frame"]
+                x_posi = scan["fit"]["x_pos"]
+                y_posi = scan["fit"]["y_pos"]
+            else:
+                framei = x_posi = y_posi = None
+
+            frame.append(framei)
+            x_pos.append(x_posi)
+            y_pos.append(y_posi)
+
+        scan_table_source.data.update(frame=frame, x_pos=x_pos, y_pos=y_pos)
+
+    def file_open_button_callback():
+        nonlocal zebra_data
+        zebra_data = []
+        for f_name in file_select.value:
+            zebra_data.append(pyzebra.read_detector_data(f_name))
+
+        _init_datatable()
+
+    file_open_button = Button(label="Open New", width=100)
+    file_open_button.on_click(file_open_button_callback)
+
+    def file_append_button_callback():
+        for f_name in file_select.value:
+            zebra_data.append(pyzebra.read_detector_data(f_name))
+
+        _init_datatable()
+
+    file_append_button = Button(label="Append", width=100)
+    file_append_button.on_click(file_append_button_callback)
+
+    # Scan select
+    def scan_table_select_callback(_attr, old, new):
+        nonlocal det_data
+
+        if not new:
+            # skip empty selections
+            return
+
+        # Avoid selection of multiple indicies (via Shift+Click or Ctrl+Click)
+        if len(new) > 1:
+            # drop selection to the previous one
+            scan_table_source.selected.indices = old
+            return
+
+        if len(old) > 1:
+            # skip unnecessary update caused by selection drop
+            return
+
+        det_data = zebra_data[new[0]]
+
+        zebra_mode = det_data["zebra_mode"]
+        if zebra_mode == "nb":
+            metadata_table_source.data.update(geom=["normal beam"])
+        else:  # zebra_mode == "bi"
+            metadata_table_source.data.update(geom=["bisecting"])
+
+        update_image(0)
+        update_overview_plot()
+
+    def scan_table_source_callback(_attr, _old, _new):
+        pass
+
+    scan_table_source = ColumnDataSource(dict(file=[], param=[], frame=[], x_pos=[], y_pos=[]))
+    scan_table_source.selected.on_change("indices", scan_table_select_callback)
+    scan_table_source.on_change("data", scan_table_source_callback)
+
+    scan_table = DataTable(
+        source=scan_table_source,
+        columns=[
+            TableColumn(field="file", title="file", width=150),
+            TableColumn(field="param", title="param", editor=NumberEditor(), width=50),
+            TableColumn(field="frame", title="Frame", width=70),
+            TableColumn(field="x_pos", title="X", width=70),
+            TableColumn(field="y_pos", title="Y", width=70),
+        ],
+        width=470,  # +60 because of the index column
+        height=420,
+        editable=True,
+        autosize_mode="none",
+    )
+
+    def param_select_callback(_attr, _old, new):
+        if new == "user defined":
+            param = [None] * len(zebra_data)
+        else:
+            # TODO: which value to take?
+            param = [scan[new][0] for scan in zebra_data]
+
+        scan_table_source.data["param"] = param
+        _update_param_plot()
+
+    param_select = Select(
+        title="Parameter:",
+        options=["user defined", "temp", "mf", "h", "k", "l"],
+        value="user defined",
+        width=145,
+    )
+    param_select.on_change("value", param_select_callback)
+
     def update_image(index=None):
-        if index is None:
-            index = index_spinner.value
-
-        current_image = det_data["data"][index]
-        proj_v_line_source.data.update(
-            x=np.arange(0, IMAGE_W) + 0.5, y=np.mean(current_image, axis=0)
-        )
-        proj_h_line_source.data.update(
-            x=np.mean(current_image, axis=1), y=np.arange(0, IMAGE_H) + 0.5
-        )
-
-        image_source.data.update(
-            h=[np.zeros((1, 1))], k=[np.zeros((1, 1))], l=[np.zeros((1, 1))],
-        )
-        image_source.data.update(image=[current_image])
-
-        if main_auto_checkbox.active:
-            im_min = np.min(current_image)
-            im_max = np.max(current_image)
-
-            display_min_spinner.value = im_min
-            display_max_spinner.value = im_max
-
-            image_glyph.color_mapper.low = im_min
-            image_glyph.color_mapper.high = im_max
-
         if "mf" in det_data:
             metadata_table_source.data.update(mf=[det_data["mf"][index]])
         else:
@@ -136,10 +233,6 @@ def create():
             metadata_table_source.data.update(temp=[det_data["temp"][index]])
         else:
             metadata_table_source.data.update(temp=[None])
-
-        gamma, nu = calculate_pol(det_data, index)
-        omega = np.ones((IMAGE_H, IMAGE_W)) * det_data["omega"][index]
-        image_source.data.update(gamma=[gamma], nu=[nu], omega=[omega])
 
     def update_overview_plot():
         h5_data = det_data["data"]
@@ -181,191 +274,6 @@ def create():
         scanning_motor_range.reset_end = var_end
         # handle both, ascending and descending sequences
         scanning_motor_range.bounds = (min(var_start, var_end), max(var_start, var_end))
-
-    def file_select_callback(_attr, old, new):
-        nonlocal det_data
-        if not new:
-            # skip empty selections
-            return
-
-        # Avoid selection of multiple indicies (via Shift+Click or Ctrl+Click)
-        if len(new) > 1:
-            # drop selection to the previous one
-            file_select.value = old
-            return
-
-        if len(old) > 1:
-            # skip unnecessary update caused by selection drop
-            return
-
-        det_data = pyzebra.read_detector_data(new[0], cami_meta)
-
-        index_spinner.value = 0
-        index_spinner.high = det_data["data"].shape[0] - 1
-        index_slider.end = det_data["data"].shape[0] - 1
-
-        zebra_mode = det_data["zebra_mode"]
-        if zebra_mode == "nb":
-            metadata_table_source.data.update(geom=["normal beam"])
-        else:  # zebra_mode == "bi"
-            metadata_table_source.data.update(geom=["bisecting"])
-
-        update_image(0)
-        update_overview_plot()
-
-    file_select = MultiSelect(title="Available .hdf files:", width=210, height=250)
-    file_select.on_change("value", file_select_callback)
-
-    def index_callback(_attr, _old, new):
-        update_image(new)
-
-    index_slider = Slider(value=0, start=0, end=1, show_value=False, width=400)
-
-    index_spinner = Spinner(title="Image index:", value=0, low=0, width=100)
-    index_spinner.on_change("value", index_callback)
-
-    index_slider.js_link("value_throttled", index_spinner, "value")
-    index_spinner.js_link("value", index_slider, "value")
-
-    plot = Plot(
-        x_range=Range1d(0, IMAGE_W, bounds=(0, IMAGE_W)),
-        y_range=Range1d(0, IMAGE_H, bounds=(0, IMAGE_H)),
-        plot_height=IMAGE_PLOT_H,
-        plot_width=IMAGE_PLOT_W,
-        toolbar_location="left",
-    )
-
-    # ---- tools
-    plot.toolbar.logo = None
-
-    # ---- axes
-    plot.add_layout(LinearAxis(), place="above")
-    plot.add_layout(LinearAxis(major_label_orientation="vertical"), place="right")
-
-    # ---- grid lines
-    plot.add_layout(Grid(dimension=0, ticker=BasicTicker()))
-    plot.add_layout(Grid(dimension=1, ticker=BasicTicker()))
-
-    # ---- rgba image glyph
-    image_source = ColumnDataSource(
-        dict(
-            image=[np.zeros((IMAGE_H, IMAGE_W), dtype="float32")],
-            h=[np.zeros((1, 1))],
-            k=[np.zeros((1, 1))],
-            l=[np.zeros((1, 1))],
-            gamma=[np.zeros((1, 1))],
-            nu=[np.zeros((1, 1))],
-            omega=[np.zeros((1, 1))],
-            x=[0],
-            y=[0],
-            dw=[IMAGE_W],
-            dh=[IMAGE_H],
-        )
-    )
-
-    h_glyph = Image(image="h", x="x", y="y", dw="dw", dh="dh", global_alpha=0)
-    k_glyph = Image(image="k", x="x", y="y", dw="dw", dh="dh", global_alpha=0)
-    l_glyph = Image(image="l", x="x", y="y", dw="dw", dh="dh", global_alpha=0)
-    gamma_glyph = Image(image="gamma", x="x", y="y", dw="dw", dh="dh", global_alpha=0)
-    nu_glyph = Image(image="nu", x="x", y="y", dw="dw", dh="dh", global_alpha=0)
-    omega_glyph = Image(image="omega", x="x", y="y", dw="dw", dh="dh", global_alpha=0)
-
-    plot.add_glyph(image_source, h_glyph)
-    plot.add_glyph(image_source, k_glyph)
-    plot.add_glyph(image_source, l_glyph)
-    plot.add_glyph(image_source, gamma_glyph)
-    plot.add_glyph(image_source, nu_glyph)
-    plot.add_glyph(image_source, omega_glyph)
-
-    image_glyph = Image(image="image", x="x", y="y", dw="dw", dh="dh")
-    plot.add_glyph(image_source, image_glyph, name="image_glyph")
-
-    # calculate hkl-indices of first mouse entry
-    def mouse_enter_callback(_event):
-        if det_data and np.array_equal(image_source.data["h"][0], np.zeros((1, 1))):
-            index = index_spinner.value
-            h, k, l = calculate_hkl(det_data, index)
-            image_source.data.update(h=[h], k=[k], l=[l])
-
-    plot.on_event(MouseEnter, mouse_enter_callback)
-
-    # ---- projections
-    proj_v = Plot(
-        x_range=plot.x_range,
-        y_range=DataRange1d(),
-        plot_height=150,
-        plot_width=IMAGE_PLOT_W,
-        toolbar_location=None,
-    )
-
-    proj_v.add_layout(LinearAxis(major_label_orientation="vertical"), place="right")
-    proj_v.add_layout(LinearAxis(major_label_text_font_size="0pt"), place="below")
-
-    proj_v.add_layout(Grid(dimension=0, ticker=BasicTicker()))
-    proj_v.add_layout(Grid(dimension=1, ticker=BasicTicker()))
-
-    proj_v_line_source = ColumnDataSource(dict(x=[], y=[]))
-    proj_v.add_glyph(proj_v_line_source, Line(x="x", y="y", line_color="steelblue"))
-
-    proj_h = Plot(
-        x_range=DataRange1d(),
-        y_range=plot.y_range,
-        plot_height=IMAGE_PLOT_H,
-        plot_width=150,
-        toolbar_location=None,
-    )
-
-    proj_h.add_layout(LinearAxis(), place="above")
-    proj_h.add_layout(LinearAxis(major_label_text_font_size="0pt"), place="left")
-
-    proj_h.add_layout(Grid(dimension=0, ticker=BasicTicker()))
-    proj_h.add_layout(Grid(dimension=1, ticker=BasicTicker()))
-
-    proj_h_line_source = ColumnDataSource(dict(x=[], y=[]))
-    proj_h.add_glyph(proj_h_line_source, Line(x="x", y="y", line_color="steelblue"))
-
-    # add tools
-    hovertool = HoverTool(
-        tooltips=[
-            ("intensity", "@image"),
-            ("gamma", "@gamma"),
-            ("nu", "@nu"),
-            ("omega", "@omega"),
-            ("h", "@h"),
-            ("k", "@k"),
-            ("l", "@l"),
-        ]
-    )
-
-    box_edit_source = ColumnDataSource(dict(x=[], y=[], width=[], height=[]))
-    box_edit_glyph = Rect(
-        x="x", y="y", width="width", height="height", fill_alpha=0, line_color="red"
-    )
-    box_edit_renderer = plot.add_glyph(box_edit_source, box_edit_glyph)
-    boxedittool = BoxEditTool(renderers=[box_edit_renderer], num_objects=1)
-
-    def box_edit_callback(_attr, _old, new):
-        if new["x"]:
-            h5_data = det_data["data"]
-            x_val = np.arange(h5_data.shape[0])
-            left = int(np.floor(new["x"][0]))
-            right = int(np.ceil(new["x"][0] + new["width"][0]))
-            bottom = int(np.floor(new["y"][0]))
-            top = int(np.ceil(new["y"][0] + new["height"][0]))
-            y_val = np.sum(h5_data[:, bottom:top, left:right], axis=(1, 2))
-        else:
-            x_val = []
-            y_val = []
-
-        roi_avg_plot_line_source.data.update(x=x_val, y=y_val)
-
-    box_edit_source.on_change("data", box_edit_callback)
-
-    wheelzoomtool = WheelZoomTool(maintain_focus=False)
-    plot.add_tools(
-        PanTool(), BoxZoomTool(), wheelzoomtool, ResetTool(), hovertool, boxedittool,
-    )
-    plot.toolbar.active_scroll = wheelzoomtool
 
     # shared frame ranges
     frame_range = Range1d(0, 1, bounds=(0, 1))
@@ -452,28 +360,6 @@ def create():
         overview_plot_y_image_source, overview_plot_y_image_glyph, name="image_glyph"
     )
 
-    roi_avg_plot = Plot(
-        x_range=DataRange1d(),
-        y_range=DataRange1d(),
-        plot_height=150,
-        plot_width=IMAGE_PLOT_W,
-        toolbar_location="left",
-    )
-
-    # ---- tools
-    roi_avg_plot.toolbar.logo = None
-
-    # ---- axes
-    roi_avg_plot.add_layout(LinearAxis(), place="below")
-    roi_avg_plot.add_layout(LinearAxis(major_label_orientation="vertical"), place="left")
-
-    # ---- grid lines
-    roi_avg_plot.add_layout(Grid(dimension=0, ticker=BasicTicker()))
-    roi_avg_plot.add_layout(Grid(dimension=1, ticker=BasicTicker()))
-
-    roi_avg_plot_line_source = ColumnDataSource(dict(x=[], y=[]))
-    roi_avg_plot.add_glyph(roi_avg_plot_line_source, Line(x="x", y="y", line_color="steelblue"))
-
     cmap_dict = {
         "gray": Greys256,
         "gray_reversed": Greys256[::-1],
@@ -482,59 +368,12 @@ def create():
     }
 
     def colormap_callback(_attr, _old, new):
-        image_glyph.color_mapper = LinearColorMapper(palette=cmap_dict[new])
         overview_plot_x_image_glyph.color_mapper = LinearColorMapper(palette=cmap_dict[new])
         overview_plot_y_image_glyph.color_mapper = LinearColorMapper(palette=cmap_dict[new])
 
     colormap = Select(title="Colormap:", options=list(cmap_dict.keys()), width=210)
     colormap.on_change("value", colormap_callback)
     colormap.value = "plasma"
-
-    STEP = 1
-
-    def main_auto_checkbox_callback(state):
-        if state:
-            display_min_spinner.disabled = True
-            display_max_spinner.disabled = True
-        else:
-            display_min_spinner.disabled = False
-            display_max_spinner.disabled = False
-
-        update_image()
-
-    main_auto_checkbox = CheckboxGroup(
-        labels=["Frame Intensity Range"], active=[0], width=145, margin=[10, 5, 0, 5]
-    )
-    main_auto_checkbox.on_click(main_auto_checkbox_callback)
-
-    def display_max_spinner_callback(_attr, _old_value, new_value):
-        display_min_spinner.high = new_value - STEP
-        image_glyph.color_mapper.high = new_value
-
-    display_max_spinner = Spinner(
-        low=0 + STEP,
-        value=1,
-        step=STEP,
-        disabled=bool(main_auto_checkbox.active),
-        width=100,
-        height=31,
-    )
-    display_max_spinner.on_change("value", display_max_spinner_callback)
-
-    def display_min_spinner_callback(_attr, _old_value, new_value):
-        display_max_spinner.low = new_value + STEP
-        image_glyph.color_mapper.low = new_value
-
-    display_min_spinner = Spinner(
-        low=0,
-        high=1 - STEP,
-        value=0,
-        step=STEP,
-        disabled=bool(main_auto_checkbox.active),
-        width=100,
-        height=31,
-    )
-    display_min_spinner.on_change("value", display_min_spinner_callback)
 
     PROJ_STEP = 0.1
 
@@ -584,59 +423,22 @@ def create():
     )
     proj_display_min_spinner.on_change("value", proj_display_min_spinner_callback)
 
-    events_data = dict(
-        wave=[],
-        ddist=[],
-        cell=[],
-        frame=[],
-        x_pos=[],
-        y_pos=[],
-        intensity=[],
-        snr_cnts=[],
-        gamma=[],
-        omega=[],
-        chi=[],
-        phi=[],
-        nu=[],
-    )
-    doc.events_data = events_data
-
-    events_table_source = ColumnDataSource(events_data)
-    events_table = DataTable(
-        source=events_table_source,
-        columns=[
-            TableColumn(field="frame", title="Frame", formatter=num_formatter, width=70),
-            TableColumn(field="x_pos", title="X", formatter=num_formatter, width=70),
-            TableColumn(field="y_pos", title="Y", formatter=num_formatter, width=70),
-            TableColumn(field="intensity", title="Intensity", formatter=num_formatter, width=70),
-            TableColumn(field="gamma", title="Gamma", formatter=num_formatter, width=70),
-            TableColumn(field="omega", title="Omega", formatter=num_formatter, width=70),
-            TableColumn(field="chi", title="Chi", formatter=num_formatter, width=70),
-            TableColumn(field="phi", title="Phi", formatter=num_formatter, width=70),
-            TableColumn(field="nu", title="Nu", formatter=num_formatter, width=70),
-        ],
-        height=150,
-        width=630,
-        autosize_mode="none",
-        index_position=None,
-    )
-
-    def add_event_button_callback():
+    def fit_event(scan):
         p0 = [1.0, 0.0, 1.0]
         maxfev = 100000
 
-        wave = det_data["wave"]
-        ddist = det_data["ddist"]
-        cell = det_data["cell"]
+        # wave = scan["wave"]
+        # ddist = scan["ddist"]
+        # cell = scan["cell"]
 
-        gamma = det_data["gamma"][0]
-        omega = det_data["omega"][0]
-        nu = det_data["nu"][0]
-        chi = det_data["chi"][0]
-        phi = det_data["phi"][0]
+        # gamma = scan["gamma"][0]
+        # omega = scan["omega"][0]
+        # nu = scan["nu"][0]
+        # chi = scan["chi"][0]
+        # phi = scan["phi"][0]
 
-        scan_motor = det_data["scan_motor"]
-        var_angle = det_data[scan_motor]
+        scan_motor = scan["scan_motor"]
+        var_angle = scan[scan_motor]
 
         x0 = int(np.floor(det_x_range.start))
         xN = int(np.ceil(det_x_range.end))
@@ -644,32 +446,32 @@ def create():
         yN = int(np.ceil(det_y_range.end))
         fr0 = int(np.floor(frame_range.start))
         frN = int(np.ceil(frame_range.end))
-        data_roi = det_data["data"][fr0:frN, y0:yN, x0:xN]
+        data_roi = scan["data"][fr0:frN, y0:yN, x0:xN]
 
         cnts = np.sum(data_roi, axis=(1, 2))
         coeff, _ = curve_fit(gauss, range(len(cnts)), cnts, p0=p0, maxfev=maxfev)
 
-        m = cnts.mean()
-        sd = cnts.std()
-        snr_cnts = np.where(sd == 0, 0, m / sd)
+        # m = cnts.mean()
+        # sd = cnts.std()
+        # snr_cnts = np.where(sd == 0, 0, m / sd)
 
         frC = fr0 + coeff[1]
         var_F = var_angle[math.floor(frC)]
         var_C = var_angle[math.ceil(frC)]
-        frStep = frC - math.floor(frC)
+        # frStep = frC - math.floor(frC)
         var_step = var_C - var_F
-        var_p = var_F + var_step * frStep
+        # var_p = var_F + var_step * frStep
 
-        if scan_motor == "gamma":
-            gamma = var_p
-        elif scan_motor == "omega":
-            omega = var_p
-        elif scan_motor == "nu":
-            nu = var_p
-        elif scan_motor == "chi":
-            chi = var_p
-        elif scan_motor == "phi":
-            phi = var_p
+        # if scan_motor == "gamma":
+        #     gamma = var_p
+        # elif scan_motor == "omega":
+        #     omega = var_p
+        # elif scan_motor == "nu":
+        #     nu = var_p
+        # elif scan_motor == "chi":
+        #     chi = var_p
+        # elif scan_motor == "phi":
+        #     phi = var_p
 
         intensity = coeff[1] * abs(coeff[2] * var_step) * math.sqrt(2) * math.sqrt(np.pi)
 
@@ -681,35 +483,7 @@ def create():
         coeff, _ = curve_fit(gauss, range(len(projY)), projY, p0=p0, maxfev=maxfev)
         y_pos = y0 + coeff[1]
 
-        events_data["wave"].append(wave)
-        events_data["ddist"].append(ddist)
-        events_data["cell"].append(cell)
-        events_data["frame"].append(frC)
-        events_data["x_pos"].append(x_pos)
-        events_data["y_pos"].append(y_pos)
-        events_data["intensity"].append(intensity)
-        events_data["snr_cnts"].append(snr_cnts)
-        events_data["gamma"].append(gamma)
-        events_data["omega"].append(omega)
-        events_data["chi"].append(chi)
-        events_data["phi"].append(phi)
-        events_data["nu"].append(nu)
-
-        events_table_source.data = events_data
-
-    add_event_button = Button(label="Add spind event", width=145)
-    add_event_button.on_click(add_event_button_callback)
-
-    def remove_event_button_callback():
-        ind2remove = events_table_source.selected.indices
-        for value in events_data.values():
-            for ind in reversed(ind2remove):
-                del value[ind]
-
-        events_table_source.data = events_data
-
-    remove_event_button = Button(label="Remove spind event", width=145)
-    remove_event_button.on_click(remove_event_button_callback)
+        scan["fit"] = {"frame": frC, "x_pos": x_pos, "y_pos": y_pos, "intensity": intensity}
 
     metadata_table_source = ColumnDataSource(dict(geom=[""], temp=[None], mf=[None]))
     metadata_table = DataTable(
@@ -725,20 +499,78 @@ def create():
         index_position=None,
     )
 
-    # Final layout
-    import_layout = column(proposal_textinput, upload_div, upload_button, file_select)
-    layout_image = column(gridplot([[proj_v, None], [plot, proj_h]], merge_tools=False))
-    colormap_layout = column(
-        colormap,
-        main_auto_checkbox,
-        row(display_min_spinner, display_max_spinner),
-        proj_auto_checkbox,
-        row(proj_display_min_spinner, proj_display_max_spinner),
-    )
+    def _update_param_plot():
+        x = []
+        y = []
+        fit_param = fit_param_select.value
+        for s, p in zip(zebra_data, scan_table_source.data["param"]):
+            if "fit" in s and fit_param:
+                x.append(p)
+                y.append(s["fit"][fit_param])
+        print(x, y)
+        param_plot_scatter_source.data.update(x=x, y=y)
 
-    layout_controls = column(
-        row(metadata_table, index_spinner, column(Spacer(height=25), index_slider)),
-        row(column(add_event_button, remove_event_button), events_table),
+    # Parameter plot
+    param_plot = Plot(x_range=DataRange1d(), y_range=DataRange1d(), plot_height=400, plot_width=700)
+
+    param_plot.add_layout(LinearAxis(axis_label="Fit parameter"), place="left")
+    param_plot.add_layout(LinearAxis(axis_label="Parameter"), place="below")
+
+    param_plot.add_layout(Grid(dimension=0, ticker=BasicTicker()))
+    param_plot.add_layout(Grid(dimension=1, ticker=BasicTicker()))
+
+    param_plot_scatter_source = ColumnDataSource(dict(x=[], y=[]))
+    param_plot.add_glyph(param_plot_scatter_source, Scatter(x="x", y="y"))
+
+    param_plot.add_tools(PanTool(), WheelZoomTool(), ResetTool())
+    param_plot.toolbar.logo = None
+
+    def fit_param_select_callback(_attr, _old, _new):
+        _update_param_plot()
+
+    fit_param_select = Select(title="Fit parameter", options=[], width=145)
+    fit_param_select.on_change("value", fit_param_select_callback)
+
+    def proc_all_button_callback():
+        for scan in zebra_data:
+            fit_event(scan)
+
+        _update_table()
+
+        for scan in zebra_data:
+            if "fit" in scan:
+                options = list(scan["fit"].keys())
+                fit_param_select.options = options
+                fit_param_select.value = options[0]
+                break
+
+        _update_param_plot()
+
+    proc_all_button = Button(label="Process All", button_type="primary", width=145)
+    proc_all_button.on_click(proc_all_button_callback)
+
+    def proc_button_callback():
+        fit_event(det_data)
+
+        _update_table()
+
+        for scan in zebra_data:
+            if "fit" in scan:
+                options = list(scan["fit"].keys())
+                fit_param_select.options = options
+                fit_param_select.value = options[0]
+                break
+
+        _update_param_plot()
+
+    proc_button = Button(label="Process Current", width=145)
+    proc_button.on_click(proc_button_callback)
+
+    layout_controls = row(
+        colormap,
+        column(proj_auto_checkbox, row(proj_display_min_spinner, proj_display_max_spinner)),
+        proc_button,
+        proc_all_button,
     )
 
     layout_overview = column(
@@ -748,13 +580,29 @@ def create():
             merge_tools=True,
             toolbar_location="left",
         ),
+        layout_controls,
     )
 
-    tab_layout = row(
-        column(import_layout, colormap_layout),
-        column(layout_overview, layout_controls),
-        column(roi_avg_plot, layout_image),
+    # Plot tabs
+    plots = Tabs(
+        tabs=[
+            Panel(child=layout_overview, title="single scan"),
+            Panel(child=column(param_plot, row(fit_param_select)), title="parameter plot"),
+        ]
     )
+
+    # Final layout
+    import_layout = column(
+        proposal_textinput,
+        upload_div,
+        upload_button,
+        file_select,
+        row(file_open_button, file_append_button),
+    )
+
+    scan_layout = column(scan_table, row(param_select, metadata_table))
+
+    tab_layout = column(row(import_layout, scan_layout, plots))
 
     return Panel(child=tab_layout, title="hdf param study")
 
@@ -768,49 +616,3 @@ def gauss(x, *p):
     """
     A, mu, sigma = p
     return A * np.exp(-((x - mu) ** 2) / (2.0 * sigma ** 2))
-
-
-def calculate_hkl(det_data, index):
-    h = np.empty(shape=(IMAGE_H, IMAGE_W))
-    k = np.empty(shape=(IMAGE_H, IMAGE_W))
-    l = np.empty(shape=(IMAGE_H, IMAGE_W))
-
-    wave = det_data["wave"]
-    ddist = det_data["ddist"]
-    gammad = det_data["gamma"][index]
-    om = det_data["omega"][index]
-    nud = det_data["nu"]
-    ub = det_data["ub"]
-    geometry = det_data["zebra_mode"]
-
-    if geometry == "bi":
-        chi = det_data["chi"][index]
-        phi = det_data["phi"][index]
-    elif geometry == "nb":
-        chi = 0
-        phi = 0
-    else:
-        raise ValueError(f"Unknown geometry type '{geometry}'")
-
-    for xi in np.arange(IMAGE_W):
-        for yi in np.arange(IMAGE_H):
-            h[yi, xi], k[yi, xi], l[yi, xi] = pyzebra.ang2hkl(
-                wave, ddist, gammad, om, chi, phi, nud, ub, xi, yi
-            )
-
-    return h, k, l
-
-
-def calculate_pol(det_data, index):
-    gamma = np.empty(shape=(IMAGE_H, IMAGE_W))
-    nu = np.empty(shape=(IMAGE_H, IMAGE_W))
-
-    ddist = det_data["ddist"]
-    gammad = det_data["gamma"][index]
-    nud = det_data["nu"]
-
-    for xi in np.arange(IMAGE_W):
-        for yi in np.arange(IMAGE_H):
-            gamma[yi, xi], nu[yi, xi] = pyzebra.det2pol(ddist, gammad, nud, xi, yi)
-
-    return gamma, nu

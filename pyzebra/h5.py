@@ -75,6 +75,7 @@ def read_detector_data(filepath, cami_meta=None):
         data = data.reshape(n, rows, cols)
 
         det_data = {"data": data}
+        det_data["original_filename"] = filepath
 
         if "/entry1/zebra_mode" in h5f:
             det_data["zebra_mode"] = h5f["/entry1/zebra_mode"][0].decode()
