@@ -194,10 +194,16 @@ def create():
         source=scan_table_source,
         columns=[
             TableColumn(field="file", title="file", width=150),
-            TableColumn(field="param", title="param", editor=NumberEditor(), width=50),
-            TableColumn(field="frame", title="Frame", width=70),
-            TableColumn(field="x_pos", title="X", width=70),
-            TableColumn(field="y_pos", title="Y", width=70),
+            TableColumn(
+                field="param",
+                title="param",
+                formatter=num_formatter,
+                editor=NumberEditor(),
+                width=50,
+            ),
+            TableColumn(field="frame", title="Frame", formatter=num_formatter, width=70),
+            TableColumn(field="x_pos", title="X", formatter=num_formatter, width=70),
+            TableColumn(field="y_pos", title="Y", formatter=num_formatter, width=70),
         ],
         width=470,  # +60 because of the index column
         height=420,
@@ -507,7 +513,6 @@ def create():
             if "fit" in s and fit_param:
                 x.append(p)
                 y.append(s["fit"][fit_param])
-        print(x, y)
         param_plot_scatter_source.data.update(x=x, y=y)
 
     # Parameter plot
