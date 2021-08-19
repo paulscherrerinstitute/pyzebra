@@ -24,7 +24,7 @@ def create():
     events_data = doc.events_data
 
     npeaks_spinner = Spinner(title="Number of peaks from hdf_view panel:", disabled=True)
-    lattice_const_textinput = TextInput(title="Lattice constants:", disabled=True)
+    lattice_const_textinput = TextInput(title="Lattice constants:")
     max_res_spinner = Spinner(title="max-res:", value=2, step=0.01, width=145)
     seed_pool_size_spinner = Spinner(title="seed-pool-size:", value=5, step=0.01, width=145)
     seed_len_tol_spinner = Spinner(title="seed-len-tol:", value=0.02, step=0.01, width=145)
