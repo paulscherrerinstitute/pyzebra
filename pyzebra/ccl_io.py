@@ -301,3 +301,31 @@ def export_1D(data, path, export_target, hkl_precision=2):
         if content:
             with open(path + ext, "w") as out_file:
                 out_file.writelines(content)
+
+
+def export_param_study(data, param_data, path):
+    file_content = []
+    for scan, param in zip(data, param_data):
+        if "fit" not in scan:
+            continue
+
+        if not file_content:
+            title_str = f"{'param':12}"
+            for fit_param_name in scan["fit"].params:
+                title_str = title_str + f"{fit_param_name:20}" + f"{'std_' + fit_param_name:20}"
+            title_str = title_str + "file"
+            file_content.append(title_str + "\n")
+
+        param_str = f"{param:<12.2f}"
+
+        fit_str = ""
+        for fit_param in scan["fit"].params.values():
+            fit_str = fit_str + f"{fit_param.value:<20.2f}" + f"{fit_param.stderr:<20.2f}"
+
+        _, fname_str = os.path.split(scan["original_filename"])
+
+        file_content.append(param_str + fit_str + fname_str + "\n")
+
+    if file_content:
+        with open(path, "w") as out_file:
+            out_file.writelines(file_content)

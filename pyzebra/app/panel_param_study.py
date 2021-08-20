@@ -54,18 +54,23 @@ import pyzebra
 from pyzebra.ccl_process import AREA_METHODS
 
 javaScript = """
+let j = 0;
 for (let i = 0; i < js_data.data['fname'].length; i++) {
     if (js_data.data['content'][i] === "") continue;
 
-    const blob = new Blob([js_data.data['content'][i]], {type: 'text/plain'})
-    const link = document.createElement('a');
-    document.body.appendChild(link);
-    const url = window.URL.createObjectURL(blob);
-    link.href = url;
-    link.download = js_data.data['fname'][i];
-    link.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(link);
+    setTimeout(function() {
+        const blob = new Blob([js_data.data['content'][i]], {type: 'text/plain'})
+        const link = document.createElement('a');
+        document.body.appendChild(link);
+        const url = window.URL.createObjectURL(blob);
+        link.href = url;
+        link.download = js_data.data['fname'][i] + js_data.data['ext'][i];
+        link.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(link);
+    }, 100 * j)
+
+    j++;
 }
 """
 
@@ -79,7 +84,7 @@ def create():
     doc = curdoc()
     det_data = []
     fit_params = {}
-    js_data = ColumnDataSource(data=dict(content=["", ""], fname=["", ""]))
+    js_data = ColumnDataSource(data=dict(content=[""], fname=[""], ext=[""]))
 
     def file_select_update_for_proposal():
         proposal = proposal_textinput.value.strip()
@@ -148,7 +153,7 @@ def create():
                 else:
                     det_data = pyzebra.parse_1D(file, ext)
                     pyzebra.normalize_dataset(det_data, monitor_spinner.value)
-                    js_data.data.update(fname=[base + ".comm", base + ".incomm"])
+                    js_data.data.update(fname=[base])
 
         _init_datatable()
         append_upload_button.disabled = False
@@ -184,7 +189,7 @@ def create():
                 else:
                     det_data = pyzebra.parse_1D(file, ext)
                     pyzebra.normalize_dataset(det_data, monitor_spinner.value)
-                    js_data.data.update(fname=[base + ".comm", base + ".incomm"])
+                    js_data.data.update(fname=[base])
 
         _init_datatable()
         append_upload_button.disabled = False
@@ -698,34 +703,38 @@ def create():
 
     lorentz_checkbox = CheckboxGroup(labels=["Lorentz Correction"], width=145, margin=(13, 5, 5, 5))
 
-    export_preview_textinput = TextAreaInput(title="Export file(s) preview:", width=450, height=400)
+    export_preview_textinput = TextAreaInput(title="Export file preview:", width=450, height=400)
 
     def _update_preview():
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_file = temp_dir + "/temp"
             export_data = []
-            for s, export in zip(det_data, scan_table_source.data["export"]):
+            param_data = []
+            for s, p, export in zip(
+                det_data, scan_table_source.data["param"], scan_table_source.data["export"]
+            ):
                 if export:
                     export_data.append(s)
+                    param_data.append(p)
 
-            # pyzebra.export_1D(export_data, temp_file, "fullprof")
+            pyzebra.export_param_study(export_data, param_data, temp_file)
 
             exported_content = ""
             file_content = []
-            for ext in (".comm", ".incomm"):
-                fname = temp_file + ext
-                if os.path.isfile(fname):
-                    with open(fname) as f:
-                        content = f.read()
-                        exported_content += f"{ext} file:\n" + content
-                else:
-                    content = ""
-                file_content.append(content)
+
+            fname = temp_file
+            if os.path.isfile(fname):
+                with open(fname) as f:
+                    content = f.read()
+                    exported_content += content
+            else:
+                content = ""
+            file_content.append(content)
 
             js_data.data.update(content=file_content)
             export_preview_textinput.value = exported_content
 
-    save_button = Button(label="Download File(s)", button_type="success", width=220)
+    save_button = Button(label="Download File", button_type="success", width=220)
     save_button.js_on_click(CustomJS(args={"js_data": js_data}, code=javaScript))
 
     fitpeak_controls = row(
