@@ -127,9 +127,9 @@ def create():
     def file_open_button_callback():
         nonlocal det_data
         det_data = []
-        for f_name in file_select.value:
-            with open(f_name) as file:
-                base, ext = os.path.splitext(f_name)
+        for f_path in file_select.value:
+            with open(f_path) as file:
+                base, ext = os.path.splitext(os.path.basename(f_path))
                 if det_data:
                     append_data = pyzebra.parse_1D(file, ext)
                     pyzebra.normalize_dataset(append_data, monitor_spinner.value)
@@ -147,9 +147,9 @@ def create():
     file_open_button.on_click(file_open_button_callback)
 
     def file_append_button_callback():
-        for f_name in file_select.value:
-            with open(f_name) as file:
-                _, ext = os.path.splitext(f_name)
+        for f_path in file_select.value:
+            with open(f_path) as file:
+                _, ext = os.path.splitext(f_path)
                 append_data = pyzebra.parse_1D(file, ext)
 
             pyzebra.normalize_dataset(append_data, monitor_spinner.value)
