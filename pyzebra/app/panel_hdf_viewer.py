@@ -147,6 +147,11 @@ def create():
         overview_x = np.mean(h5_data, axis=1)
         overview_y = np.mean(h5_data, axis=2)
 
+        # normalize for simpler colormapping
+        overview_max_val = max(np.max(overview_x), np.max(overview_y))
+        overview_x = 1000 * overview_x / overview_max_val
+        overview_y = 1000 * overview_y / overview_max_val
+
         overview_plot_x_image_source.data.update(image=[overview_x], dw=[n_x], dh=[n_im])
         overview_plot_y_image_source.data.update(image=[overview_y], dw=[n_y], dh=[n_im])
 
@@ -536,7 +541,7 @@ def create():
     )
     display_min_spinner.on_change("value", display_min_spinner_callback)
 
-    PROJ_STEP = 0.1
+    PROJ_STEP = 1
 
     def proj_auto_checkbox_callback(state):
         if state:
