@@ -59,42 +59,60 @@ def create():
 
     num_formatter = NumberFormatter(format="0.00", nan_format="")
 
-    def file_select_update_for_proposal():
-        proposal = proposal_textinput.value.strip()
-        if not proposal:
-            return
+    def file_select_update():
+        if data_source.value == "proposal number":
+            proposal = proposal_textinput.value.strip()
+            if not proposal:
+                file_select.options = []
+                return
 
-        for zebra_proposals_path in pyzebra.ZEBRA_PROPOSALS_PATHS:
-            proposal_path = os.path.join(zebra_proposals_path, proposal)
-            if os.path.isdir(proposal_path):
-                # found it
-                break
-        else:
-            raise ValueError(f"Can not find data for proposal '{proposal}'.")
+            for zebra_proposals_path in pyzebra.ZEBRA_PROPOSALS_PATHS:
+                proposal_path = os.path.join(zebra_proposals_path, proposal)
+                if os.path.isdir(proposal_path):
+                    # found it
+                    break
+            else:
+                raise ValueError(f"Can not find data for proposal '{proposal}'.")
 
-        file_list = []
-        for file in os.listdir(proposal_path):
-            if file.endswith(".hdf"):
-                file_list.append((os.path.join(proposal_path, file), file))
-        file_select.options = file_list
+            file_list = []
+            for file in os.listdir(proposal_path):
+                if file.endswith(".hdf"):
+                    file_list.append((os.path.join(proposal_path, file), file))
+            file_select.options = file_list
 
-    doc.add_periodic_callback(file_select_update_for_proposal, 5000)
+        else:  # "cami file"
+            if not cami_meta:
+                file_select.options = []
+                return
+
+            file_list = cami_meta["filelist"]
+            file_select.options = [(entry, os.path.basename(entry)) for entry in file_list]
+
+    def data_source_callback(_attr, _old, _new):
+        file_select_update()
+
+    data_source = Select(
+        title="Data Source:",
+        value="proposal number",
+        options=["proposal number", "cami file"],
+        width=210,
+    )
+    data_source.on_change("value", data_source_callback)
+
+    doc.add_periodic_callback(file_select_update, 5000)
 
     def proposal_textinput_callback(_attr, _old, _new):
-        nonlocal cami_meta
-        cami_meta = {}
-        file_select_update_for_proposal()
+        file_select_update()
 
-    proposal_textinput = TextInput(title="Proposal number:", width=210)
+    proposal_textinput = doc.proposal_textinput
     proposal_textinput.on_change("value", proposal_textinput_callback)
 
     def upload_button_callback(_attr, _old, new):
         nonlocal cami_meta
-        proposal_textinput.value = ""
         with io.StringIO(base64.b64decode(new).decode()) as file:
             cami_meta = pyzebra.parse_h5meta(file)
-            file_list = cami_meta["filelist"]
-            file_select.options = [(entry, os.path.basename(entry)) for entry in file_list]
+        data_source.value = "cami file"
+        file_select_update()
 
     upload_div = Div(text="or upload .cami file:", margin=(5, 5, 0, 5))
     upload_button = FileInput(accept=".cami", width=200)
@@ -731,7 +749,7 @@ def create():
     )
 
     # Final layout
-    import_layout = column(proposal_textinput, upload_div, upload_button, file_select)
+    import_layout = column(data_source, upload_div, upload_button, file_select)
     layout_image = column(gridplot([[proj_v, None], [plot, proj_h]], merge_tools=False))
     colormap_layout = column(
         colormap,

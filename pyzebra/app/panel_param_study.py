@@ -115,7 +115,7 @@ def create():
     def proposal_textinput_callback(_attr, _old, _new):
         file_select_update_for_proposal()
 
-    proposal_textinput = TextInput(title="Proposal number:", width=210)
+    proposal_textinput = doc.proposal_textinput
     proposal_textinput.on_change("value", proposal_textinput_callback)
 
     def _init_datatable():
@@ -178,7 +178,6 @@ def create():
     def upload_button_callback(_attr, _old, new):
         nonlocal det_data
         det_data = []
-        proposal_textinput.value = ""
         for f_str, f_name in zip(new, upload_button.filename):
             with io.StringIO(base64.b64decode(f_str).decode()) as file:
                 base, ext = os.path.splitext(f_name)
@@ -748,7 +747,6 @@ def create():
     scan_layout = column(scan_table, row(monitor_spinner, scan_motor_select, param_select))
 
     import_layout = column(
-        proposal_textinput,
         file_select,
         row(file_open_button, file_append_button),
         upload_div,

@@ -4,7 +4,7 @@ from io import StringIO
 
 from bokeh.io import curdoc
 from bokeh.layouts import column, row
-from bokeh.models import Tabs, TextAreaInput
+from bokeh.models import Panel, Tabs, TextAreaInput, TextInput
 
 import panel_ccl_integrate
 import panel_hdf_anatric
@@ -12,7 +12,6 @@ import panel_hdf_param_study
 import panel_hdf_viewer
 import panel_param_study
 import panel_spind
-
 
 doc = curdoc()
 
@@ -26,11 +25,15 @@ bokeh_logger = logging.getLogger("bokeh")
 bokeh_logger.addHandler(bokeh_handler)
 bokeh_log_textareainput = TextAreaInput(title="server output:", height=150)
 
+proposal_textinput = TextInput(title="Proposal number:", width=210)
+doc.proposal_textinput = proposal_textinput
+
 # Final layout
 doc.add_root(
     column(
         Tabs(
             tabs=[
+                Panel(child=proposal_textinput, title="user config"),
                 panel_hdf_viewer.create(),
                 panel_hdf_anatric.create(),
                 panel_ccl_integrate.create(),
