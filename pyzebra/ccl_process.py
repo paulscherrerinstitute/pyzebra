@@ -85,6 +85,10 @@ def merge_scans(scan_into, scan_from):
         scan_into["init_omega"] = scan_into["omega"]
         scan_into["init_counts"] = scan_into["counts"]
 
+    if "merged_scans" not in scan_into:
+        scan_into["merged_scans"] = []
+    scan_into["merged_scans"].append(scan_from)
+
     omega = np.concatenate((scan_into["omega"], scan_from["omega"]))
     counts = np.concatenate((scan_into["counts"], scan_from["counts"]))
 
@@ -106,6 +110,11 @@ def restore_scan(scan):
         scan["counts"] = scan["init_counts"]
         del scan["init_omega"]
         del scan["init_counts"]
+
+    if "merged_scans" in scan:
+        for merged_scan in scan["merged_scans"]:
+            merged_scan["active"] = True
+        del scan["merged_scans"]
 
 
 def fit_scan(scan, model_dict, fit_from=None, fit_to=None):
