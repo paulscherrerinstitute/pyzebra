@@ -126,19 +126,19 @@ def create():
 
     def file_open_button_callback():
         nonlocal det_data
-        det_data = []
-        for f_path in file_select.value:
+        for f_ind, f_path in enumerate(file_select.value):
             with open(f_path) as file:
                 base, ext = os.path.splitext(os.path.basename(f_path))
-                if det_data:
-                    append_data = pyzebra.parse_1D(file, ext)
-                    pyzebra.normalize_dataset(append_data, monitor_spinner.value)
-                    pyzebra.merge_datasets(det_data, append_data)
-                else:
-                    det_data = pyzebra.parse_1D(file, ext)
-                    pyzebra.normalize_dataset(det_data, monitor_spinner.value)
-                    pyzebra.merge_duplicates(det_data)
-                    js_data.data.update(fname=[base, base])
+                file_data = pyzebra.parse_1D(file, ext)
+
+            pyzebra.normalize_dataset(file_data, monitor_spinner.value)
+
+            if f_ind == 0:  # first file
+                det_data = file_data
+                pyzebra.merge_duplicates(det_data)
+                js_data.data.update(fname=[base, base])
+            else:
+                pyzebra.merge_datasets(det_data, file_data)
 
         _init_datatable()
         append_upload_button.disabled = False
@@ -150,10 +150,10 @@ def create():
         for f_path in file_select.value:
             with open(f_path) as file:
                 _, ext = os.path.splitext(f_path)
-                append_data = pyzebra.parse_1D(file, ext)
+                file_data = pyzebra.parse_1D(file, ext)
 
-            pyzebra.normalize_dataset(append_data, monitor_spinner.value)
-            pyzebra.merge_datasets(det_data, append_data)
+            pyzebra.normalize_dataset(file_data, monitor_spinner.value)
+            pyzebra.merge_datasets(det_data, file_data)
 
         _init_datatable()
 
@@ -162,19 +162,19 @@ def create():
 
     def upload_button_callback(_attr, _old, new):
         nonlocal det_data
-        det_data = []
-        for f_str, f_name in zip(new, upload_button.filename):
+        for f_ind, f_str, f_name in enumerate(zip(new, upload_button.filename)):
             with io.StringIO(base64.b64decode(f_str).decode()) as file:
                 base, ext = os.path.splitext(f_name)
-                if det_data:
-                    append_data = pyzebra.parse_1D(file, ext)
-                    pyzebra.normalize_dataset(append_data, monitor_spinner.value)
-                    pyzebra.merge_datasets(det_data, append_data)
-                else:
-                    det_data = pyzebra.parse_1D(file, ext)
-                    pyzebra.normalize_dataset(det_data, monitor_spinner.value)
-                    pyzebra.merge_duplicates(det_data)
-                    js_data.data.update(fname=[base, base])
+                file_data = pyzebra.parse_1D(file, ext)
+
+            pyzebra.normalize_dataset(file_data, monitor_spinner.value)
+
+            if f_ind == 0:  # first file
+                det_data = file_data
+                pyzebra.merge_duplicates(det_data)
+                js_data.data.update(fname=[base, base])
+            else:
+                pyzebra.merge_datasets(det_data, file_data)
 
         _init_datatable()
         append_upload_button.disabled = False
@@ -187,10 +187,10 @@ def create():
         for f_str, f_name in zip(new, append_upload_button.filename):
             with io.StringIO(base64.b64decode(f_str).decode()) as file:
                 _, ext = os.path.splitext(f_name)
-                append_data = pyzebra.parse_1D(file, ext)
+                file_data = pyzebra.parse_1D(file, ext)
 
-            pyzebra.normalize_dataset(append_data, monitor_spinner.value)
-            pyzebra.merge_datasets(det_data, append_data)
+            pyzebra.normalize_dataset(file_data, monitor_spinner.value)
+            pyzebra.merge_datasets(det_data, file_data)
 
         _init_datatable()
 
