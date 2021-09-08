@@ -162,14 +162,15 @@ def create():
 
     def upload_button_callback(_attr, _old, new):
         nonlocal det_data
-        for f_ind, f_str, f_name in enumerate(zip(new, upload_button.filename)):
+        det_data = []
+        for f_str, f_name in zip(new, upload_button.filename):
             with io.StringIO(base64.b64decode(f_str).decode()) as file:
                 base, ext = os.path.splitext(f_name)
                 file_data = pyzebra.parse_1D(file, ext)
 
             pyzebra.normalize_dataset(file_data, monitor_spinner.value)
 
-            if f_ind == 0:  # first file
+            if not det_data:  # first file
                 det_data = file_data
                 pyzebra.merge_duplicates(det_data)
                 js_data.data.update(fname=[base, base])
