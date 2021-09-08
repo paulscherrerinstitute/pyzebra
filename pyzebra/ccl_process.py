@@ -89,13 +89,20 @@ def merge_scans(scan_into, scan_from):
         scan_into["merged_scans"] = []
     scan_into["merged_scans"].append(scan_from)
 
-    omega = np.concatenate((scan_into["omega"], scan_from["omega"]))
-    counts = np.concatenate((scan_into["counts"], scan_from["counts"]))
+    if (
+        scan_into["omega"].shape == scan_from["omega"].shape
+        and np.max(np.abs(scan_into["omega"] - scan_from["omega"])) < 0.0005
+    ):
+        scan_into["counts"] = (scan_into["counts"] + scan_from["counts"]) / 2
 
-    index = np.argsort(omega)
+    else:
+        omega = np.concatenate((scan_into["omega"], scan_from["omega"]))
+        counts = np.concatenate((scan_into["counts"], scan_from["counts"]))
 
-    scan_into["omega"] = omega[index]
-    scan_into["counts"] = counts[index]
+        index = np.argsort(omega)
+
+        scan_into["omega"] = omega[index]
+        scan_into["counts"] = counts[index]
 
     scan_from["active"] = False
 
