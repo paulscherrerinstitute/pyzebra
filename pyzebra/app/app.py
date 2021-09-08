@@ -2,9 +2,10 @@ import logging
 import sys
 from io import StringIO
 
+import pyzebra
 from bokeh.io import curdoc
 from bokeh.layouts import column, row
-from bokeh.models import Panel, Tabs, TextAreaInput, TextInput
+from bokeh.models import Button, Panel, Tabs, TextAreaInput, TextInput
 
 import panel_ccl_integrate
 import panel_hdf_anatric
@@ -25,15 +26,32 @@ bokeh_logger = logging.getLogger("bokeh")
 bokeh_logger.addHandler(bokeh_handler)
 bokeh_log_textareainput = TextAreaInput(title="server output:", height=150)
 
-proposal_textinput = TextInput(title="Proposal number:", width=210)
+def proposal_textinput_callback(_attr, _old, _new):
+    apply_button.disabled = False
+
+proposal_textinput = TextInput(title="Proposal number:", name="")
+proposal_textinput.on_change("value_input", proposal_textinput_callback)
 doc.proposal_textinput = proposal_textinput
+
+def apply_button_callback():
+    try:
+        proposal_path = pyzebra.find_proposal_path(proposal_textinput.value)
+    except ValueError as e:
+        print(e)
+        return
+
+    proposal_textinput.name = proposal_path
+    apply_button.disabled = True
+
+apply_button = Button(label="Apply", button_type="primary")
+apply_button.on_click(apply_button_callback)
 
 # Final layout
 doc.add_root(
     column(
         Tabs(
             tabs=[
-                Panel(child=proposal_textinput, title="user config"),
+                Panel(child=column(proposal_textinput, apply_button), title="user config"),
                 panel_hdf_viewer.create(),
                 panel_hdf_anatric.create(),
                 panel_ccl_integrate.create(),

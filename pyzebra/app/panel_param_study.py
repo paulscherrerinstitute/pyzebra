@@ -86,28 +86,19 @@ def create():
     js_data = ColumnDataSource(data=dict(content=[""], fname=[""], ext=[""]))
 
     def file_select_update_for_proposal():
-        proposal = proposal_textinput.value.strip()
-        if not proposal:
+        proposal_path = proposal_textinput.name
+        if proposal_path:
+            file_list = []
+            for file in os.listdir(proposal_path):
+                if file.endswith((".ccl", ".dat")):
+                    file_list.append((os.path.join(proposal_path, file), file))
+            file_select.options = file_list
+            file_open_button.disabled = False
+            file_append_button.disabled = False
+        else:
             file_select.options = []
             file_open_button.disabled = True
             file_append_button.disabled = True
-            return
-
-        for zebra_proposals_path in pyzebra.ZEBRA_PROPOSALS_PATHS:
-            proposal_path = os.path.join(zebra_proposals_path, proposal)
-            if os.path.isdir(proposal_path):
-                # found it
-                break
-        else:
-            raise ValueError(f"Can not find data for proposal '{proposal}'.")
-
-        file_list = []
-        for file in os.listdir(proposal_path):
-            if file.endswith((".ccl", ".dat")):
-                file_list.append((os.path.join(proposal_path, file), file))
-        file_select.options = file_list
-        file_open_button.disabled = False
-        file_append_button.disabled = False
 
     doc.add_periodic_callback(file_select_update_for_proposal, 5000)
 
@@ -115,7 +106,7 @@ def create():
         file_select_update_for_proposal()
 
     proposal_textinput = doc.proposal_textinput
-    proposal_textinput.on_change("value", proposal_textinput_callback)
+    proposal_textinput.on_change("name", proposal_textinput_callback)
 
     def _init_datatable():
         scan_list = [s["idx"] for s in det_data]

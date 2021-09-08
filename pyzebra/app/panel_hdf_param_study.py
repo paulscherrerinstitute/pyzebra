@@ -57,24 +57,15 @@ def create():
 
     def file_select_update():
         if data_source.value == "proposal number":
-            proposal = proposal_textinput.value.strip()
-            if not proposal:
-                file_select.options = []
-                return
-
-            for zebra_proposals_path in pyzebra.ZEBRA_PROPOSALS_PATHS:
-                proposal_path = os.path.join(zebra_proposals_path, proposal)
-                if os.path.isdir(proposal_path):
-                    # found it
-                    break
+            proposal_path = proposal_textinput.name
+            if proposal_path:
+                file_list = []
+                for file in os.listdir(proposal_path):
+                    if file.endswith(".hdf"):
+                        file_list.append((os.path.join(proposal_path, file), file))
+                file_select.options = file_list
             else:
-                raise ValueError(f"Can not find data for proposal '{proposal}'.")
-
-            file_list = []
-            for file in os.listdir(proposal_path):
-                if file.endswith(".hdf"):
-                    file_list.append((os.path.join(proposal_path, file), file))
-            file_select.options = file_list
+                file_select.options = []
 
         else:  # "cami file"
             if not cami_meta:
@@ -101,7 +92,7 @@ def create():
         file_select_update()
 
     proposal_textinput = doc.proposal_textinput
-    proposal_textinput.on_change("value", proposal_textinput_callback)
+    proposal_textinput.on_change("name", proposal_textinput_callback)
 
     def upload_button_callback(_attr, _old, new):
         nonlocal cami_meta
