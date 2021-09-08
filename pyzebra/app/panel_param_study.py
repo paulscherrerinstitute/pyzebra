@@ -151,9 +151,10 @@ def create():
 
             if f_ind == 0:  # first file
                 det_data = file_data
+                pyzebra.merge_duplicates(det_data)
                 js_data.data.update(fname=[base])
             else:
-                det_data.extend(file_data)
+                pyzebra.merge_datasets(det_data, file_data)
 
         _init_datatable()
         append_upload_button.disabled = False
@@ -168,7 +169,7 @@ def create():
                 file_data = pyzebra.parse_1D(file, ext)
 
             pyzebra.normalize_dataset(file_data, monitor_spinner.value)
-            det_data.extend(file_data)
+            pyzebra.merge_datasets(det_data, file_data)
 
         _init_datatable()
 
@@ -187,9 +188,10 @@ def create():
 
             if f_ind == 0:  # first file
                 det_data = file_data
+                pyzebra.merge_duplicates(det_data)
                 js_data.data.update(fname=[base])
             else:
-                det_data.extend(file_data)
+                pyzebra.merge_datasets(det_data, file_data)
 
         _init_datatable()
         append_upload_button.disabled = False
@@ -205,7 +207,7 @@ def create():
                 file_data = pyzebra.parse_1D(file, ext)
 
             pyzebra.normalize_dataset(file_data, monitor_spinner.value)
-            det_data.extend(file_data)
+            pyzebra.merge_datasets(det_data, file_data)
 
         _init_datatable()
 
