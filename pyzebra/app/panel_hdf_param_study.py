@@ -33,7 +33,6 @@ from bokeh.models import (
     Spinner,
     TableColumn,
     Tabs,
-    TextInput,
     Title,
     WheelZoomTool,
 )
@@ -198,7 +197,16 @@ def create():
         else:  # zebra_mode == "bi"
             metadata_table_source.data.update(geom=["bisecting"])
 
-        update_image(0)
+        if "mf" in det_data:
+            metadata_table_source.data.update(mf=[det_data["mf"][0]])
+        else:
+            metadata_table_source.data.update(mf=[None])
+
+        if "temp" in det_data:
+            metadata_table_source.data.update(temp=[det_data["temp"][0]])
+        else:
+            metadata_table_source.data.update(temp=[None])
+
         update_overview_plot()
 
     def scan_table_source_callback(_attr, _old, _new):
@@ -246,17 +254,6 @@ def create():
         width=145,
     )
     param_select.on_change("value", param_select_callback)
-
-    def update_image(index=None):
-        if "mf" in det_data:
-            metadata_table_source.data.update(mf=[det_data["mf"][index]])
-        else:
-            metadata_table_source.data.update(mf=[None])
-
-        if "temp" in det_data:
-            metadata_table_source.data.update(temp=[det_data["temp"][index]])
-        else:
-            metadata_table_source.data.update(temp=[None])
 
     def update_overview_plot():
         h5_data = det_data["data"]

@@ -37,7 +37,6 @@ from bokeh.models import (
     Spacer,
     Spinner,
     TableColumn,
-    TextInput,
     Title,
     WheelZoomTool,
 )

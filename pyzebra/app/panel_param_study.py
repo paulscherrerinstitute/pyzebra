@@ -42,7 +42,6 @@ from bokeh.models import (
     TableColumn,
     Tabs,
     TextAreaInput,
-    TextInput,
     WheelZoomTool,
     Whisker,
 )
@@ -237,10 +236,11 @@ def create():
         scan_table_source.data.update(fit=fit_ok)
 
     def _update_plot():
-        _update_single_scan_plot(_get_selected_scan())
+        _update_single_scan_plot()
         _update_overview()
 
-    def _update_single_scan_plot(scan):
+    def _update_single_scan_plot():
+        scan = _get_selected_scan()
         scan_motor = scan["scan_motor"]
 
         y = scan["counts"]
@@ -488,6 +488,7 @@ def create():
 
     scan_table_source = ColumnDataSource(dict(file=[], scan=[], param=[], fit=[], export=[]))
     scan_table_source.on_change("data", scan_table_source_callback)
+    scan_table_source.selected.on_change("indices", scan_table_select_callback)
 
     scan_table = DataTable(
         source=scan_table_source,
@@ -502,13 +503,6 @@ def create():
         editable=True,
         autosize_mode="none",
     )
-
-    def scan_table_source_callback(_attr, _old, _new):
-        if scan_table_source.selected.indices:
-            _update_plot()
-
-    scan_table_source.selected.on_change("indices", scan_table_select_callback)
-    scan_table_source.on_change("data", scan_table_source_callback)
 
     def _get_selected_scan():
         return det_data[scan_table_source.selected.indices[0]]

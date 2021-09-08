@@ -38,7 +38,6 @@ from bokeh.models import (
     Spinner,
     TableColumn,
     TextAreaInput,
-    TextInput,
     WheelZoomTool,
     Whisker,
 )
@@ -202,7 +201,7 @@ def create():
     def monitor_spinner_callback(_attr, old, new):
         if det_data:
             pyzebra.normalize_dataset(det_data, new)
-            _update_plot(_get_selected_scan())
+            _update_plot()
 
     monitor_spinner = Spinner(title="Monitor:", mode="int", value=100_000, low=1, width=145)
     monitor_spinner.on_change("value", monitor_spinner_callback)
@@ -212,7 +211,8 @@ def create():
         export = [scan.get("active", True) for scan in det_data]
         scan_table_source.data.update(fit=fit_ok, export=export)
 
-    def _update_plot(scan):
+    def _update_plot():
+        scan = _get_selected_scan()
         scan_motor = scan["scan_motor"]
 
         y = scan["counts"]
@@ -322,13 +322,14 @@ def create():
             # skip unnecessary update caused by selection drop
             return
 
-        _update_plot(det_data[new[0]])
+        _update_plot()
 
     def scan_table_source_callback(_attr, _old, _new):
         _update_preview()
 
     scan_table_source = ColumnDataSource(dict(scan=[], hkl=[], fit=[], export=[]))
     scan_table_source.on_change("data", scan_table_source_callback)
+    scan_table_source.selected.on_change("indices", scan_table_select_callback)
 
     scan_table = DataTable(
         source=scan_table_source,
@@ -343,8 +344,6 @@ def create():
         autosize_mode="none",
         editable=True,
     )
-
-    scan_table_source.selected.on_change("indices", scan_table_select_callback)
 
     def _get_selected_scan():
         return det_data[scan_table_source.selected.indices[0]]
@@ -361,7 +360,7 @@ def create():
 
         pyzebra.merge_scans(scan_into, scan_from)
         _update_datatable()
-        _update_plot(_get_selected_scan())
+        _update_plot()
 
     merge_button = Button(label="Merge into current", width=145)
     merge_button.on_click(merge_button_callback)
@@ -369,7 +368,7 @@ def create():
     def restore_button_callback():
         pyzebra.restore_scan(_get_selected_scan())
         _update_datatable()
-        _update_plot(_get_selected_scan())
+        _update_plot()
 
     restore_button = Button(label="Restore scan", width=145)
     restore_button.on_click(restore_button_callback)
@@ -505,7 +504,7 @@ def create():
                     lorentz=lorentz_checkbox.active,
                 )
 
-        _update_plot(_get_selected_scan())
+        _update_plot()
         _update_datatable()
 
     proc_all_button = Button(label="Process All", button_type="primary", width=145)
@@ -522,7 +521,7 @@ def create():
             lorentz=lorentz_checkbox.active,
         )
 
-        _update_plot(scan)
+        _update_plot()
         _update_datatable()
 
     proc_button = Button(label="Process Current", width=145)
