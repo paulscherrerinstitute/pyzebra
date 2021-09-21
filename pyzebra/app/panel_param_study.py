@@ -318,13 +318,19 @@ def create():
     def _update_param_plot():
         x = []
         y = []
+        y_lower = []
+        y_upper = []
         fit_param = fit_param_select.value
         for s, p in zip(det_data, scan_table_source.data["param"]):
             if "fit" in s and fit_param:
                 x.append(p)
-                y.append(s["fit"].values[fit_param])
+                param_fit_val = s["fit"].params[fit_param].value
+                param_fit_std = s["fit"].params[fit_param].stderr
+                y.append(param_fit_val)
+                y_lower.append(param_fit_val - param_fit_std)
+                y_upper.append(param_fit_val + param_fit_std)
 
-        param_plot_scatter_source.data.update(x=x, y=y)
+        param_plot_scatter_source.data.update(x=x, y=y, y_lower=y_lower, y_upper=y_upper)
 
     # Main plot
     plot = Plot(
@@ -434,8 +440,11 @@ def create():
     param_plot.add_layout(Grid(dimension=0, ticker=BasicTicker()))
     param_plot.add_layout(Grid(dimension=1, ticker=BasicTicker()))
 
-    param_plot_scatter_source = ColumnDataSource(dict(x=[], y=[]))
+    param_plot_scatter_source = ColumnDataSource(dict(x=[], y=[], y_upper=[], y_lower=[]))
     param_plot.add_glyph(param_plot_scatter_source, Scatter(x="x", y="y"))
+    param_plot.add_layout(
+        Whisker(source=param_plot_scatter_source, base="x", upper="y_upper", lower="y_lower")
+    )
 
     param_plot.add_tools(PanTool(), WheelZoomTool(), ResetTool())
     param_plot.toolbar.logo = None
