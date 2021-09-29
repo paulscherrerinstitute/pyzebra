@@ -207,10 +207,11 @@ def create():
         scan_motor = scan["scan_motor"]
 
         y = scan["counts"]
+        y_err = scan["counts_err"]
         x = scan[scan_motor]
 
         plot.axis[0].axis_label = scan_motor
-        plot_scatter_source.data.update(x=x, y=y, y_upper=y + np.sqrt(y), y_lower=y - np.sqrt(y))
+        plot_scatter_source.data.update(x=x, y=y, y_upper=y + y_err, y_lower=y - y_err)
 
         fit = scan.get("fit")
         if fit is not None:

@@ -29,6 +29,7 @@ def normalize_dataset(dataset, monitor=100_000):
     for scan in dataset:
         monitor_ratio = monitor / scan["monitor"]
         scan["counts"] *= monitor_ratio
+        scan["counts_err"] *= monitor_ratio
         scan["monitor"] = monitor
 
 
@@ -83,6 +84,7 @@ def merge_scans(scan_into, scan_from):
     if "init_omega" not in scan_into:
         scan_into["init_omega"] = scan_into["omega"]
         scan_into["init_counts"] = scan_into["counts"]
+        scan_into["init_counts_err"] = scan_into["counts_err"]
 
     if "merged_scans" not in scan_into:
         scan_into["merged_scans"] = []
@@ -93,15 +95,20 @@ def merge_scans(scan_into, scan_from):
         and np.max(np.abs(scan_into["omega"] - scan_from["omega"])) < 0.0005
     ):
         scan_into["counts"] = (scan_into["counts"] + scan_from["counts"]) / 2
+        scan_into["counts_err"] = np.sqrt(
+            scan_into["counts_err"] ** 2 + scan_from["counts_err"] ** 2
+        )
 
     else:
         omega = np.concatenate((scan_into["omega"], scan_from["omega"]))
         counts = np.concatenate((scan_into["counts"], scan_from["counts"]))
+        counts_err = np.concatenate((scan_into["counts_err"], scan_from["counts_err"]))
 
         index = np.argsort(omega)
 
         scan_into["omega"] = omega[index]
         scan_into["counts"] = counts[index]
+        scan_into["counts_err"] = counts_err[index]
 
     scan_from["active"] = False
 
@@ -114,8 +121,10 @@ def restore_scan(scan):
     if "init_omega" in scan:
         scan["omega"] = scan["init_omega"]
         scan["counts"] = scan["init_counts"]
+        scan["counts_err"] = scan["init_counts_err"]
         del scan["init_omega"]
         del scan["init_counts"]
+        del scan["init_counts_err"]
 
     if "merged_scans" in scan:
         for merged_scan in scan["merged_scans"]:
@@ -130,11 +139,13 @@ def fit_scan(scan, model_dict, fit_from=None, fit_to=None):
         fit_to = np.inf
 
     y_fit = scan["counts"]
+    y_err = scan["counts_err"]
     x_fit = scan[scan["scan_motor"]]
 
     # apply fitting range
     fit_ind = (fit_from <= x_fit) & (x_fit <= fit_to)
     y_fit = y_fit[fit_ind]
+    y_err = y_err[fit_ind]
     x_fit = x_fit[fit_ind]
 
     model = None
@@ -182,7 +193,7 @@ def fit_scan(scan, model_dict, fit_from=None, fit_to=None):
         else:
             model += _model
 
-    weights = [1 / np.sqrt(val) if val != 0 else 1 for val in y_fit]
+    weights = [1 / y_err if y_err != 0 else 1 for y_err in y_err]
     scan["fit"] = model.fit(y_fit, x=x_fit, weights=weights)
 
 
