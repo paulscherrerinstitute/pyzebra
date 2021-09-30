@@ -81,23 +81,30 @@ def merge_datasets(dataset_into, dataset_from):
 
 def merge_scans(scan_into, scan_from):
     # TODO: does it need to be "scan_motor" instead of omega for a generalized solution?
-    if "init_omega" not in scan_into:
-        scan_into["init_omega"] = scan_into["omega"]
-        scan_into["init_counts"] = scan_into["counts"]
-        scan_into["init_counts_err"] = scan_into["counts_err"]
+    if "init_scan" not in scan_into:
+        scan_into["init_scan"] = scan_into.copy()
 
     if "merged_scans" not in scan_into:
         scan_into["merged_scans"] = []
+
+    if scan_from in scan_into["merged_scans"]:
+        return
+
     scan_into["merged_scans"].append(scan_from)
 
     if (
         scan_into["omega"].shape == scan_from["omega"].shape
         and np.max(np.abs(scan_into["omega"] - scan_from["omega"])) < 0.0005
     ):
-        scan_into["counts"] = (scan_into["counts"] + scan_from["counts"]) / 2
-        scan_into["counts_err"] = np.sqrt(
-            scan_into["counts_err"] ** 2 + scan_from["counts_err"] ** 2
-        )
+        counts_tmp = 0
+        counts_err_tmp = 0
+
+        for scan in [scan_into["init_scan"], *scan_into["merged_scans"]]:
+            counts_tmp += scan["counts"]
+            counts_err_tmp += scan["counts_err"] ** 2
+
+        scan_into["counts"] = counts_tmp / (1 + len(scan_into["merged_scans"]))
+        scan_into["counts_err"] = np.sqrt(counts_err_tmp)
 
     else:
         omega = np.concatenate((scan_into["omega"], scan_from["omega"]))
@@ -118,18 +125,14 @@ def merge_scans(scan_into, scan_from):
 
 
 def restore_scan(scan):
-    if "init_omega" in scan:
-        scan["omega"] = scan["init_omega"]
-        scan["counts"] = scan["init_counts"]
-        scan["counts_err"] = scan["init_counts_err"]
-        del scan["init_omega"]
-        del scan["init_counts"]
-        del scan["init_counts_err"]
-
     if "merged_scans" in scan:
         for merged_scan in scan["merged_scans"]:
             merged_scan["active"] = True
-        del scan["merged_scans"]
+
+    if "init_scan" in scan:
+        tmp = scan["init_scan"]
+        scan.clear()
+        scan.update(tmp)
 
 
 def fit_scan(scan, model_dict, fit_from=None, fit_to=None):
