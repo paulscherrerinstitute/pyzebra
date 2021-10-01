@@ -214,26 +214,23 @@ def parse_1D(fileobj, data_type):
                 s[motor] = np.median(s[motor])
             else:
                 s["scan_motors"].append(motor)
-        s["scan_motor"] = s["scan_motors"][0]
 
         # "om" -> "omega"
         if "om" in s["scan_motors"]:
             s["scan_motors"][s["scan_motors"].index("om")] = "omega"
-            if s["scan_motor"] == "om":
-                s["scan_motor"] = "omega"
             s["omega"] = s["om"]
             del s["om"]
 
         # "tt" -> "temp"
-        elif "tt" in s["scan_motors"]:
+        if "tt" in s["scan_motors"]:
             s["scan_motors"][s["scan_motors"].index("tt")] = "temp"
-            if s["scan_motor"] == "tt":
-                s["scan_motor"] = "temp"
             s["temp"] = s["tt"]
             del s["tt"]
 
         # "mf" stays "mf"
         # "phi" stays "phi"
+
+        s["scan_motor"] = s["scan_motors"][0]
 
         if "h" not in s:
             s["h"] = s["k"] = s["l"] = float("nan")
