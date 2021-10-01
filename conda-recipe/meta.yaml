@@ -22,7 +22,7 @@ requirements:
     - numpy
     - scipy
     - h5py
-    - bokeh =2.3
+    - bokeh =2.4
     - numba
     - lmfit
 
