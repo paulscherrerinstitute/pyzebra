@@ -10,6 +10,7 @@ from bokeh.layouts import column, row
 from bokeh.models import (
     BasicTicker,
     Button,
+    CellEditor,
     CheckboxEditor,
     CheckboxGroup,
     ColumnDataSource,
@@ -326,9 +327,9 @@ def create():
     scan_table = DataTable(
         source=scan_table_source,
         columns=[
-            TableColumn(field="scan", title="Scan", width=50),
-            TableColumn(field="hkl", title="hkl", width=100),
-            TableColumn(field="fit", title="Fit", width=50),
+            TableColumn(field="scan", title="Scan", editor=CellEditor(), width=50),
+            TableColumn(field="hkl", title="hkl", editor=CellEditor(), width=100),
+            TableColumn(field="fit", title="Fit", editor=CellEditor(), width=50),
             TableColumn(field="export", title="Export", editor=CheckboxEditor(), width=50),
         ],
         width=310,  # +60 because of the index column
@@ -464,7 +465,7 @@ def create():
     fitparams_table = DataTable(
         source=fitparams_table_source,
         columns=[
-            TableColumn(field="param", title="Parameter"),
+            TableColumn(field="param", title="Parameter", editor=CellEditor()),
             TableColumn(field="value", title="Value", editor=NumberEditor()),
             TableColumn(field="vary", title="Vary", editor=CheckboxEditor()),
             TableColumn(field="min", title="Min", editor=NumberEditor()),

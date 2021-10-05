@@ -10,6 +10,7 @@ from bokeh.models import (
     BasicTicker,
     BoxZoomTool,
     Button,
+    CellEditor,
     CheckboxGroup,
     ColumnDataSource,
     DataRange1d,
@@ -210,7 +211,7 @@ def create():
     scan_table = DataTable(
         source=scan_table_source,
         columns=[
-            TableColumn(field="file", title="file", width=150),
+            TableColumn(field="file", title="file", editor=CellEditor(), width=150),
             TableColumn(
                 field="param",
                 title="param",
@@ -218,9 +219,15 @@ def create():
                 editor=NumberEditor(),
                 width=50,
             ),
-            TableColumn(field="frame", title="Frame", formatter=num_formatter, width=70),
-            TableColumn(field="x_pos", title="X", formatter=num_formatter, width=70),
-            TableColumn(field="y_pos", title="Y", formatter=num_formatter, width=70),
+            TableColumn(
+                field="frame", title="Frame", formatter=num_formatter, editor=CellEditor(), width=70
+            ),
+            TableColumn(
+                field="x_pos", title="X", formatter=num_formatter, editor=CellEditor(), width=70
+            ),
+            TableColumn(
+                field="y_pos", title="Y", formatter=num_formatter, editor=CellEditor(), width=70
+            ),
         ],
         width=470,  # +60 because of the index column
         height=420,
