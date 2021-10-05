@@ -147,6 +147,10 @@ def fit_scan(scan, model_dict, fit_from=None, fit_to=None):
 
     # apply fitting range
     fit_ind = (fit_from <= x_fit) & (x_fit <= fit_to)
+    if not np.any(fit_ind):
+        print(f"No data in fit range for scan {scan['idx']}")
+        return
+
     y_fit = y_fit[fit_ind]
     y_err = y_err[fit_ind]
     x_fit = x_fit[fit_ind]
@@ -201,6 +205,9 @@ def fit_scan(scan, model_dict, fit_from=None, fit_to=None):
 
 
 def get_area(scan, area_method, lorentz):
+    if "fit" not in scan:
+        return
+
     if area_method not in AREA_METHODS:
         raise ValueError(f"Unknown area method: {area_method}.")
 
