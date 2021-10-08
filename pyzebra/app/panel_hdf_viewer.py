@@ -108,6 +108,27 @@ def create():
     upload_button = FileInput(accept=".cami", width=200)
     upload_button.on_change("value", upload_button_callback)
 
+    def upload_hdf_button_callback(_attr, _old, new):
+        nonlocal det_data
+        det_data = pyzebra.read_detector_data(io.BytesIO(base64.b64decode(new)))
+
+        index_spinner.value = 0
+        index_spinner.high = det_data["data"].shape[0] - 1
+        index_slider.end = det_data["data"].shape[0] - 1
+
+        zebra_mode = det_data["zebra_mode"]
+        if zebra_mode == "nb":
+            metadata_table_source.data.update(geom=["normal beam"])
+        else:  # zebra_mode == "bi"
+            metadata_table_source.data.update(geom=["bisecting"])
+
+        update_image(0)
+        update_overview_plot()
+
+    upload_hdf_div = Div(text="or upload .hdf file:", margin=(5, 5, 0, 5))
+    upload_hdf_button = FileInput(accept=".hdf", width=200)
+    upload_hdf_button.on_change("value", upload_hdf_button_callback)
+
     def update_image(index=None):
         if index is None:
             index = index_spinner.value
@@ -739,7 +760,9 @@ def create():
     )
 
     # Final layout
-    import_layout = column(data_source, upload_div, upload_button, file_select)
+    import_layout = column(
+        data_source, upload_div, upload_button, upload_hdf_div, upload_hdf_button, file_select
+    )
     layout_image = column(gridplot([[proj_v, None], [plot, proj_h]], merge_tools=False))
     colormap_layout = column(
         colormap,
