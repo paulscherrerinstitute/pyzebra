@@ -8,6 +8,7 @@
             "program": "${workspaceFolder}/pyzebra/app/cli.py",
             "console": "internalConsole",
             "env": {},
+            "justMyCode": false,
         },
     ]
 }
