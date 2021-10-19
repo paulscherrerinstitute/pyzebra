@@ -1,6 +1,5 @@
 import base64
 import io
-import math
 import os
 
 import numpy as np
@@ -41,7 +40,6 @@ from bokeh.models import (
     WheelZoomTool,
 )
 from bokeh.palettes import Cividis256, Greys256, Plasma256  # pylint: disable=E0611
-from scipy.optimize import curve_fit
 
 import pyzebra
 
@@ -656,8 +654,15 @@ def create():
     )
 
     def add_event_button_callback():
-        p0 = [1.0, 0.0, 1.0]
-        maxfev = 100000
+        pyzebra.fit_event(
+            det_data,
+            int(np.floor(frame_range.start)),
+            int(np.ceil(frame_range.end)),
+            int(np.floor(det_y_range.start)),
+            int(np.ceil(det_y_range.end)),
+            int(np.floor(det_x_range.start)),
+            int(np.ceil(det_x_range.end)),
+        )
 
         wave = det_data["wave"]
         ddist = det_data["ddist"]
@@ -672,25 +677,12 @@ def create():
         scan_motor = det_data["scan_motor"]
         var_angle = det_data[scan_motor]
 
-        x0 = int(np.floor(det_x_range.start))
-        xN = int(np.ceil(det_x_range.end))
-        y0 = int(np.floor(det_y_range.start))
-        yN = int(np.ceil(det_y_range.end))
-        fr0 = int(np.floor(frame_range.start))
-        frN = int(np.ceil(frame_range.end))
-        data_roi = det_data["data"][fr0:frN, y0:yN, x0:xN]
+        snr_cnts = det_data["fit"]["snr"]
+        frC = det_data["fit"]["frame"]
 
-        cnts = np.sum(data_roi, axis=(1, 2))
-        coeff, _ = curve_fit(gauss, range(len(cnts)), cnts, p0=p0, maxfev=maxfev)
-
-        m = cnts.mean()
-        sd = cnts.std()
-        snr_cnts = np.where(sd == 0, 0, m / sd)
-
-        frC = fr0 + coeff[1]
-        var_F = var_angle[math.floor(frC)]
-        var_C = var_angle[math.ceil(frC)]
-        frStep = frC - math.floor(frC)
+        var_F = var_angle[int(np.floor(frC))]
+        var_C = var_angle[int(np.ceil(frC))]
+        frStep = frC - np.floor(frC)
         var_step = var_C - var_F
         var_p = var_F + var_step * frStep
 
@@ -705,15 +697,9 @@ def create():
         elif scan_motor == "phi":
             phi = var_p
 
-        intensity = coeff[1] * abs(coeff[2] * var_step) * math.sqrt(2) * math.sqrt(np.pi)
-
-        projX = np.sum(data_roi, axis=(0, 1))
-        coeff, _ = curve_fit(gauss, range(len(projX)), projX, p0=p0, maxfev=maxfev)
-        x_pos = x0 + coeff[1]
-
-        projY = np.sum(data_roi, axis=(0, 2))
-        coeff, _ = curve_fit(gauss, range(len(projY)), projY, p0=p0, maxfev=maxfev)
-        y_pos = y0 + coeff[1]
+        intensity = det_data["fit"]["intensity"]
+        x_pos = det_data["fit"]["x_pos"]
+        y_pos = det_data["fit"]["y_pos"]
 
         events_data["wave"].append(wave)
         events_data["ddist"].append(ddist)
@@ -793,17 +779,6 @@ def create():
     )
 
     return Panel(child=tab_layout, title="hdf viewer")
-
-
-def gauss(x, *p):
-    """Defines Gaussian function
-    Args:
-        A - amplitude, mu - position of the center, sigma - width
-    Returns:
-        Gaussian function
-    """
-    A, mu, sigma = p
-    return A * np.exp(-((x - mu) ** 2) / (2.0 * sigma ** 2))
 
 
 def calculate_hkl(det_data, index):

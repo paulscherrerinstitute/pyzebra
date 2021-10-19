@@ -257,6 +257,10 @@ def fit_event(scan, fr_from, fr_to, y_from, y_to, x_from, x_to):
     frC = result.params["center"].value
     intensity = result.params["height"].value
 
+    counts_std = counts_per_fr.std()
+    counts_mean = counts_per_fr.mean()
+    snr = 0 if counts_std == 0 else counts_mean / counts_std
+
     model = Gaussian2dModel()
     xs, ys = np.meshgrid(np.arange(x_from, x_to), np.arange(y_from, y_to))
     xs = xs.flatten()
@@ -267,4 +271,4 @@ def fit_event(scan, fr_from, fr_to, y_from, y_to, x_from, x_to):
     xC = result.params["centerx"].value
     yC = result.params["centery"].value
 
-    scan["fit"] = {"frame": frC, "x_pos": xC, "y_pos": yC, "intensity": intensity}
+    scan["fit"] = {"frame": frC, "x_pos": xC, "y_pos": yC, "intensity": intensity, "snr": snr}
