@@ -1,7 +1,7 @@
 import os
 
 import numpy as np
-from lmfit.models import GaussianModel, LinearModel, PseudoVoigtModel, VoigtModel
+from lmfit.models import Gaussian2dModel, GaussianModel, LinearModel, PseudoVoigtModel, VoigtModel
 from scipy.integrate import simpson, trapezoid
 
 from .ccl_io import CCL_ANGLES
@@ -244,3 +244,27 @@ def get_area(scan, area_method, lorentz):
         area_s = np.abs(area_s * corr_factor)
 
     scan["area"] = (area_v, area_s)
+
+
+def fit_event(scan, fr_from, fr_to, y_from, y_to, x_from, x_to):
+    data_roi = scan["data"][fr_from:fr_to, y_from:y_to, x_from:x_to]
+
+    model = GaussianModel()
+    fr = np.arange(fr_from, fr_to)
+    counts_per_fr = np.sum(data_roi, axis=(1, 2))
+    params = model.guess(counts_per_fr, fr)
+    result = model.fit(counts_per_fr, x=fr, params=params)
+    frC = result.params["center"].value
+    intensity = result.params["height"].value
+
+    model = Gaussian2dModel()
+    xs, ys = np.meshgrid(np.arange(x_from, x_to), np.arange(y_from, y_to))
+    xs = xs.flatten()
+    ys = ys.flatten()
+    counts = np.sum(data_roi, axis=0).flatten()
+    params = model.guess(counts, xs, ys)
+    result = model.fit(counts, x=xs, y=ys, params=params)
+    xC = result.params["centerx"].value
+    yC = result.params["centery"].value
+
+    scan["fit"] = {"frame": frC, "x_pos": xC, "y_pos": yC, "intensity": intensity}

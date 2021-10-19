@@ -1,6 +1,5 @@
 import base64
 import io
-import math
 import os
 
 import numpy as np
@@ -38,7 +37,6 @@ from bokeh.models import (
     WheelZoomTool,
 )
 from bokeh.palettes import Cividis256, Greys256, Plasma256  # pylint: disable=E0611
-from scipy.optimize import curve_fit
 
 import pyzebra
 
@@ -447,68 +445,6 @@ def create():
     )
     proj_display_min_spinner.on_change("value", proj_display_min_spinner_callback)
 
-    def fit_event(scan):
-        p0 = [1.0, 0.0, 1.0]
-        maxfev = 100000
-
-        # wave = scan["wave"]
-        # ddist = scan["ddist"]
-        # cell = scan["cell"]
-
-        # gamma = scan["gamma"][0]
-        # omega = scan["omega"][0]
-        # nu = scan["nu"][0]
-        # chi = scan["chi"][0]
-        # phi = scan["phi"][0]
-
-        scan_motor = scan["scan_motor"]
-        var_angle = scan[scan_motor]
-
-        x0 = int(np.floor(det_x_range.start))
-        xN = int(np.ceil(det_x_range.end))
-        y0 = int(np.floor(det_y_range.start))
-        yN = int(np.ceil(det_y_range.end))
-        fr0 = int(np.floor(frame_range.start))
-        frN = int(np.ceil(frame_range.end))
-        data_roi = scan["data"][fr0:frN, y0:yN, x0:xN]
-
-        cnts = np.sum(data_roi, axis=(1, 2))
-        coeff, _ = curve_fit(gauss, range(len(cnts)), cnts, p0=p0, maxfev=maxfev)
-
-        # m = cnts.mean()
-        # sd = cnts.std()
-        # snr_cnts = np.where(sd == 0, 0, m / sd)
-
-        frC = fr0 + coeff[1]
-        var_F = var_angle[math.floor(frC)]
-        var_C = var_angle[math.ceil(frC)]
-        # frStep = frC - math.floor(frC)
-        var_step = var_C - var_F
-        # var_p = var_F + var_step * frStep
-
-        # if scan_motor == "gamma":
-        #     gamma = var_p
-        # elif scan_motor == "omega":
-        #     omega = var_p
-        # elif scan_motor == "nu":
-        #     nu = var_p
-        # elif scan_motor == "chi":
-        #     chi = var_p
-        # elif scan_motor == "phi":
-        #     phi = var_p
-
-        intensity = coeff[1] * abs(coeff[2] * var_step) * math.sqrt(2) * math.sqrt(np.pi)
-
-        projX = np.sum(data_roi, axis=(0, 1))
-        coeff, _ = curve_fit(gauss, range(len(projX)), projX, p0=p0, maxfev=maxfev)
-        x_pos = x0 + coeff[1]
-
-        projY = np.sum(data_roi, axis=(0, 2))
-        coeff, _ = curve_fit(gauss, range(len(projY)), projY, p0=p0, maxfev=maxfev)
-        y_pos = y0 + coeff[1]
-
-        scan["fit"] = {"frame": frC, "x_pos": x_pos, "y_pos": y_pos, "intensity": intensity}
-
     metadata_table_source = ColumnDataSource(dict(geom=[""], temp=[None], mf=[None]))
     metadata_table = DataTable(
         source=metadata_table_source,
@@ -556,7 +492,15 @@ def create():
 
     def proc_all_button_callback():
         for scan in zebra_data:
-            fit_event(scan)
+            pyzebra.fit_event(
+                scan,
+                int(np.floor(frame_range.start)),
+                int(np.ceil(frame_range.end)),
+                int(np.floor(det_y_range.start)),
+                int(np.ceil(det_y_range.end)),
+                int(np.floor(det_x_range.start)),
+                int(np.ceil(det_x_range.end)),
+            )
 
         _update_table()
 
@@ -573,7 +517,15 @@ def create():
     proc_all_button.on_click(proc_all_button_callback)
 
     def proc_button_callback():
-        fit_event(det_data)
+        pyzebra.fit_event(
+            det_data,
+            int(np.floor(frame_range.start)),
+            int(np.ceil(frame_range.end)),
+            int(np.floor(det_y_range.start)),
+            int(np.ceil(det_y_range.end)),
+            int(np.floor(det_x_range.start)),
+            int(np.ceil(det_x_range.end)),
+        )
 
         _update_table()
 
@@ -628,14 +580,3 @@ def create():
     tab_layout = column(row(import_layout, scan_layout, plots))
 
     return Panel(child=tab_layout, title="hdf param study")
-
-
-def gauss(x, *p):
-    """Defines Gaussian function
-    Args:
-        A - amplitude, mu - position of the center, sigma - width
-    Returns:
-        Gaussian function
-    """
-    A, mu, sigma = p
-    return A * np.exp(-((x - mu) ** 2) / (2.0 * sigma ** 2))
