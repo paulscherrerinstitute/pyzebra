@@ -36,6 +36,7 @@ from bokeh.models import (
     Spacer,
     Spinner,
     TableColumn,
+    Tabs,
     Title,
     WheelZoomTool,
 )
@@ -167,6 +168,34 @@ def create():
         gamma, nu = calculate_pol(det_data, index)
         omega = np.ones((IMAGE_H, IMAGE_W)) * det_data["omega"][index]
         image_source.data.update(gamma=[gamma], nu=[nu], omega=[omega])
+
+        # update detector center angles
+        det_c_x = int(IMAGE_W / 2)
+        det_c_y = int(IMAGE_H / 2)
+        if det_data["zebra_mode"] == "nb":
+            gamma_c = gamma[det_c_y, det_c_x]
+            nu_c = nu[det_c_y, det_c_x]
+            omega_c = omega[det_c_y, det_c_x]
+            chi_c = None
+            phi_c = None
+
+        else:  # zebra_mode == "bi"
+            wave = det_data["wave"]
+            ddist = det_data["ddist"]
+            gammad = det_data["gamma"][index]
+            om = det_data["omega"][index]
+            ch = det_data["chi"][index]
+            ph = det_data["phi"][index]
+            nud = det_data["nu"]
+
+            nu_c = 0
+            chi_c, phi_c, gamma_c, omega_c = pyzebra.ang_proc(
+                wave, ddist, gammad, om, ch, ph, nud, det_c_x, det_c_y
+            )
+
+        detcenter_table_source.data.update(
+            gamma=[gamma_c], nu=[nu_c], omega=[omega_c], chi=[chi_c], phi=[phi_c],
+        )
 
     def update_overview_plot():
         h5_data = det_data["data"]
@@ -653,6 +682,22 @@ def create():
         index_position=None,
     )
 
+    detcenter_table_source = ColumnDataSource(dict(gamma=[], omega=[], chi=[], phi=[], nu=[]))
+    detcenter_table = DataTable(
+        source=detcenter_table_source,
+        columns=[
+            TableColumn(field="gamma", title="Gamma", formatter=num_formatter, width=70),
+            TableColumn(field="omega", title="Omega", formatter=num_formatter, width=70),
+            TableColumn(field="chi", title="Chi", formatter=num_formatter, width=70),
+            TableColumn(field="phi", title="Phi", formatter=num_formatter, width=70),
+            TableColumn(field="nu", title="Nu", formatter=num_formatter, width=70),
+        ],
+        height=150,
+        width=350,
+        autosize_mode="none",
+        index_position=None,
+    )
+
     def add_event_button_callback():
         pyzebra.fit_event(
             det_data,
@@ -746,6 +791,13 @@ def create():
     )
 
     # Final layout
+    peak_tables = Tabs(
+        tabs=[
+            Panel(child=events_table, title="Actual peak center"),
+            Panel(child=detcenter_table, title="Peak in the detector center"),
+        ]
+    )
+
     import_layout = column(
         data_source, upload_div, upload_button, upload_hdf_div, upload_hdf_button, file_select
     )
@@ -760,7 +812,7 @@ def create():
 
     layout_controls = column(
         row(metadata_table, index_spinner, column(Spacer(height=25), index_slider)),
-        row(column(add_event_button, remove_event_button), events_table),
+        row(column(add_event_button, remove_event_button), peak_tables),
     )
 
     layout_overview = column(

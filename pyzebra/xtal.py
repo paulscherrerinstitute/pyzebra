@@ -372,6 +372,16 @@ def ang2hkl(wave, ddist, gammad, om, ch, ph, nud, ub, x, y):
     return hkl
 
 
+def ang_proc(wave, ddist, gammad, om, ch, ph, nud, x, y):
+    """Utility function to calculate ch, ph, ga, om
+    """
+    ga, nu = det2pol(ddist, gammad, nud, x, y)
+    z1 = z1frmd(wave, ga, om, ch, ph, nu)
+    ch2, ph2 = eqchph(z1)
+    ch, ph, ga, om = fixdnu(wave, z1, ch2, ph2, nu)
+    return ch, ph, ga, om
+
+
 def gauss(x, *p):
     """Defines Gaussian function
 
