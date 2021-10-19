@@ -96,20 +96,20 @@ def create():
     proposal_textinput = doc.proposal_textinput
     proposal_textinput.on_change("name", proposal_textinput_callback)
 
-    def upload_button_callback(_attr, _old, new):
+    def upload_cami_button_callback(_attr, _old, new):
         nonlocal cami_meta
         with io.StringIO(base64.b64decode(new).decode()) as file:
             cami_meta = pyzebra.parse_h5meta(file)
         data_source.value = "cami file"
         file_select_update()
 
-    upload_div = Div(text="or upload .cami file:", margin=(5, 5, 0, 5))
-    upload_button = FileInput(accept=".cami", width=200)
-    upload_button.on_change("value", upload_button_callback)
+    upload_cami_div = Div(text="or upload .cami file:", margin=(5, 5, 0, 5))
+    upload_cami_button = FileInput(accept=".cami", width=200)
+    upload_cami_button.on_change("value", upload_cami_button_callback)
 
-    def upload_hdf_button_callback(_attr, _old, new):
+    def _open_file(file, cami_meta):
         nonlocal det_data
-        det_data = pyzebra.read_detector_data(io.BytesIO(base64.b64decode(new)))
+        det_data = pyzebra.read_detector_data(file, cami_meta)
 
         index_spinner.value = 0
         index_spinner.high = det_data["data"].shape[0] - 1
@@ -124,9 +124,21 @@ def create():
         update_image(0)
         update_overview_plot()
 
+    def upload_hdf_button_callback(_attr, _old, new):
+        _open_file(io.BytesIO(base64.b64decode(new)), None)
+
     upload_hdf_div = Div(text="or upload .hdf file:", margin=(5, 5, 0, 5))
     upload_hdf_button = FileInput(accept=".hdf", width=200)
     upload_hdf_button.on_change("value", upload_hdf_button_callback)
+
+    def file_open_button_callback():
+        if data_source.value == "proposal number":
+            _open_file(file_select.value[0], None)
+        else:
+            _open_file(file_select.value[0], cami_meta)
+
+    file_open_button = Button(label="Open New", width=100)
+    file_open_button.on_click(file_open_button_callback)
 
     def update_image(index=None):
         if index is None:
@@ -244,35 +256,10 @@ def create():
         scanning_motor_range.bounds = (min(var_start, var_end), max(var_start, var_end))
 
     def file_select_callback(_attr, old, new):
-        nonlocal det_data
-        if not new:
-            # skip empty selections
-            return
-
         # Avoid selection of multiple indicies (via Shift+Click or Ctrl+Click)
         if len(new) > 1:
             # drop selection to the previous one
             file_select.value = old
-            return
-
-        if len(old) > 1:
-            # skip unnecessary update caused by selection drop
-            return
-
-        det_data = pyzebra.read_detector_data(new[0], cami_meta)
-
-        index_spinner.value = 0
-        index_spinner.high = det_data["data"].shape[0] - 1
-        index_slider.end = det_data["data"].shape[0] - 1
-
-        zebra_mode = det_data["zebra_mode"]
-        if zebra_mode == "nb":
-            metadata_table_source.data.update(geom=["normal beam"])
-        else:  # zebra_mode == "bi"
-            metadata_table_source.data.update(geom=["bisecting"])
-
-        update_image(0)
-        update_overview_plot()
 
     file_select = MultiSelect(title="Available .hdf files:", width=210, height=250)
     file_select.on_change("value", file_select_callback)
@@ -799,8 +786,15 @@ def create():
     )
 
     import_layout = column(
-        data_source, upload_div, upload_button, upload_hdf_div, upload_hdf_button, file_select
+        data_source,
+        upload_cami_div,
+        upload_cami_button,
+        upload_hdf_div,
+        upload_hdf_button,
+        file_select,
+        file_open_button,
     )
+
     layout_image = column(gridplot([[proj_v, None], [plot, proj_h]], merge_tools=False))
     colormap_layout = column(
         colormap,
