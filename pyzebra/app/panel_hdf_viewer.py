@@ -717,7 +717,7 @@ def create():
 
         events_table_source.data = events_data
 
-    add_event_button = Button(label="Add spind event", width=145)
+    add_event_button = Button(label="Add peak center", width=145)
     add_event_button.on_click(add_event_button_callback)
 
     def remove_event_button_callback():
@@ -728,7 +728,7 @@ def create():
 
         events_table_source.data = events_data
 
-    remove_event_button = Button(label="Remove spind event", width=145)
+    remove_event_button = Button(label="Remove peak center", width=145)
     remove_event_button.on_click(remove_event_button_callback)
 
     metadata_table_source = ColumnDataSource(dict(geom=[""], temp=[None], mf=[None]))
