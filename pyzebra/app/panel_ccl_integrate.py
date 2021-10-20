@@ -102,7 +102,7 @@ def create():
     def _init_datatable():
         scan_list = [s["idx"] for s in det_data]
         hkl = [f'{s["h"]} {s["k"]} {s["l"]}' for s in det_data]
-        export = [s.get("active", True) for s in det_data]
+        export = [s["export"] for s in det_data]
         scan_table_source.data.update(
             scan=scan_list, hkl=hkl, fit=[0] * len(scan_list), export=export,
         )
@@ -200,7 +200,7 @@ def create():
 
     def _update_datatable():
         fit_ok = [(1 if "fit" in scan else 0) for scan in det_data]
-        export = [scan.get("active", True) for scan in det_data]
+        export = [scan["export"] for scan in det_data]
         scan_table_source.data.update(fit=fit_ok, export=export)
 
     def _update_plot():
@@ -317,7 +317,11 @@ def create():
 
         _update_plot()
 
-    def scan_table_source_callback(_attr, _old, _new):
+    def scan_table_source_callback(_attr, _old, new):
+        # unfortunately, we don't know if the change comes from data update or user input
+        # also `old` and `new` are the same for non-scalars
+        for scan, export in zip(det_data, new["export"]):
+            scan["export"] = export
         _update_preview()
 
     scan_table_source = ColumnDataSource(dict(scan=[], hkl=[], fit=[], export=[]))
@@ -486,8 +490,8 @@ def create():
     fit_output_textinput = TextAreaInput(title="Fit results:", width=750, height=200)
 
     def proc_all_button_callback():
-        for scan, export in zip(det_data, scan_table_source.data["export"]):
-            if export:
+        for scan in det_data:
+            if scan["export"]:
                 pyzebra.fit_scan(
                     scan, fit_params, fit_from=fit_from_spinner.value, fit_to=fit_to_spinner.value
                 )
@@ -531,9 +535,9 @@ def create():
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_file = temp_dir + "/temp"
             export_data = []
-            for s, export in zip(det_data, scan_table_source.data["export"]):
-                if export:
-                    export_data.append(s)
+            for scan in det_data:
+                if scan["export"]:
+                    export_data.append(scan)
 
             pyzebra.export_1D(
                 export_data,

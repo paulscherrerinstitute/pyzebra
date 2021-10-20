@@ -111,6 +111,7 @@ def create():
 
     def _init_datatable():
         scan_list = [s["idx"] for s in det_data]
+        export = [s["export"] for s in det_data]
         file_list = []
         for scan in det_data:
             file_list.append(os.path.basename(scan["original_filename"]))
@@ -120,7 +121,7 @@ def create():
             scan=scan_list,
             param=[None] * len(scan_list),
             fit=[0] * len(scan_list),
-            export=[True] * len(scan_list),
+            export=export,
         )
         scan_table_source.selected.indices = []
         scan_table_source.selected.indices = [0]
@@ -485,7 +486,11 @@ def create():
 
         _update_plot()
 
-    def scan_table_source_callback(_attr, _old, _new):
+    def scan_table_source_callback(_attr, _old, new):
+        # unfortunately, we don't know if the change comes from data update or user input
+        # also `old` and `new` are the same for non-scalars
+        for scan, export in zip(det_data, new["export"]):
+            scan["export"] = export
         _update_preview()
 
     scan_table_source = ColumnDataSource(dict(file=[], scan=[], param=[], fit=[], export=[]))
@@ -646,8 +651,8 @@ def create():
     fit_output_textinput = TextAreaInput(title="Fit results:", width=750, height=200)
 
     def proc_all_button_callback():
-        for scan, export in zip(det_data, scan_table_source.data["export"]):
-            if export:
+        for scan in det_data:
+            if scan["export"]:
                 pyzebra.fit_scan(
                     scan, fit_params, fit_from=fit_from_spinner.value, fit_to=fit_to_spinner.value
                 )
@@ -708,12 +713,10 @@ def create():
             temp_file = temp_dir + "/temp"
             export_data = []
             param_data = []
-            for s, p, export in zip(
-                det_data, scan_table_source.data["param"], scan_table_source.data["export"]
-            ):
-                if export:
-                    export_data.append(s)
-                    param_data.append(p)
+            for scan, param in zip(det_data, scan_table_source.data["param"]):
+                if scan["export"]:
+                    export_data.append(scan)
+                    param_data.append(param)
 
             pyzebra.export_param_study(export_data, param_data, temp_file)
 

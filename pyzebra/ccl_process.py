@@ -117,7 +117,7 @@ def merge_scans(scan_into, scan_from):
         scan_into["counts"] = counts[index]
         scan_into["counts_err"] = counts_err[index]
 
-    scan_from["active"] = False
+    scan_from["export"] = False
 
     fname1 = os.path.basename(scan_into["original_filename"])
     fname2 = os.path.basename(scan_from["original_filename"])
@@ -127,7 +127,7 @@ def merge_scans(scan_into, scan_from):
 def restore_scan(scan):
     if "merged_scans" in scan:
         for merged_scan in scan["merged_scans"]:
-            merged_scan["active"] = True
+            merged_scan["export"] = True
 
     if "init_scan" in scan:
         tmp = scan["init_scan"]

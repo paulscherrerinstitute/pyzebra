@@ -144,6 +144,7 @@ def parse_1D(fileobj, data_type):
                 continue
 
             s = {}
+            s["export"] = True
 
             # first line
             for param, (param_name, param_type) in zip(line.split(), ccl_first_line):
@@ -182,6 +183,7 @@ def parse_1D(fileobj, data_type):
             metadata["gamma"] = metadata["twotheta"]
 
         s = defaultdict(list)
+        s["export"] = True
 
         match = re.search("Scanning Variables: (.*), Steps: (.*)", next(fileobj))
         motors = [motor.lower() for motor in match.group(1).split(", ")]
