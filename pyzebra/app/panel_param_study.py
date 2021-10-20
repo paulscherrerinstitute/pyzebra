@@ -168,10 +168,10 @@ def create():
     file_append_button = Button(label="Append", width=100, disabled=True)
     file_append_button.on_click(file_append_button_callback)
 
-    def upload_button_callback(_attr, _old, new):
+    def upload_button_callback(_attr, _old, _new):
         nonlocal det_data
         det_data = []
-        for f_str, f_name in zip(new, upload_button.filename):
+        for f_str, f_name in zip(upload_button.value, upload_button.filename):
             with io.StringIO(base64.b64decode(f_str).decode()) as file:
                 base, ext = os.path.splitext(f_name)
                 file_data = pyzebra.parse_1D(file, ext)
@@ -190,10 +190,12 @@ def create():
 
     upload_div = Div(text="or upload new .ccl/.dat files:", margin=(5, 5, 0, 5))
     upload_button = FileInput(accept=".ccl,.dat", multiple=True, width=200)
-    upload_button.on_change("value", upload_button_callback)
+    # for on_change("value", ...) or on_change("filename", ...),
+    # see https://github.com/bokeh/bokeh/issues/11461
+    upload_button.on_change("filename", upload_button_callback)
 
-    def append_upload_button_callback(_attr, _old, new):
-        for f_str, f_name in zip(new, append_upload_button.filename):
+    def append_upload_button_callback(_attr, _old, _new):
+        for f_str, f_name in zip(append_upload_button.value, append_upload_button.filename):
             with io.StringIO(base64.b64decode(f_str).decode()) as file:
                 _, ext = os.path.splitext(f_name)
                 file_data = pyzebra.parse_1D(file, ext)
@@ -205,7 +207,9 @@ def create():
 
     append_upload_div = Div(text="append extra files:", margin=(5, 5, 0, 5))
     append_upload_button = FileInput(accept=".ccl,.dat", multiple=True, width=200, disabled=True)
-    append_upload_button.on_change("value", append_upload_button_callback)
+    # for on_change("value", ...) or on_change("filename", ...),
+    # see https://github.com/bokeh/bokeh/issues/11461
+    append_upload_button.on_change("filename", append_upload_button_callback)
 
     def monitor_spinner_callback(_attr, _old, new):
         if det_data:
