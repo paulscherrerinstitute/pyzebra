@@ -255,6 +255,24 @@ def create():
         # handle both, ascending and descending sequences
         scanning_motor_range.bounds = (min(var_start, var_end), max(var_start, var_end))
 
+        gamma_start = det_data["gamma"][0] + det_data["x_deg"][0]
+        gamma_end = det_data["gamma"][0] + det_data["x_deg"][-1]
+
+        gamma_range.start = gamma_start
+        gamma_range.end = gamma_end
+        gamma_range.reset_start = gamma_start
+        gamma_range.reset_end = gamma_end
+        gamma_range.bounds = (min(gamma_start, gamma_end), max(gamma_start, gamma_end))
+
+        nu_start = det_data["nu"][0] + det_data["y_deg"][0]
+        nu_end = det_data["nu"][0] + det_data["y_deg"][-1]
+
+        nu_range.start = nu_start
+        nu_range.end = nu_end
+        nu_range.reset_start = nu_start
+        nu_range.reset_end = nu_end
+        nu_range.bounds = (min(nu_start, nu_end), max(nu_start, nu_end))
+
     def file_select_callback(_attr, old, new):
         # Avoid selection of multiple indicies (via Shift+Click or Ctrl+Click)
         if len(new) > 1:
@@ -420,12 +438,14 @@ def create():
     scanning_motor_range = Range1d(0, 1, bounds=(0, 1))
 
     det_x_range = Range1d(0, IMAGE_W, bounds=(0, IMAGE_W))
+    gamma_range = Range1d(0, 1, bounds=(0, 1))
     overview_plot_x = Plot(
         title=Title(text="Projections on X-axis"),
         x_range=det_x_range,
         y_range=frame_range,
+        extra_x_ranges={"gamma": gamma_range},
         extra_y_ranges={"scanning_motor": scanning_motor_range},
-        plot_height=400,
+        plot_height=450,
         plot_width=IMAGE_PLOT_W - 3,
     )
 
@@ -439,6 +459,9 @@ def create():
 
     # ---- axes
     overview_plot_x.add_layout(LinearAxis(axis_label="Coordinate X, pix"), place="below")
+    overview_plot_x.add_layout(
+        LinearAxis(x_range_name="gamma", axis_label="Gamma, deg"), place="above"
+    )
     overview_plot_x.add_layout(
         LinearAxis(axis_label="Frame", major_label_orientation="vertical"), place="left"
     )
@@ -458,12 +481,14 @@ def create():
     )
 
     det_y_range = Range1d(0, IMAGE_H, bounds=(0, IMAGE_H))
+    nu_range = Range1d(0, 1, bounds=(0, 1))
     overview_plot_y = Plot(
         title=Title(text="Projections on Y-axis"),
         x_range=det_y_range,
         y_range=frame_range,
+        extra_x_ranges={"nu": nu_range},
         extra_y_ranges={"scanning_motor": scanning_motor_range},
-        plot_height=400,
+        plot_height=450,
         plot_width=IMAGE_PLOT_H + 22,
     )
 
@@ -477,6 +502,7 @@ def create():
 
     # ---- axes
     overview_plot_y.add_layout(LinearAxis(axis_label="Coordinate Y, pix"), place="below")
+    overview_plot_y.add_layout(LinearAxis(x_range_name="nu", axis_label="Nu, deg"), place="above")
     overview_plot_y.add_layout(
         LinearAxis(
             y_range_name="scanning_motor",
