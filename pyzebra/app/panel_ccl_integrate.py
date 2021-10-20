@@ -103,8 +103,23 @@ def create():
         scan_list = [s["idx"] for s in det_data]
         hkl = [f'{s["h"]} {s["k"]} {s["l"]}' for s in det_data]
         export = [s["export"] for s in det_data]
+
+        twotheta = [np.median(s["twotheta"]) if "twotheta" in s else None for s in det_data]
+        omega = [np.median(s["omega"]) if "omega" in s else None for s in det_data]
+        chi = [np.median(s["chi"]) if "chi" in s else None for s in det_data]
+        phi = [np.median(s["phi"]) if "phi" in s else None for s in det_data]
+        nu = [np.median(s["nu"]) if "nu" in s else None for s in det_data]
+
         scan_table_source.data.update(
-            scan=scan_list, hkl=hkl, fit=[0] * len(scan_list), export=export,
+            scan=scan_list,
+            hkl=hkl,
+            fit=[0] * len(scan_list),
+            export=export,
+            twotheta=twotheta,
+            omega=omega,
+            chi=chi,
+            phi=phi,
+            nu=nu,
         )
         scan_table_source.selected.indices = []
         scan_table_source.selected.indices = [0]
@@ -328,7 +343,9 @@ def create():
             scan["export"] = export
         _update_preview()
 
-    scan_table_source = ColumnDataSource(dict(scan=[], hkl=[], fit=[], export=[]))
+    scan_table_source = ColumnDataSource(
+        dict(scan=[], hkl=[], fit=[], export=[], twotheta=[], omega=[], chi=[], phi=[], nu=[])
+    )
     scan_table_source.on_change("data", scan_table_source_callback)
     scan_table_source.selected.on_change("indices", scan_table_select_callback)
 
@@ -339,8 +356,13 @@ def create():
             TableColumn(field="hkl", title="hkl", editor=CellEditor(), width=100),
             TableColumn(field="fit", title="Fit", editor=CellEditor(), width=50),
             TableColumn(field="export", title="Export", editor=CheckboxEditor(), width=50),
+            TableColumn(field="twotheta", title="twotheta", editor=CellEditor(), width=50),
+            TableColumn(field="omega", title="omega", editor=CellEditor(), width=50),
+            TableColumn(field="chi", title="chi", editor=CellEditor(), width=50),
+            TableColumn(field="phi", title="phi", editor=CellEditor(), width=50),
+            TableColumn(field="nu", title="nu", editor=CellEditor(), width=50),
         ],
-        width=310,  # +60 because of the index column
+        width=310,  # +60 because of the index column, but excluding twotheta onwards
         height=350,
         autosize_mode="none",
         editable=True,
