@@ -80,7 +80,6 @@ def merge_datasets(dataset_into, dataset_from):
 
 
 def merge_scans(scan_into, scan_from):
-    # TODO: does it need to be "scan_motor" instead of omega for a generalized solution?
     if "init_scan" not in scan_into:
         scan_into["init_scan"] = scan_into.copy()
 
@@ -92,9 +91,11 @@ def merge_scans(scan_into, scan_from):
 
     scan_into["merged_scans"].append(scan_from)
 
+    scan_motor = scan_into["scan_motor"]  # the same as scan_from["scan_motor"]
+
     if (
-        scan_into["omega"].shape == scan_from["omega"].shape
-        and np.max(np.abs(scan_into["omega"] - scan_from["omega"])) < 0.0005
+        scan_into[scan_motor].shape == scan_from[scan_motor].shape
+        and np.max(np.abs(scan_into[scan_motor] - scan_from[scan_motor])) < 0.0005
     ):
         counts_tmp = 0
         counts_err_tmp = 0
@@ -107,13 +108,13 @@ def merge_scans(scan_into, scan_from):
         scan_into["counts_err"] = np.sqrt(counts_err_tmp)
 
     else:
-        omega = np.concatenate((scan_into["omega"], scan_from["omega"]))
+        motor_pos = np.concatenate((scan_into[scan_motor], scan_from[scan_motor]))
         counts = np.concatenate((scan_into["counts"], scan_from["counts"]))
         counts_err = np.concatenate((scan_into["counts_err"], scan_from["counts_err"]))
 
-        index = np.argsort(omega)
+        index = np.argsort(motor_pos)
 
-        scan_into["omega"] = omega[index]
+        scan_into[scan_motor] = motor_pos[index]
         scan_into["counts"] = counts[index]
         scan_into["counts_err"] = counts_err[index]
 
