@@ -72,7 +72,7 @@ for (let i = 0; i < js_data.data['fname'].length; i++) {
 
 def create():
     doc = curdoc()
-    det_data = {}
+    det_data = []
     fit_params = {}
     js_data = ColumnDataSource(data=dict(content=["", ""], fname=["", ""], ext=["", ""]))
 
@@ -132,59 +132,80 @@ def create():
 
     def file_open_button_callback():
         nonlocal det_data
-        for f_ind, f_path in enumerate(file_select.value):
+        new_data = []
+        for f_path in file_select.value:
             with open(f_path) as file:
-                base, ext = os.path.splitext(os.path.basename(f_path))
-                file_data = pyzebra.parse_1D(file, ext)
+                f_name = os.path.basename(f_path)
+                base, ext = os.path.splitext(f_name)
+                try:
+                    file_data = pyzebra.parse_1D(file, ext)
+                except:
+                    print(f"Error loading {f_name}")
+                    continue
 
             pyzebra.normalize_dataset(file_data, monitor_spinner.value)
 
-            if f_ind == 0:  # first file
-                det_data = file_data
-                pyzebra.merge_duplicates(det_data)
+            if not new_data:  # first file
+                new_data = file_data
+                pyzebra.merge_duplicates(new_data)
                 js_data.data.update(fname=[base, base])
             else:
-                pyzebra.merge_datasets(det_data, file_data)
+                pyzebra.merge_datasets(new_data, file_data)
 
-        _init_datatable()
-        append_upload_button.disabled = False
+        if new_data:
+            det_data = new_data
+            _init_datatable()
+            append_upload_button.disabled = False
 
     file_open_button = Button(label="Open New", width=100, disabled=True)
     file_open_button.on_click(file_open_button_callback)
 
     def file_append_button_callback():
+        file_data = []
         for f_path in file_select.value:
             with open(f_path) as file:
-                _, ext = os.path.splitext(f_path)
-                file_data = pyzebra.parse_1D(file, ext)
+                f_name = os.path.basename(f_path)
+                _, ext = os.path.splitext(f_name)
+                try:
+                    file_data = pyzebra.parse_1D(file, ext)
+                except:
+                    print(f"Error loading {f_name}")
+                    continue
 
             pyzebra.normalize_dataset(file_data, monitor_spinner.value)
             pyzebra.merge_datasets(det_data, file_data)
 
-        _init_datatable()
+        if file_data:
+            _init_datatable()
 
     file_append_button = Button(label="Append", width=100, disabled=True)
     file_append_button.on_click(file_append_button_callback)
 
     def upload_button_callback(_attr, _old, _new):
         nonlocal det_data
-        det_data = []
+        new_data = []
         for f_str, f_name in zip(upload_button.value, upload_button.filename):
             with io.StringIO(base64.b64decode(f_str).decode()) as file:
                 base, ext = os.path.splitext(f_name)
-                file_data = pyzebra.parse_1D(file, ext)
+                try:
+                    file_data = pyzebra.parse_1D(file, ext)
+                except:
+                    print(f"Error loading {f_name}")
+                    continue
 
             pyzebra.normalize_dataset(file_data, monitor_spinner.value)
 
-            if not det_data:  # first file
-                det_data = file_data
-                pyzebra.merge_duplicates(det_data)
+            if not new_data:  # first file
+                new_data = file_data
+                pyzebra.merge_duplicates(new_data)
                 js_data.data.update(fname=[base, base])
             else:
-                pyzebra.merge_datasets(det_data, file_data)
+                pyzebra.merge_datasets(new_data, file_data)
 
-        _init_datatable()
-        append_upload_button.disabled = False
+        if new_data:
+            det_data = new_data
+            _init_datatable()
+            append_upload_button.disabled = False
 
     upload_div = Div(text="or upload new .ccl/.dat files:", margin=(5, 5, 0, 5))
     upload_button = FileInput(accept=".ccl,.dat", multiple=True, width=200)
@@ -193,15 +214,21 @@ def create():
     upload_button.on_change("filename", upload_button_callback)
 
     def append_upload_button_callback(_attr, _old, _new):
+        file_data = []
         for f_str, f_name in zip(append_upload_button.value, append_upload_button.filename):
             with io.StringIO(base64.b64decode(f_str).decode()) as file:
                 _, ext = os.path.splitext(f_name)
-                file_data = pyzebra.parse_1D(file, ext)
+                try:
+                    file_data = pyzebra.parse_1D(file, ext)
+                except:
+                    print(f"Error loading {f_name}")
+                    continue
 
             pyzebra.normalize_dataset(file_data, monitor_spinner.value)
             pyzebra.merge_datasets(det_data, file_data)
 
-        _init_datatable()
+        if file_data:
+            _init_datatable()
 
     append_upload_div = Div(text="append extra files:", margin=(5, 5, 0, 5))
     append_upload_button = FileInput(accept=".ccl,.dat", multiple=True, width=200, disabled=True)

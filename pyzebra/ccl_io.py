@@ -192,6 +192,7 @@ def parse_1D(fileobj, data_type):
         match = re.search("(.*) Points, Mode: (.*), Preset (.*)", next(fileobj))
         if match.group(2) != "Monitor":
             raise Exception("Unknown mode in dat file.")
+        s["n_points"] = int(match.group(1))
         s["monitor"] = float(match.group(3))
 
         col_names = list(map(str.lower, next(fileobj).split()))
