@@ -68,6 +68,12 @@ def _parameters_match(scan1, scan2):
 
 
 def merge_datasets(dataset_into, dataset_from):
+    scan_motors_into = dataset_into[0]["scan_motors"]
+    scan_motors_from = dataset_from[0]["scan_motors"]
+    if scan_motors_into != scan_motors_from:
+        print(f"Scan motors mismatch between datasets: {scan_motors_into} vs {scan_motors_from}")
+        return
+
     merged = np.zeros(len(dataset_from), dtype=np.bool)
     for scan_into in dataset_into:
         for ind, scan_from in enumerate(dataset_from):
