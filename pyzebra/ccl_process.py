@@ -223,12 +223,8 @@ def get_area(scan, area_method, lorentz):
         area_s = 0
         for name, param in scan["fit"].params.items():
             if "amplitude" in name:
-                if param.stderr is None:
-                    area_v = np.nan
-                    area_s = np.nan
-                else:
-                    area_v += param.value
-                    area_s += param.stderr
+                area_v += np.nan if param.value is None else param.value
+                area_s += np.nan if param.stderr is None else param.stderr
 
     else:  # area_method == "int_area"
         y_val = scan["counts"]
