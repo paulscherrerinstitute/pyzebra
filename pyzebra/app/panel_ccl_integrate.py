@@ -383,7 +383,7 @@ def create():
             TableColumn(field="hkl", title="hkl", editor=CellEditor(), width=100),
             TableColumn(field="fit", title="Fit", editor=CellEditor(), width=50),
             TableColumn(field="export", title="Export", editor=CheckboxEditor(), width=50),
-            TableColumn(field="twotheta", title="twotheta", editor=CellEditor(), width=50),
+            TableColumn(field="twotheta", title="2theta", editor=CellEditor(), width=50),
             TableColumn(field="omega", title="omega", editor=CellEditor(), width=50),
             TableColumn(field="chi", title="chi", editor=CellEditor(), width=50),
             TableColumn(field="phi", title="phi", editor=CellEditor(), width=50),
