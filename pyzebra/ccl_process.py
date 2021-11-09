@@ -149,6 +149,10 @@ def restore_scan(scan):
         tmp = scan["init_scan"]
         scan.clear()
         scan.update(tmp)
+        # force scan export to True, otherwise in the sequence of incorrectly merged scans
+        # a <- b <- c the scan b will be restored with scan["export"] = False if restoring executed
+        # in the same order, i.e. restore a -> restore b
+        scan["export"] = True
 
 
 def fit_scan(scan, model_dict, fit_from=None, fit_to=None):
