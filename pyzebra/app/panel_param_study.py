@@ -527,6 +527,7 @@ def create():
         # also `old` and `new` are the same for non-scalars
         for scan, export in zip(det_data, new["export"]):
             scan["export"] = export
+        _update_overview()
         _update_preview()
 
     scan_table_source = ColumnDataSource(dict(file=[], scan=[], param=[], fit=[], export=[]))
