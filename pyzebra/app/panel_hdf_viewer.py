@@ -132,6 +132,9 @@ def create():
     upload_hdf_button.on_change("value", upload_hdf_button_callback)
 
     def file_open_button_callback():
+        if not file_select.value:
+            return
+
         if data_source.value == "proposal number":
             _open_file(file_select.value[0], None)
         else:
@@ -274,10 +277,21 @@ def create():
         nu_range.bounds = (min(nu_start, nu_end), max(nu_start, nu_end))
 
     def file_select_callback(_attr, old, new):
+        if not new:
+            # skip empty selections
+            return
+
         # Avoid selection of multiple indicies (via Shift+Click or Ctrl+Click)
         if len(new) > 1:
             # drop selection to the previous one
             file_select.value = old
+            return
+
+        if len(old) > 1:
+            # skip unnecessary update caused by selection drop
+            return
+
+        file_open_button_callback()
 
     file_select = MultiSelect(title="Available .hdf files:", width=210, height=250)
     file_select.on_change("value", file_select_callback)
