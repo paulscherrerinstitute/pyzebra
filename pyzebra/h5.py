@@ -135,12 +135,4 @@ def read_detector_data(filepath, cami_meta=None):
                 if "dist1" in cami_meta_detparam:
                     det_data["ddist"] = cami_meta_detparam["dist1"]
 
-        x = h5f["/entry1/ZEBRA/area_detector2/x"][:]
-        y = h5f["/entry1/ZEBRA/area_detector2/y"][:]
-        x_pixel_offset = int(h5f["/entry1/ZEBRA/area_detector2/x_pixel_offset"][:])
-        y_pixel_offset = int(h5f["/entry1/ZEBRA/area_detector2/y_pixel_offset"][:])
-        distance = h5f["/entry1/ZEBRA/area_detector2/distance"][:]
-        det_data["x_deg"] = np.arctan((x - x[x_pixel_offset]) / distance)
-        det_data["y_deg"] = np.arctan((y - y[y_pixel_offset]) / distance)
-
     return det_data

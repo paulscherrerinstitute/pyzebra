@@ -258,8 +258,9 @@ def create():
         # handle both, ascending and descending sequences
         scanning_motor_range.bounds = (min(var_start, var_end), max(var_start, var_end))
 
-        gamma_start = det_data["gamma"][0] + det_data["x_deg"][0]
-        gamma_end = det_data["gamma"][0] + det_data["x_deg"][-1]
+        gamma = image_source.data["gamma"][0]
+        gamma_start = gamma[0, 0]
+        gamma_end = gamma[0, -1]
 
         gamma_range.start = gamma_start
         gamma_range.end = gamma_end
@@ -267,8 +268,9 @@ def create():
         gamma_range.reset_end = gamma_end
         gamma_range.bounds = (min(gamma_start, gamma_end), max(gamma_start, gamma_end))
 
-        nu_start = det_data["nu"][0] + det_data["y_deg"][0]
-        nu_end = det_data["nu"][0] + det_data["y_deg"][-1]
+        nu = image_source.data["nu"][0]
+        nu_start = nu[0, 0]
+        nu_end = nu[-1, 0]
 
         nu_range.start = nu_start
         nu_range.end = nu_end
@@ -899,15 +901,10 @@ def calculate_hkl(det_data, index):
 
 
 def calculate_pol(det_data, index):
-    gamma = np.empty(shape=(IMAGE_H, IMAGE_W))
-    nu = np.empty(shape=(IMAGE_H, IMAGE_W))
-
     ddist = det_data["ddist"]
     gammad = det_data["gamma"][index]
     nud = det_data["nu"]
-
-    for xi in np.arange(IMAGE_W):
-        for yi in np.arange(IMAGE_H):
-            gamma[yi, xi], nu[yi, xi] = pyzebra.det2pol(ddist, gammad, nud, xi, yi)
+    yi, xi = np.ogrid[:IMAGE_H, :IMAGE_W]
+    gamma, nu = pyzebra.det2pol(ddist, gammad, nud, xi, yi)
 
     return gamma, nu
