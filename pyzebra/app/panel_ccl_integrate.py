@@ -244,7 +244,7 @@ def create():
     monitor_spinner = Spinner(title="Monitor:", mode="int", value=100_000, low=1, width=145)
     monitor_spinner.on_change("value", monitor_spinner_callback)
 
-    def _update_datatable():
+    def _update_table():
         fit_ok = [(1 if "fit" in scan else 0) for scan in det_data]
         export = [scan["export"] for scan in det_data]
         scan_table_source.data.update(fit=fit_ok, export=export)
@@ -409,7 +409,7 @@ def create():
             return
 
         pyzebra.merge_scans(scan_into, scan_from)
-        _update_datatable()
+        _update_table()
         _update_plot()
 
     merge_button = Button(label="Merge into current", width=145)
@@ -417,7 +417,7 @@ def create():
 
     def restore_button_callback():
         pyzebra.restore_scan(_get_selected_scan())
-        _update_datatable()
+        _update_table()
         _update_plot()
 
     restore_button = Button(label="Restore scan", width=145)
@@ -555,7 +555,7 @@ def create():
                 )
 
         _update_plot()
-        _update_datatable()
+        _update_table()
 
     proc_all_button = Button(label="Process All", button_type="primary", width=145)
     proc_all_button.on_click(proc_all_button_callback)
@@ -572,7 +572,7 @@ def create():
         )
 
         _update_plot()
-        _update_datatable()
+        _update_table()
 
     proc_button = Button(label="Process Current", width=145)
     proc_button.on_click(proc_button_callback)

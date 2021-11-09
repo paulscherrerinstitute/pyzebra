@@ -130,6 +130,10 @@ def create():
         scan_motor_select.value = det_data[0]["scan_motor"]
         param_select.value = "user defined"
 
+        merge_options = [(str(i), f"{i} ({idx})") for i, idx in enumerate(scan_list)]
+        merge_from_select.options = merge_options
+        merge_from_select.value = merge_options[0][0]
+
     file_select = MultiSelect(title="Available .ccl/.dat files:", width=210, height=250)
 
     def file_open_button_callback():
@@ -257,7 +261,8 @@ def create():
 
     def _update_table():
         fit_ok = [(1 if "fit" in scan else 0) for scan in det_data]
-        scan_table_source.data.update(fit=fit_ok)
+        export = [scan["export"] for scan in det_data]
+        scan_table_source.data.update(fit=fit_ok, export=export)
 
     def _update_plot():
         _update_single_scan_plot()
@@ -538,9 +543,35 @@ def create():
             TableColumn(field="export", title="Export", editor=CheckboxEditor(), width=50),
         ],
         width=410,  # +60 because of the index column
+        height=350,
         editable=True,
         autosize_mode="none",
     )
+
+    merge_from_select = Select(title="scan:", width=145)
+
+    def merge_button_callback():
+        scan_into = _get_selected_scan()
+        scan_from = det_data[int(merge_from_select.value)]
+
+        if scan_into is scan_from:
+            print("WARNING: Selected scans for merging are identical")
+            return
+
+        pyzebra.merge_scans(scan_into, scan_from)
+        _update_table()
+        _update_plot()
+
+    merge_button = Button(label="Merge into current", width=145)
+    merge_button.on_click(merge_button_callback)
+
+    def restore_button_callback():
+        pyzebra.restore_scan(_get_selected_scan())
+        _update_table()
+        _update_plot()
+
+    restore_button = Button(label="Restore scan", width=145)
+    restore_button.on_click(restore_button_callback)
 
     def _get_selected_scan():
         return det_data[scan_table_source.selected.indices[0]]
@@ -777,7 +808,11 @@ def create():
         column(fit_to_spinner, proc_button, proc_all_button),
     )
 
-    scan_layout = column(scan_table, row(monitor_spinner, scan_motor_select, param_select))
+    scan_layout = column(
+        scan_table,
+        row(monitor_spinner, scan_motor_select, param_select),
+        row(column(Spacer(height=19), row(restore_button, merge_button)), merge_from_select),
+    )
 
     import_layout = column(
         file_select,
