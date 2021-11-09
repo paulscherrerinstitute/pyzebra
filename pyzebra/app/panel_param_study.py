@@ -112,6 +112,11 @@ def create():
     def _init_datatable():
         scan_list = [s["idx"] for s in det_data]
         export = [s["export"] for s in det_data]
+        if param_select.value == "user defined":
+            param = [None] * len(det_data)
+        else:
+            param = [scan[param_select.value] for scan in det_data]
+
         file_list = []
         for scan in det_data:
             file_list.append(os.path.basename(scan["original_filename"]))
@@ -119,7 +124,7 @@ def create():
         scan_table_source.data.update(
             file=file_list,
             scan=scan_list,
-            param=[None] * len(scan_list),
+            param=param,
             fit=[0] * len(scan_list),
             export=export,
         )
@@ -128,7 +133,6 @@ def create():
 
         scan_motor_select.options = det_data[0]["scan_motors"]
         scan_motor_select.value = det_data[0]["scan_motor"]
-        param_select.value = "user defined"
 
         merge_options = [(str(i), f"{i} ({idx})") for i, idx in enumerate(scan_list)]
         merge_from_select.options = merge_options
@@ -245,7 +249,8 @@ def create():
     def monitor_spinner_callback(_attr, _old, new):
         if det_data:
             pyzebra.normalize_dataset(det_data, new)
-            _update_plot()
+            _update_single_scan_plot()
+            _update_overview()
 
     monitor_spinner = Spinner(title="Monitor:", mode="int", value=100_000, low=1, width=145)
     monitor_spinner.on_change("value", monitor_spinner_callback)
@@ -254,7 +259,8 @@ def create():
         if det_data:
             for scan in det_data:
                 scan["scan_motor"] = new
-            _update_plot()
+            _update_single_scan_plot()
+            _update_overview()
 
     scan_motor_select = Select(title="Scan motor:", options=[], width=145)
     scan_motor_select.on_change("value", scan_motor_select_callback)
@@ -262,11 +268,12 @@ def create():
     def _update_table():
         fit_ok = [(1 if "fit" in scan else 0) for scan in det_data]
         export = [scan["export"] for scan in det_data]
-        scan_table_source.data.update(fit=fit_ok, export=export)
+        if param_select.value == "user defined":
+            param = [None] * len(det_data)
+        else:
+            param = [scan[param_select.value] for scan in det_data]
 
-    def _update_plot():
-        _update_single_scan_plot()
-        _update_overview()
+        scan_table_source.data.update(fit=fit_ok, export=export, param=param)
 
     def _update_single_scan_plot():
         scan = _get_selected_scan()
@@ -520,7 +527,7 @@ def create():
             # skip unnecessary update caused by selection drop
             return
 
-        _update_plot()
+        _update_single_scan_plot()
 
     def scan_table_source_callback(_attr, _old, new):
         # unfortunately, we don't know if the change comes from data update or user input
@@ -528,6 +535,7 @@ def create():
         for scan, export in zip(det_data, new["export"]):
             scan["export"] = export
         _update_overview()
+        _update_param_plot()
         _update_preview()
 
     scan_table_source = ColumnDataSource(dict(file=[], scan=[], param=[], fit=[], export=[]))
@@ -561,7 +569,8 @@ def create():
 
         pyzebra.merge_scans(scan_into, scan_from)
         _update_table()
-        _update_plot()
+        _update_single_scan_plot()
+        _update_overview()
 
     merge_button = Button(label="Merge into current", width=145)
     merge_button.on_click(merge_button_callback)
@@ -569,7 +578,8 @@ def create():
     def restore_button_callback():
         pyzebra.restore_scan(_get_selected_scan())
         _update_table()
-        _update_plot()
+        _update_single_scan_plot()
+        _update_overview()
 
     restore_button = Button(label="Restore scan", width=145)
     restore_button.on_click(restore_button_callback)
@@ -577,14 +587,8 @@ def create():
     def _get_selected_scan():
         return det_data[scan_table_source.selected.indices[0]]
 
-    def param_select_callback(_attr, _old, new):
-        if new == "user defined":
-            param = [None] * len(det_data)
-        else:
-            param = [scan[new] for scan in det_data]
-
-        scan_table_source.data["param"] = param
-        _update_param_plot()
+    def param_select_callback(_attr, _old, _new):
+        _update_table()
 
     param_select = Select(
         title="Parameter:",
@@ -725,7 +729,8 @@ def create():
                     lorentz=lorentz_checkbox.active,
                 )
 
-        _update_plot()
+        _update_single_scan_plot()
+        _update_overview()
         _update_table()
 
         for scan in det_data:
@@ -734,7 +739,6 @@ def create():
                 fit_param_select.options = options
                 fit_param_select.value = options[0]
                 break
-        _update_param_plot()
 
     proc_all_button = Button(label="Process All", button_type="primary", width=145)
     proc_all_button.on_click(proc_all_button_callback)
@@ -750,7 +754,8 @@ def create():
             lorentz=lorentz_checkbox.active,
         )
 
-        _update_plot()
+        _update_single_scan_plot()
+        _update_overview()
         _update_table()
 
         for scan in det_data:
@@ -759,7 +764,6 @@ def create():
                 fit_param_select.options = options
                 fit_param_select.value = options[0]
                 break
-        _update_param_plot()
 
     proc_button = Button(label="Process Current", width=145)
     proc_button.on_click(proc_button_callback)
