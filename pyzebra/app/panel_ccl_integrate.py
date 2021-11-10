@@ -105,6 +105,7 @@ def create():
         export = [s["export"] for s in det_data]
 
         twotheta = [np.median(s["twotheta"]) if "twotheta" in s else None for s in det_data]
+        gamma = [np.median(s["gamma"]) if "gamma" in s else None for s in det_data]
         omega = [np.median(s["omega"]) if "omega" in s else None for s in det_data]
         chi = [np.median(s["chi"]) if "chi" in s else None for s in det_data]
         phi = [np.median(s["phi"]) if "phi" in s else None for s in det_data]
@@ -116,6 +117,7 @@ def create():
             fit=[0] * len(scan_list),
             export=export,
             twotheta=twotheta,
+            gamma=gamma,
             omega=omega,
             chi=chi,
             phi=phi,
@@ -371,7 +373,18 @@ def create():
         _update_preview()
 
     scan_table_source = ColumnDataSource(
-        dict(scan=[], hkl=[], fit=[], export=[], twotheta=[], omega=[], chi=[], phi=[], nu=[])
+        dict(
+            scan=[],
+            hkl=[],
+            fit=[],
+            export=[],
+            twotheta=[],
+            gamma=[],
+            omega=[],
+            chi=[],
+            phi=[],
+            nu=[],
+        )
     )
     scan_table_source.on_change("data", scan_table_source_callback)
     scan_table_source.selected.on_change("indices", scan_table_select_callback)
@@ -384,6 +397,7 @@ def create():
             TableColumn(field="fit", title="Fit", editor=CellEditor(), width=50),
             TableColumn(field="export", title="Export", editor=CheckboxEditor(), width=50),
             TableColumn(field="twotheta", title="2theta", editor=CellEditor(), width=50),
+            TableColumn(field="gamma", title="gamma", editor=CellEditor(), width=50),
             TableColumn(field="omega", title="omega", editor=CellEditor(), width=50),
             TableColumn(field="chi", title="chi", editor=CellEditor(), width=50),
             TableColumn(field="phi", title="phi", editor=CellEditor(), width=50),
