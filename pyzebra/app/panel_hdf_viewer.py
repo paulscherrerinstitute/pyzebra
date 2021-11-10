@@ -775,6 +775,10 @@ def create():
         x_pos = det_data["fit"]["x_pos"]
         y_pos = det_data["fit"]["y_pos"]
 
+        if det_data["zebra_mode"] == "nb":
+            chi = None
+            phi = None
+
         events_data["wave"].append(wave)
         events_data["ddist"].append(ddist)
         events_data["cell"].append(cell)
