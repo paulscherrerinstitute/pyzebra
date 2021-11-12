@@ -8,6 +8,7 @@ from bokeh.layouts import column, row
 from bokeh.models import Button, Panel, Tabs, TextAreaInput, TextInput
 
 import panel_ccl_integrate
+import panel_ccl_compare
 import panel_hdf_anatric
 import panel_hdf_param_study
 import panel_hdf_viewer
@@ -55,6 +56,7 @@ doc.add_root(
                 panel_hdf_viewer.create(),
                 panel_hdf_anatric.create(),
                 panel_ccl_integrate.create(),
+                panel_ccl_compare.create(),
                 panel_param_study.create(),
                 panel_hdf_param_study.create(),
                 panel_spind.create(),

@@ -306,6 +306,63 @@ def export_1D(data, path, export_target, hkl_precision=2):
                 out_file.writelines(content)
 
 
+def export_ccl_compare(data1, data2, path, export_target, hkl_precision=2):
+    """Exports compare data in the .comm/.incomm format for fullprof or .col/.incol format for jana.
+
+    Scans with integer/real hkl values are saved in .comm/.incomm or .col/.incol files
+    correspondingly. If no scans are present for a particular output format, that file won't be
+    created.
+    """
+    if export_target not in EXPORT_TARGETS:
+        raise ValueError(f"Unknown export target: {export_target}.")
+
+    zebra_mode = data1[0]["zebra_mode"]
+    exts = EXPORT_TARGETS[export_target]
+    file_content = {ext: [] for ext in exts}
+
+    for scan1, scan2 in zip(data1, data2):
+        if "fit" not in scan1:
+            continue
+
+        idx_str = f"{scan1['idx']:6}"
+
+        h, k, l = scan1["h"], scan1["k"], scan1["l"]
+        hkl_are_integers = isinstance(h, int)  # if True, other indices are of type 'int' too
+        if hkl_are_integers:
+            hkl_str = f"{h:4}{k:4}{l:4}"
+        else:
+            hkl_str = f"{h:8.{hkl_precision}f}{k:8.{hkl_precision}f}{l:8.{hkl_precision}f}"
+
+        area_n1, area_s1 = scan1["area"]
+        area_n2, area_s2 = scan2["area"]
+        area_n = area_n1 - area_n2
+        area_s = np.sqrt(area_s1 ** 2 + area_s2 ** 2)
+        area_str = f"{area_n:10.2f}{area_s:10.2f}"
+
+        ang_str = ""
+        for angle, _ in CCL_ANGLES[zebra_mode]:
+            if angle == scan1["scan_motor"]:
+                angle_center = (np.min(scan1[angle]) + np.max(scan1[angle])) / 2
+            else:
+                angle_center = scan1[angle]
+
+            if angle == "twotheta" and export_target == "jana":
+                angle_center /= 2
+
+            ang_str = ang_str + f"{angle_center:8g}"
+
+        if export_target == "jana":
+            ang_str = ang_str + f"{scan1['temp']:8}" + f"{scan1['monitor']:8}"
+
+        ref = file_content[exts[0]] if hkl_are_integers else file_content[exts[1]]
+        ref.append(idx_str + hkl_str + area_str + ang_str + "\n")
+
+    for ext, content in file_content.items():
+        if content:
+            with open(path + ext, "w") as out_file:
+                out_file.writelines(content)
+
+
 def export_param_study(data, param_data, path):
     file_content = []
     for scan, param in zip(data, param_data):
