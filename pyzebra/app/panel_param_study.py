@@ -394,7 +394,7 @@ def create():
 
     plot_scatter_source = ColumnDataSource(dict(x=[0], y=[0], y_upper=[0], y_lower=[0]))
     plot_scatter = plot.add_glyph(
-        plot_scatter_source, Scatter(x="x", y="y", line_color="steelblue")
+        plot_scatter_source, Scatter(x="x", y="y", line_color="steelblue", fill_color="steelblue")
     )
     plot.add_layout(Whisker(source=plot_scatter_source, base="x", upper="y_upper", lower="y_lower"))
 

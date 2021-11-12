@@ -295,7 +295,7 @@ def create():
 
     plot_scatter1_source = ColumnDataSource(dict(x=[0], y=[0], y_upper=[0], y_lower=[0]))
     plot_scatter1 = plot.add_glyph(
-        plot_scatter1_source, Scatter(x="x", y="y", line_color="steelblue")
+        plot_scatter1_source, Scatter(x="x", y="y", line_color="steelblue", fill_color="steelblue")
     )
     plot.add_layout(
         Whisker(source=plot_scatter1_source, base="x", upper="y_upper", lower="y_lower")
@@ -303,7 +303,7 @@ def create():
 
     plot_scatter2_source = ColumnDataSource(dict(x=[0], y=[0], y_upper=[0], y_lower=[0]))
     plot_scatter2 = plot.add_glyph(
-        plot_scatter2_source, Scatter(x="x", y="y", line_color="firebrick")
+        plot_scatter2_source, Scatter(x="x", y="y", line_color="firebrick", fill_color="firebrick")
     )
     plot.add_layout(
         Whisker(source=plot_scatter2_source, base="x", upper="y_upper", lower="y_lower")
@@ -614,7 +614,7 @@ def create():
     area_method_div = Div(text="Intensity:", margin=(5, 5, 0, 5))
     area_method_radiobutton = RadioGroup(labels=["Function", "Area"], active=0, width=145)
 
-    intensity_diff_div = Div(text="Intensity diff:", margin=(5, 5, 0, 5))
+    intensity_diff_div = Div(text="Intensity difference:", margin=(5, 5, 0, 5))
     intensity_diff_radiobutton = RadioGroup(
         labels=["file1 - file2", "file2 - file1"], active=0, width=145
     )
