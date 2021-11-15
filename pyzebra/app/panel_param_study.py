@@ -122,11 +122,7 @@ def create():
             file_list.append(os.path.basename(scan["original_filename"]))
 
         scan_table_source.data.update(
-            file=file_list,
-            scan=scan_list,
-            param=param,
-            fit=[0] * len(scan_list),
-            export=export,
+            file=file_list, scan=scan_list, param=param, fit=[0] * len(scan_list), export=export,
         )
         scan_table_source.selected.indices = []
         scan_table_source.selected.indices = [0]
@@ -781,7 +777,7 @@ def create():
             export_data = []
             param_data = []
             for scan, param in zip(det_data, scan_table_source.data["param"]):
-                if scan["export"]:
+                if scan["export"] and param:
                     export_data.append(scan)
                     param_data.append(param)
 
