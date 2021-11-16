@@ -342,7 +342,7 @@ def create():
             mapper["transform"].high = np.max([np.max(y) for y in ys])
         ov_param_plot_scatter_source.data.update(x=x, y=y, param=par)
 
-        if y:
+        try:
             interp_f = interpolate.interp2d(x, y, par)
             x1, x2 = min(x), max(x)
             y1, y2 = min(y), max(y)
@@ -354,7 +354,7 @@ def create():
             ov_param_plot_image_source.data.update(
                 image=[image], x=[x1], y=[y1], dw=[x2 - x1], dh=[y2 - y1]
             )
-        else:
+        except Exception:
             ov_param_plot_image_source.data.update(image=[], x=[], y=[], dw=[], dh=[])
 
     def _update_param_plot():
