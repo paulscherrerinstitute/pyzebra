@@ -131,7 +131,7 @@ def merge_scans(scan_into, scan_from):
 
     scan_into[scan_motor] = pos_tmp
     scan_into["counts"] = val_tmp / num_tmp
-    scan_into["counts_err"] = np.sqrt(err_tmp)
+    scan_into["counts_err"] = np.sqrt(err_tmp) / num_tmp
 
     scan_from["export"] = False
 
