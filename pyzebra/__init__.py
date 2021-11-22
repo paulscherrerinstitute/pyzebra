@@ -5,4 +5,4 @@ from pyzebra.h5 import *
 from pyzebra.utils import *
 from pyzebra.xtal import *
 
-__version__ = "0.6.1"
+__version__ = "0.6.2"
