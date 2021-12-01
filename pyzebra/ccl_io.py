@@ -170,7 +170,7 @@ def parse_1D(fileobj, data_type):
             while len(counts) < s["n_points"]:
                 counts.extend(map(float, next(fileobj).split()))
             s["counts"] = np.array(counts)
-            s["counts_err"] = np.sqrt(s["counts"])
+            s["counts_err"] = np.sqrt(np.maximum(s["counts"], 1))
 
             if s["h"].is_integer() and s["k"].is_integer() and s["l"].is_integer():
                 s["h"], s["k"], s["l"] = map(int, (s["h"], s["k"], s["l"]))
@@ -208,7 +208,7 @@ def parse_1D(fileobj, data_type):
         for name in col_names:
             s[name] = np.array(s[name])
 
-        s["counts_err"] = np.sqrt(s["counts"])
+        s["counts_err"] = np.sqrt(np.maximum(s["counts"], 1))
 
         s["scan_motors"] = []
         for motor, step in zip(motors, steps):

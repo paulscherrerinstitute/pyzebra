@@ -220,8 +220,7 @@ def fit_scan(scan, model_dict, fit_from=None, fit_to=None):
         else:
             model += _model
 
-    weights = [1 / y_err if y_err != 0 else 1 for y_err in y_err]
-    scan["fit"] = model.fit(y_fit, x=x_fit, weights=weights)
+    scan["fit"] = model.fit(y_fit, x=x_fit, weights=1 / y_err)
 
 
 def get_area(scan, area_method, lorentz):
