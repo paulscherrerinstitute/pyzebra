@@ -178,7 +178,7 @@ def create():
 
         new_data1 = []
         new_data2 = []
-        for ind, f_str, f_name in enumerate(zip(upload_button.value, upload_button.filename)):
+        for ind, (f_str, f_name) in enumerate(zip(upload_button.value, upload_button.filename)):
             with io.StringIO(base64.b64decode(f_str).decode()) as file:
                 base, ext = os.path.splitext(f_name)
                 try:
