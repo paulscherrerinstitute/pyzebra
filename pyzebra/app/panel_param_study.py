@@ -4,6 +4,7 @@ import itertools
 import os
 import tempfile
 import types
+import warnings
 
 import numpy as np
 from bokeh.io import curdoc
@@ -343,7 +344,9 @@ def create():
         ov_param_plot_scatter_source.data.update(x=x, y=y, param=par)
 
         try:
-            interp_f = interpolate.interp2d(x, y, par)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", category=RuntimeWarning)
+                interp_f = interpolate.interp2d(x, y, par)
             x1, x2 = min(x), max(x)
             y1, y2 = min(y), max(y)
             image = interp_f(
