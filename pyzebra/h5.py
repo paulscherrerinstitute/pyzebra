@@ -103,12 +103,16 @@ def read_detector_data(filepath, cami_meta=None):
         det_data["name"] = h5f["/entry1/sample/name"][0].decode()
         det_data["cell"] = h5f["/entry1/sample/cell"][:]
 
-        for var in ("omega", "gamma", "nu", "chi", "phi"):
-            if abs(det_data[var][0] - det_data[var][-1]) > 0.1:
-                det_data["scan_motor"] = var
-                break
+        if n == 1:
+            # a default motor for a single frame file
+            det_data["scan_motor"] = "omega"
         else:
-            raise ValueError("No angles that vary")
+            for var in ("omega", "gamma", "nu", "chi", "phi"):
+                if abs(det_data[var][0] - det_data[var][-1]) > 0.1:
+                    det_data["scan_motor"] = var
+                    break
+            else:
+                raise ValueError("No angles that vary")
 
         # optional parameters
         if "/entry1/sample/magnetic_field" in h5f:
