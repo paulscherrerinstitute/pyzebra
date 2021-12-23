@@ -141,22 +141,29 @@ def create():
 
         scan_table_source.data.update(frame=frame, x_pos=x_pos, y_pos=y_pos)
 
+    def _file_open():
+        new_data = []
+        for f_name in file_select.value:
+            try:
+                new_data.append(pyzebra.read_detector_data(f_name))
+            except KeyError:
+                print("Could not read data from the file.")
+                return
+
+        zebra_data.extend(new_data)
+
+        _init_datatable()
+
     def file_open_button_callback():
         nonlocal zebra_data
         zebra_data = []
-        for f_name in file_select.value:
-            zebra_data.append(pyzebra.read_detector_data(f_name))
-
-        _init_datatable()
+        _file_open()
 
     file_open_button = Button(label="Open New", width=100)
     file_open_button.on_click(file_open_button_callback)
 
     def file_append_button_callback():
-        for f_name in file_select.value:
-            zebra_data.append(pyzebra.read_detector_data(f_name))
-
-        _init_datatable()
+        _file_open()
 
     file_append_button = Button(label="Append", width=100)
     file_append_button.on_click(file_append_button_callback)

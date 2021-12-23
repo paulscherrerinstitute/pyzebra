@@ -107,9 +107,13 @@ def create():
     upload_cami_button = FileInput(accept=".cami", width=200)
     upload_cami_button.on_change("value", upload_cami_button_callback)
 
-    def _open_file(file, cami_meta):
+    def _file_open(file, cami_meta):
         nonlocal det_data
-        det_data = pyzebra.read_detector_data(file, cami_meta)
+        try:
+            det_data = pyzebra.read_detector_data(file, cami_meta)
+        except KeyError:
+            print("Could not read data from the file.")
+            return
 
         index_spinner.value = 0
         index_spinner.high = det_data["data"].shape[0] - 1
@@ -125,7 +129,7 @@ def create():
         update_overview_plot()
 
     def upload_hdf_button_callback(_attr, _old, new):
-        _open_file(io.BytesIO(base64.b64decode(new)), None)
+        _file_open(io.BytesIO(base64.b64decode(new)), None)
 
     upload_hdf_div = Div(text="or upload .hdf file:", margin=(5, 5, 0, 5))
     upload_hdf_button = FileInput(accept=".hdf", width=200)
@@ -136,9 +140,9 @@ def create():
             return
 
         if data_source.value == "proposal number":
-            _open_file(file_select.value[0], None)
+            _file_open(file_select.value[0], None)
         else:
-            _open_file(file_select.value[0], cami_meta)
+            _file_open(file_select.value[0], cami_meta)
 
     file_open_button = Button(label="Open New", width=100)
     file_open_button.on_click(file_open_button_callback)
