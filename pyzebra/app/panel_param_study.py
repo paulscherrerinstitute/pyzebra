@@ -4,7 +4,6 @@ import itertools
 import os
 import tempfile
 import types
-import warnings
 
 import numpy as np
 from bokeh.io import curdoc
@@ -344,16 +343,13 @@ def create():
         ov_param_plot_scatter_source.data.update(x=x, y=y, param=par)
 
         try:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", category=RuntimeWarning)
-                interp_f = interpolate.interp2d(x, y, par)
             x1, x2 = min(x), max(x)
             y1, y2 = min(y), max(y)
-            image = interp_f(
+            grid_x, grid_y = np.meshgrid(
                 np.linspace(x1, x2, ov_param_plot.inner_width // 10),
                 np.linspace(y1, y2, ov_param_plot.inner_height // 10),
-                assume_sorted=True,
             )
+            image = interpolate.griddata((x, y), par, (grid_x, grid_y))
             ov_param_plot_image_source.data.update(
                 image=[image], x=[x1], y=[y1], dw=[x2 - x1], dh=[y2 - y1]
             )
