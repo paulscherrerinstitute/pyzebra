@@ -115,9 +115,15 @@ def create():
             print("Could not read data from the file.")
             return
 
+        last_im_index = det_data["data"].shape[0] - 1
+
         index_spinner.value = 0
-        index_spinner.high = det_data["data"].shape[0] - 1
-        index_slider.end = det_data["data"].shape[0] - 1
+        index_spinner.high = last_im_index
+        if last_im_index == 0:
+            index_slider.disabled = True
+        else:
+            index_slider.disabled = False
+            index_slider.end = last_im_index
 
         zebra_mode = det_data["zebra_mode"]
         if zebra_mode == "nb":
@@ -253,7 +259,7 @@ def create():
 
         var = det_data[scan_motor]
         var_start = var[0]
-        var_end = var[-1] + (var[-1] - var[0]) / (n_im - 1)
+        var_end = var[-1] + (var[-1] - var[0]) / (n_im - 1) if n_im != 1 else var_start + 1
 
         scanning_motor_range.start = var_start
         scanning_motor_range.end = var_end
