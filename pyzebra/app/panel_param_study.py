@@ -27,6 +27,7 @@ from bokeh.models import (
     Legend,
     Line,
     LinearAxis,
+    LinearColorMapper,
     MultiLine,
     MultiSelect,
     NumberEditor,
@@ -34,6 +35,7 @@ from bokeh.models import (
     PanTool,
     Plot,
     RadioGroup,
+    Range1d,
     ResetTool,
     Scatter,
     Select,
@@ -46,8 +48,7 @@ from bokeh.models import (
     WheelZoomTool,
     Whisker,
 )
-from bokeh.palettes import Category10, Turbo256
-from bokeh.transform import linear_cmap
+from bokeh.palettes import Category10, Plasma256
 from scipy import interpolate
 
 import pyzebra
@@ -337,23 +338,31 @@ def create():
 
         ov_plot_mline_source.data.update(xs=xs, ys=ys, param=param, color=color_palette(len(xs)))
 
-        if y:
-            mapper["transform"].low = np.min([np.min(y) for y in ys])
-            mapper["transform"].high = np.max([np.max(y) for y in ys])
-        ov_param_plot_scatter_source.data.update(x=x, y=y, param=par)
+        ov_param_plot_scatter_source.data.update(x=x, y=y)
 
-        try:
+        if y:
             x1, x2 = min(x), max(x)
             y1, y2 = min(y), max(y)
             grid_x, grid_y = np.meshgrid(
-                np.linspace(x1, x2, ov_param_plot.inner_width // 10),
-                np.linspace(y1, y2, ov_param_plot.inner_height // 10),
+                np.linspace(x1, x2, ov_param_plot.inner_width),
+                np.linspace(y1, y2, ov_param_plot.inner_height),
             )
             image = interpolate.griddata((x, y), par, (grid_x, grid_y))
             ov_param_plot_image_source.data.update(
                 image=[image], x=[x1], y=[y1], dw=[x2 - x1], dh=[y2 - y1]
             )
-        except Exception:
+
+            x_range = ov_param_plot.x_range
+            x_range.start, x_range.end = x1, x2
+            x_range.reset_start, x_range.reset_end = x1, x2
+            x_range.bounds = (x1, x2)
+
+            y_range = ov_param_plot.y_range
+            y_range.start, y_range.end = y1, y2
+            y_range.reset_start, y_range.reset_end = y1, y2
+            y_range.bounds = (y1, y2)
+
+        else:
             ov_param_plot_image_source.data.update(image=[], x=[], y=[], dw=[], dh=[])
 
     def _update_param_plot():
@@ -447,9 +456,7 @@ def create():
     ov_plot.toolbar.logo = None
 
     # Overview perams plot
-    ov_param_plot = Plot(
-        x_range=DataRange1d(), y_range=DataRange1d(), plot_height=450, plot_width=700
-    )
+    ov_param_plot = Plot(x_range=Range1d(), y_range=Range1d(), plot_height=450, plot_width=700)
 
     ov_param_plot.add_layout(LinearAxis(axis_label="Param"), place="left")
     ov_param_plot.add_layout(LinearAxis(axis_label="Scan motor"), place="below")
@@ -457,16 +464,16 @@ def create():
     ov_param_plot.add_layout(Grid(dimension=0, ticker=BasicTicker()))
     ov_param_plot.add_layout(Grid(dimension=1, ticker=BasicTicker()))
 
+    color_mapper = LinearColorMapper(palette=Plasma256)
     ov_param_plot_image_source = ColumnDataSource(dict(image=[], x=[], y=[], dw=[], dh=[]))
     ov_param_plot.add_glyph(
-        ov_param_plot_image_source, Image(image="image", x="x", y="y", dw="dw", dh="dh")
+        ov_param_plot_image_source,
+        Image(image="image", x="x", y="y", dw="dw", dh="dh", color_mapper=color_mapper),
     )
 
-    ov_param_plot_scatter_source = ColumnDataSource(dict(x=[], y=[], param=[]))
-    mapper = linear_cmap(field_name="param", palette=Turbo256, low=0, high=50)
+    ov_param_plot_scatter_source = ColumnDataSource(dict(x=[], y=[]))
     ov_param_plot.add_glyph(
-        ov_param_plot_scatter_source,
-        Scatter(x="x", y="y", line_color=mapper, fill_color=mapper, size=10),
+        ov_param_plot_scatter_source, Scatter(x="x", y="y", marker="dot", size=15),
     )
 
     ov_param_plot.add_tools(PanTool(), WheelZoomTool(), ResetTool())
