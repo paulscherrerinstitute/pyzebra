@@ -136,7 +136,7 @@ def read_detector_data(filepath, cami_meta=None):
 
             if "detector parameters" in cami_meta:
                 cami_meta_detparam = cami_meta["detector parameters"]
-                if "dist1" in cami_meta_detparam:
-                    det_data["ddist"] = cami_meta_detparam["dist1"]
+                if "dist2" in cami_meta_detparam:
+                    det_data["ddist"] = cami_meta_detparam["dist2"]
 
     return det_data
