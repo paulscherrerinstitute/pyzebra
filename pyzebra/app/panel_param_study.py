@@ -83,7 +83,7 @@ def color_palette(n_colors):
 
 def create():
     doc = curdoc()
-    det_data = []
+    dataset = []
     fit_params = {}
     js_data = ColumnDataSource(data=dict(content=[""], fname=[""], ext=[""]))
 
@@ -111,15 +111,15 @@ def create():
     proposal_textinput.on_change("name", proposal_textinput_callback)
 
     def _init_datatable():
-        scan_list = [s["idx"] for s in det_data]
-        export = [s["export"] for s in det_data]
+        scan_list = [s["idx"] for s in dataset]
+        export = [s["export"] for s in dataset]
         if param_select.value == "user defined":
-            param = [None] * len(det_data)
+            param = [None] * len(dataset)
         else:
-            param = [scan[param_select.value] for scan in det_data]
+            param = [scan[param_select.value] for scan in dataset]
 
         file_list = []
-        for scan in det_data:
+        for scan in dataset:
             file_list.append(os.path.basename(scan["original_filename"]))
 
         scan_table_source.data.update(
@@ -128,8 +128,8 @@ def create():
         scan_table_source.selected.indices = []
         scan_table_source.selected.indices = [0]
 
-        scan_motor_select.options = det_data[0]["scan_motors"]
-        scan_motor_select.value = det_data[0]["scan_motor"]
+        scan_motor_select.options = dataset[0]["scan_motors"]
+        scan_motor_select.value = dataset[0]["scan_motor"]
 
         merge_options = [(str(i), f"{i} ({idx})") for i, idx in enumerate(scan_list)]
         merge_from_select.options = merge_options
@@ -138,7 +138,7 @@ def create():
     file_select = MultiSelect(title="Available .ccl/.dat files:", width=210, height=250)
 
     def file_open_button_callback():
-        nonlocal det_data
+        nonlocal dataset
         new_data = []
         for f_path in file_select.value:
             with open(f_path) as file:
@@ -160,7 +160,7 @@ def create():
                 pyzebra.merge_datasets(new_data, file_data)
 
         if new_data:
-            det_data = new_data
+            dataset = new_data
             _init_datatable()
             append_upload_button.disabled = False
 
@@ -180,7 +180,7 @@ def create():
                     continue
 
             pyzebra.normalize_dataset(file_data, monitor_spinner.value)
-            pyzebra.merge_datasets(det_data, file_data)
+            pyzebra.merge_datasets(dataset, file_data)
 
         if file_data:
             _init_datatable()
@@ -189,7 +189,7 @@ def create():
     file_append_button.on_click(file_append_button_callback)
 
     def upload_button_callback(_attr, _old, _new):
-        nonlocal det_data
+        nonlocal dataset
         new_data = []
         for f_str, f_name in zip(upload_button.value, upload_button.filename):
             with io.StringIO(base64.b64decode(f_str).decode()) as file:
@@ -210,7 +210,7 @@ def create():
                 pyzebra.merge_datasets(new_data, file_data)
 
         if new_data:
-            det_data = new_data
+            dataset = new_data
             _init_datatable()
             append_upload_button.disabled = False
 
@@ -232,7 +232,7 @@ def create():
                     continue
 
             pyzebra.normalize_dataset(file_data, monitor_spinner.value)
-            pyzebra.merge_datasets(det_data, file_data)
+            pyzebra.merge_datasets(dataset, file_data)
 
         if file_data:
             _init_datatable()
@@ -244,8 +244,8 @@ def create():
     append_upload_button.on_change("filename", append_upload_button_callback)
 
     def monitor_spinner_callback(_attr, _old, new):
-        if det_data:
-            pyzebra.normalize_dataset(det_data, new)
+        if dataset:
+            pyzebra.normalize_dataset(dataset, new)
             _update_single_scan_plot()
             _update_overview()
 
@@ -253,8 +253,8 @@ def create():
     monitor_spinner.on_change("value", monitor_spinner_callback)
 
     def scan_motor_select_callback(_attr, _old, new):
-        if det_data:
-            for scan in det_data:
+        if dataset:
+            for scan in dataset:
                 scan["scan_motor"] = new
             _update_single_scan_plot()
             _update_overview()
@@ -263,12 +263,12 @@ def create():
     scan_motor_select.on_change("value", scan_motor_select_callback)
 
     def _update_table():
-        fit_ok = [(1 if "fit" in scan else 0) for scan in det_data]
-        export = [scan["export"] for scan in det_data]
+        fit_ok = [(1 if "fit" in scan else 0) for scan in dataset]
+        export = [scan["export"] for scan in dataset]
         if param_select.value == "user defined":
-            param = [None] * len(det_data)
+            param = [None] * len(dataset)
         else:
-            param = [scan[param_select.value] for scan in det_data]
+            param = [scan[param_select.value] for scan in dataset]
 
         scan_table_source.data.update(fit=fit_ok, export=export, param=param)
 
@@ -322,7 +322,7 @@ def create():
         par = []
         for s, p in enumerate(scan_table_source.data["param"]):
             if p is not None:
-                scan = det_data[s]
+                scan = dataset[s]
                 scan_motor = scan["scan_motor"]
                 xs.append(scan[scan_motor])
                 x.extend(scan[scan_motor])
@@ -331,8 +331,8 @@ def create():
                 param.append(float(p))
                 par.extend(scan["counts"])
 
-        if det_data:
-            scan_motor = det_data[0]["scan_motor"]
+        if dataset:
+            scan_motor = dataset[0]["scan_motor"]
             ov_plot.axis[0].axis_label = scan_motor
             ov_param_plot.axis[0].axis_label = scan_motor
 
@@ -371,7 +371,7 @@ def create():
         y_lower = []
         y_upper = []
         fit_param = fit_param_select.value
-        for s, p in zip(det_data, scan_table_source.data["param"]):
+        for s, p in zip(dataset, scan_table_source.data["param"]):
             if "fit" in s and fit_param:
                 x.append(p)
                 param_fit_val = s["fit"].params[fit_param].value
@@ -534,7 +534,7 @@ def create():
     def scan_table_source_callback(_attr, _old, new):
         # unfortunately, we don't know if the change comes from data update or user input
         # also `old` and `new` are the same for non-scalars
-        for scan, export in zip(det_data, new["export"]):
+        for scan, export in zip(dataset, new["export"]):
             scan["export"] = export
         _update_overview()
         _update_param_plot()
@@ -563,7 +563,7 @@ def create():
 
     def merge_button_callback():
         scan_into = _get_selected_scan()
-        scan_from = det_data[int(merge_from_select.value)]
+        scan_from = dataset[int(merge_from_select.value)]
 
         if scan_into is scan_from:
             print("WARNING: Selected scans for merging are identical")
@@ -587,7 +587,7 @@ def create():
     restore_button.on_click(restore_button_callback)
 
     def _get_selected_scan():
-        return det_data[scan_table_source.selected.indices[0]]
+        return dataset[scan_table_source.selected.indices[0]]
 
     def param_select_callback(_attr, _old, _new):
         _update_table()
@@ -720,7 +720,7 @@ def create():
     fit_output_textinput = TextAreaInput(title="Fit results:", width=750, height=200)
 
     def proc_all_button_callback():
-        for scan in det_data:
+        for scan in dataset:
             if scan["export"]:
                 pyzebra.fit_scan(
                     scan, fit_params, fit_from=fit_from_spinner.value, fit_to=fit_to_spinner.value
@@ -735,7 +735,7 @@ def create():
         _update_overview()
         _update_table()
 
-        for scan in det_data:
+        for scan in dataset:
             if "fit" in scan:
                 options = list(scan["fit"].params.keys())
                 fit_param_select.options = options
@@ -760,7 +760,7 @@ def create():
         _update_overview()
         _update_table()
 
-        for scan in det_data:
+        for scan in dataset:
             if "fit" in scan:
                 options = list(scan["fit"].params.keys())
                 fit_param_select.options = options
@@ -782,7 +782,7 @@ def create():
             temp_file = temp_dir + "/temp"
             export_data = []
             param_data = []
-            for scan, param in zip(det_data, scan_table_source.data["param"]):
+            for scan, param in zip(dataset, scan_table_source.data["param"]):
                 if scan["export"] and param:
                     export_data.append(scan)
                     param_data.append(param)

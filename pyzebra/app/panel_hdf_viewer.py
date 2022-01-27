@@ -52,7 +52,7 @@ IMAGE_PLOT_H = int(IMAGE_H * 2) + 27
 
 def create():
     doc = curdoc()
-    det_data = {}
+    scan = {}
     cami_meta = {}
 
     num_formatter = NumberFormatter(format="0.00", nan_format="")
@@ -108,14 +108,14 @@ def create():
     upload_cami_button.on_change("value", upload_cami_button_callback)
 
     def _file_open(file, cami_meta):
-        nonlocal det_data
+        nonlocal scan
         try:
-            det_data = pyzebra.read_detector_data(file, cami_meta)
+            scan = pyzebra.read_detector_data(file, cami_meta)
         except KeyError:
             print("Could not read data from the file.")
             return
 
-        last_im_index = det_data["data"].shape[0] - 1
+        last_im_index = scan["data"].shape[0] - 1
 
         index_spinner.value = 0
         index_spinner.high = last_im_index
@@ -125,7 +125,7 @@ def create():
             index_slider.disabled = False
             index_slider.end = last_im_index
 
-        zebra_mode = det_data["zebra_mode"]
+        zebra_mode = scan["zebra_mode"]
         if zebra_mode == "nb":
             metadata_table_source.data.update(geom=["normal beam"])
         else:  # zebra_mode == "bi"
@@ -157,7 +157,7 @@ def create():
         if index is None:
             index = index_spinner.value
 
-        current_image = det_data["data"][index]
+        current_image = scan["data"][index]
         proj_v_line_source.data.update(
             x=np.arange(0, IMAGE_W) + 0.5, y=np.mean(current_image, axis=0)
         )
@@ -180,24 +180,24 @@ def create():
             image_glyph.color_mapper.low = im_min
             image_glyph.color_mapper.high = im_max
 
-        if "mf" in det_data:
-            metadata_table_source.data.update(mf=[det_data["mf"][index]])
+        if "mf" in scan:
+            metadata_table_source.data.update(mf=[scan["mf"][index]])
         else:
             metadata_table_source.data.update(mf=[None])
 
-        if "temp" in det_data:
-            metadata_table_source.data.update(temp=[det_data["temp"][index]])
+        if "temp" in scan:
+            metadata_table_source.data.update(temp=[scan["temp"][index]])
         else:
             metadata_table_source.data.update(temp=[None])
 
-        gamma, nu = calculate_pol(det_data, index)
-        omega = np.ones((IMAGE_H, IMAGE_W)) * det_data["omega"][index]
+        gamma, nu = calculate_pol(scan, index)
+        omega = np.ones((IMAGE_H, IMAGE_W)) * scan["omega"][index]
         image_source.data.update(gamma=[gamma], nu=[nu], omega=[omega])
 
         # update detector center angles
         det_c_x = int(IMAGE_W / 2)
         det_c_y = int(IMAGE_H / 2)
-        if det_data["zebra_mode"] == "nb":
+        if scan["zebra_mode"] == "nb":
             gamma_c = gamma[det_c_y, det_c_x]
             nu_c = nu[det_c_y, det_c_x]
             omega_c = omega[det_c_y, det_c_x]
@@ -205,13 +205,13 @@ def create():
             phi_c = None
 
         else:  # zebra_mode == "bi"
-            wave = det_data["wave"]
-            ddist = det_data["ddist"]
-            gammad = det_data["gamma"][index]
-            om = det_data["omega"][index]
-            ch = det_data["chi"][index]
-            ph = det_data["phi"][index]
-            nud = det_data["nu"]
+            wave = scan["wave"]
+            ddist = scan["ddist"]
+            gammad = scan["gamma"][index]
+            om = scan["omega"][index]
+            ch = scan["chi"][index]
+            ph = scan["phi"][index]
+            nud = scan["nu"]
 
             nu_c = 0
             chi_c, phi_c, gamma_c, omega_c = pyzebra.ang_proc(
@@ -223,7 +223,7 @@ def create():
         )
 
     def update_overview_plot():
-        h5_data = det_data["data"]
+        h5_data = scan["data"]
         n_im, n_y, n_x = h5_data.shape
         overview_x = np.mean(h5_data, axis=1)
         overview_y = np.mean(h5_data, axis=2)
@@ -254,10 +254,10 @@ def create():
         frame_range.reset_end = n_im
         frame_range.bounds = (0, n_im)
 
-        scan_motor = det_data["scan_motor"]
+        scan_motor = scan["scan_motor"]
         overview_plot_y.axis[1].axis_label = f"Scanning motor, {scan_motor}"
 
-        var = det_data[scan_motor]
+        var = scan[scan_motor]
         var_start = var[0]
         var_end = var[-1] + (var[-1] - var[0]) / (n_im - 1) if n_im != 1 else var_start + 1
 
@@ -374,9 +374,9 @@ def create():
 
     # calculate hkl-indices of first mouse entry
     def mouse_enter_callback(_event):
-        if det_data and np.array_equal(image_source.data["h"][0], np.zeros((1, 1))):
+        if scan and np.array_equal(image_source.data["h"][0], np.zeros((1, 1))):
             index = index_spinner.value
-            h, k, l = calculate_hkl(det_data, index)
+            h, k, l = calculate_hkl(scan, index)
             image_source.data.update(h=[h], k=[k], l=[l])
 
     plot.on_event(MouseEnter, mouse_enter_callback)
@@ -438,7 +438,7 @@ def create():
 
     def box_edit_callback(_attr, _old, new):
         if new["x"]:
-            h5_data = det_data["data"]
+            h5_data = scan["data"]
             x_val = np.arange(h5_data.shape[0])
             left = int(np.floor(new["x"][0]))
             right = int(np.ceil(new["x"][0] + new["width"][0]))
@@ -739,7 +739,7 @@ def create():
 
     def add_event_button_callback():
         pyzebra.fit_event(
-            det_data,
+            scan,
             int(np.floor(frame_range.start)),
             int(np.ceil(frame_range.end)),
             int(np.floor(det_y_range.start)),
@@ -748,21 +748,21 @@ def create():
             int(np.ceil(det_x_range.end)),
         )
 
-        wave = det_data["wave"]
-        ddist = det_data["ddist"]
-        cell = det_data["cell"]
+        wave = scan["wave"]
+        ddist = scan["ddist"]
+        cell = scan["cell"]
 
-        gamma = det_data["gamma"][0]
-        omega = det_data["omega"][0]
-        nu = det_data["nu"][0]
-        chi = det_data["chi"][0]
-        phi = det_data["phi"][0]
+        gamma = scan["gamma"][0]
+        omega = scan["omega"][0]
+        nu = scan["nu"][0]
+        chi = scan["chi"][0]
+        phi = scan["phi"][0]
 
-        scan_motor = det_data["scan_motor"]
-        var_angle = det_data[scan_motor]
+        scan_motor = scan["scan_motor"]
+        var_angle = scan[scan_motor]
 
-        snr_cnts = det_data["fit"]["snr"]
-        frC = det_data["fit"]["frame"]
+        snr_cnts = scan["fit"]["snr"]
+        frC = scan["fit"]["frame"]
 
         var_F = var_angle[int(np.floor(frC))]
         var_C = var_angle[int(np.ceil(frC))]
@@ -781,11 +781,11 @@ def create():
         elif scan_motor == "phi":
             phi = var_p
 
-        intensity = det_data["fit"]["intensity"]
-        x_pos = det_data["fit"]["x_pos"]
-        y_pos = det_data["fit"]["y_pos"]
+        intensity = scan["fit"]["intensity"]
+        x_pos = scan["fit"]["x_pos"]
+        y_pos = scan["fit"]["y_pos"]
 
-        if det_data["zebra_mode"] == "nb":
+        if scan["zebra_mode"] == "nb":
             chi = None
             phi = None
 
@@ -883,22 +883,22 @@ def create():
     return Panel(child=tab_layout, title="hdf viewer")
 
 
-def calculate_hkl(det_data, index):
+def calculate_hkl(scan, index):
     h = np.empty(shape=(IMAGE_H, IMAGE_W))
     k = np.empty(shape=(IMAGE_H, IMAGE_W))
     l = np.empty(shape=(IMAGE_H, IMAGE_W))
 
-    wave = det_data["wave"]
-    ddist = det_data["ddist"]
-    gammad = det_data["gamma"][index]
-    om = det_data["omega"][index]
-    nud = det_data["nu"]
-    ub = det_data["ub"]
-    geometry = det_data["zebra_mode"]
+    wave = scan["wave"]
+    ddist = scan["ddist"]
+    gammad = scan["gamma"][index]
+    om = scan["omega"][index]
+    nud = scan["nu"]
+    ub = scan["ub"]
+    geometry = scan["zebra_mode"]
 
     if geometry == "bi":
-        chi = det_data["chi"][index]
-        phi = det_data["phi"][index]
+        chi = scan["chi"][index]
+        phi = scan["phi"][index]
     elif geometry == "nb":
         chi = 0
         phi = 0
@@ -914,10 +914,10 @@ def calculate_hkl(det_data, index):
     return h, k, l
 
 
-def calculate_pol(det_data, index):
-    ddist = det_data["ddist"]
-    gammad = det_data["gamma"][index]
-    nud = det_data["nu"]
+def calculate_pol(scan, index):
+    ddist = scan["ddist"]
+    gammad = scan["gamma"][index]
+    nud = scan["nu"]
     yi, xi = np.ogrid[:IMAGE_H, :IMAGE_W]
     gamma, nu = pyzebra.det2pol(ddist, gammad, nud, xi, yi)
 

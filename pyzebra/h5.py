@@ -1,6 +1,6 @@
 import h5py
 import numpy as np
-
+from lmfit.models import Gaussian2dModel, GaussianModel
 
 META_MATRIX = ("UB")
 META_CELL = ("cell")
@@ -74,69 +74,97 @@ def read_detector_data(filepath, cami_meta=None):
         n, cols, rows = data.shape
         data = data.reshape(n, rows, cols)
 
-        det_data = {"data": data}
-        det_data["original_filename"] = filepath
+        scan = {"data": data}
+        scan["original_filename"] = filepath
 
         if "/entry1/zebra_mode" in h5f:
-            det_data["zebra_mode"] = h5f["/entry1/zebra_mode"][0].decode()
+            scan["zebra_mode"] = h5f["/entry1/zebra_mode"][0].decode()
         else:
-            det_data["zebra_mode"] = "nb"
+            scan["zebra_mode"] = "nb"
 
         # overwrite zebra_mode from cami
         if cami_meta is not None:
             if "zebra_mode" in cami_meta:
-                det_data["zebra_mode"] = cami_meta["zebra_mode"][0]
+                scan["zebra_mode"] = cami_meta["zebra_mode"][0]
 
         # om, sometimes ph
-        if det_data["zebra_mode"] == "nb":
-            det_data["omega"] = h5f["/entry1/area_detector2/rotation_angle"][:]
+        if scan["zebra_mode"] == "nb":
+            scan["omega"] = h5f["/entry1/area_detector2/rotation_angle"][:]
         else:  # bi
-            det_data["omega"] = h5f["/entry1/sample/rotation_angle"][:]
+            scan["omega"] = h5f["/entry1/sample/rotation_angle"][:]
 
-        det_data["gamma"] = h5f["/entry1/ZEBRA/area_detector2/polar_angle"][:]  # gammad
-        det_data["nu"] = h5f["/entry1/ZEBRA/area_detector2/tilt_angle"][:]  # nud
-        det_data["ddist"] = h5f["/entry1/ZEBRA/area_detector2/distance"][:]
-        det_data["wave"] = h5f["/entry1/ZEBRA/monochromator/wavelength"][:]
-        det_data["chi"] = h5f["/entry1/sample/chi"][:]  # ch
-        det_data["phi"] = h5f["/entry1/sample/phi"][:]  # ph
-        det_data["ub"] = h5f["/entry1/sample/UB"][:].reshape(3, 3)
-        det_data["name"] = h5f["/entry1/sample/name"][0].decode()
-        det_data["cell"] = h5f["/entry1/sample/cell"][:]
+        scan["gamma"] = h5f["/entry1/ZEBRA/area_detector2/polar_angle"][:]  # gammad
+        scan["nu"] = h5f["/entry1/ZEBRA/area_detector2/tilt_angle"][:]  # nud
+        scan["ddist"] = h5f["/entry1/ZEBRA/area_detector2/distance"][:]
+        scan["wave"] = h5f["/entry1/ZEBRA/monochromator/wavelength"][:]
+        scan["chi"] = h5f["/entry1/sample/chi"][:]  # ch
+        scan["phi"] = h5f["/entry1/sample/phi"][:]  # ph
+        scan["ub"] = h5f["/entry1/sample/UB"][:].reshape(3, 3)
+        scan["name"] = h5f["/entry1/sample/name"][0].decode()
+        scan["cell"] = h5f["/entry1/sample/cell"][:]
 
         if n == 1:
             # a default motor for a single frame file
-            det_data["scan_motor"] = "omega"
+            scan["scan_motor"] = "omega"
         else:
             for var in ("omega", "gamma", "nu", "chi", "phi"):
-                if abs(det_data[var][0] - det_data[var][-1]) > 0.1:
-                    det_data["scan_motor"] = var
+                if abs(scan[var][0] - scan[var][-1]) > 0.1:
+                    scan["scan_motor"] = var
                     break
             else:
                 raise ValueError("No angles that vary")
 
         # optional parameters
         if "/entry1/sample/magnetic_field" in h5f:
-            det_data["mf"] = h5f["/entry1/sample/magnetic_field"][:]
+            scan["mf"] = h5f["/entry1/sample/magnetic_field"][:]
 
         if "/entry1/sample/temperature" in h5f:
-            det_data["temp"] = h5f["/entry1/sample/temperature"][:]
+            scan["temp"] = h5f["/entry1/sample/temperature"][:]
 
         # overwrite metadata from .cami
         if cami_meta is not None:
             if "crystal" in cami_meta:
                 cami_meta_crystal = cami_meta["crystal"]
                 if "name" in cami_meta_crystal:
-                    det_data["name"] = cami_meta_crystal["name"]
+                    scan["name"] = cami_meta_crystal["name"]
                 if "UB" in cami_meta_crystal:
-                    det_data["ub"] = cami_meta_crystal["UB"]
+                    scan["ub"] = cami_meta_crystal["UB"]
                 if "cell" in cami_meta_crystal:
-                    det_data["cell"] = cami_meta_crystal["cell"]
+                    scan["cell"] = cami_meta_crystal["cell"]
                 if "lambda" in cami_meta_crystal:
-                    det_data["wave"] = cami_meta_crystal["lambda"]
+                    scan["wave"] = cami_meta_crystal["lambda"]
 
             if "detector parameters" in cami_meta:
                 cami_meta_detparam = cami_meta["detector parameters"]
                 if "dist2" in cami_meta_detparam:
-                    det_data["ddist"] = cami_meta_detparam["dist2"]
+                    scan["ddist"] = cami_meta_detparam["dist2"]
 
-    return det_data
+    return scan
+
+
+def fit_event(scan, fr_from, fr_to, y_from, y_to, x_from, x_to):
+    data_roi = scan["data"][fr_from:fr_to, y_from:y_to, x_from:x_to]
+
+    model = GaussianModel()
+    fr = np.arange(fr_from, fr_to)
+    counts_per_fr = np.sum(data_roi, axis=(1, 2))
+    params = model.guess(counts_per_fr, fr)
+    result = model.fit(counts_per_fr, x=fr, params=params)
+    frC = result.params["center"].value
+    intensity = result.params["height"].value
+
+    counts_std = counts_per_fr.std()
+    counts_mean = counts_per_fr.mean()
+    snr = 0 if counts_std == 0 else counts_mean / counts_std
+
+    model = Gaussian2dModel()
+    xs, ys = np.meshgrid(np.arange(x_from, x_to), np.arange(y_from, y_to))
+    xs = xs.flatten()
+    ys = ys.flatten()
+    counts = np.sum(data_roi, axis=0).flatten()
+    params = model.guess(counts, xs, ys)
+    result = model.fit(counts, x=xs, y=ys, params=params)
+    xC = result.params["centerx"].value
+    yC = result.params["centery"].value
+
+    scan["fit"] = {"frame": frC, "x_pos": xC, "y_pos": yC, "intensity": intensity, "snr": snr}

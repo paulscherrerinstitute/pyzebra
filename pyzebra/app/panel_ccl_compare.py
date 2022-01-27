@@ -72,8 +72,8 @@ for (let i = 0; i < js_data.data['fname'].length; i++) {
 
 def create():
     doc = curdoc()
-    det_data1 = []
-    det_data2 = []
+    dataset1 = []
+    dataset2 = []
     fit_params = {}
     js_data = ColumnDataSource(data=dict(content=["", ""], fname=["", ""], ext=["", ""]))
 
@@ -99,17 +99,17 @@ def create():
     proposal_textinput.on_change("name", proposal_textinput_callback)
 
     def _init_datatable():
-        # det_data2 should have the same metadata to det_data1
-        scan_list = [s["idx"] for s in det_data1]
-        hkl = [f'{s["h"]} {s["k"]} {s["l"]}' for s in det_data1]
-        export = [s["export"] for s in det_data1]
+        # dataset2 should have the same metadata as dataset1
+        scan_list = [s["idx"] for s in dataset1]
+        hkl = [f'{s["h"]} {s["k"]} {s["l"]}' for s in dataset1]
+        export = [s["export"] for s in dataset1]
 
-        twotheta = [np.median(s["twotheta"]) if "twotheta" in s else None for s in det_data1]
-        gamma = [np.median(s["gamma"]) if "gamma" in s else None for s in det_data1]
-        omega = [np.median(s["omega"]) if "omega" in s else None for s in det_data1]
-        chi = [np.median(s["chi"]) if "chi" in s else None for s in det_data1]
-        phi = [np.median(s["phi"]) if "phi" in s else None for s in det_data1]
-        nu = [np.median(s["nu"]) if "nu" in s else None for s in det_data1]
+        twotheta = [np.median(s["twotheta"]) if "twotheta" in s else None for s in dataset1]
+        gamma = [np.median(s["gamma"]) if "gamma" in s else None for s in dataset1]
+        omega = [np.median(s["omega"]) if "omega" in s else None for s in dataset1]
+        chi = [np.median(s["chi"]) if "chi" in s else None for s in dataset1]
+        phi = [np.median(s["phi"]) if "phi" in s else None for s in dataset1]
+        nu = [np.median(s["nu"]) if "nu" in s else None for s in dataset1]
 
         scan_table_source.data.update(
             scan=scan_list,
@@ -163,9 +163,9 @@ def create():
         new_data1 = new_data1[:min_len]
         new_data2 = new_data2[:min_len]
 
-        nonlocal det_data1, det_data2
-        det_data1 = new_data1
-        det_data2 = new_data2
+        nonlocal dataset1, dataset2
+        dataset1 = new_data1
+        dataset2 = new_data2
         _init_datatable()
 
     file_open_button = Button(label="Open New", width=100, disabled=True)
@@ -201,9 +201,9 @@ def create():
         new_data1 = new_data1[:min_len]
         new_data2 = new_data2[:min_len]
 
-        nonlocal det_data1, det_data2
-        det_data1 = new_data1
-        det_data2 = new_data2
+        nonlocal dataset1, dataset2
+        dataset1 = new_data1
+        dataset2 = new_data2
         _init_datatable()
 
     upload_div = Div(text="or upload 2 .ccl files:", margin=(5, 5, 0, 5))
@@ -213,17 +213,17 @@ def create():
     upload_button.on_change("filename", upload_button_callback)
 
     def monitor_spinner_callback(_attr, old, new):
-        if det_data1 and det_data2:
-            pyzebra.normalize_dataset(det_data1, new)
-            pyzebra.normalize_dataset(det_data2, new)
+        if dataset1 and dataset2:
+            pyzebra.normalize_dataset(dataset1, new)
+            pyzebra.normalize_dataset(dataset2, new)
             _update_plot()
 
     monitor_spinner = Spinner(title="Monitor:", mode="int", value=100_000, low=1, width=145)
     monitor_spinner.on_change("value", monitor_spinner_callback)
 
     def _update_table():
-        fit_ok = [(1 if "fit" in scan else 0) for scan in det_data1]
-        export = [scan["export"] for scan in det_data1]
+        fit_ok = [(1 if "fit" in scan else 0) for scan in dataset1]
+        export = [scan["export"] for scan in dataset1]
         scan_table_source.data.update(fit=fit_ok, export=export)
 
     def _update_plot():
@@ -382,7 +382,7 @@ def create():
     def scan_table_source_callback(_attr, _old, new):
         # unfortunately, we don't know if the change comes from data update or user input
         # also `old` and `new` are the same for non-scalars
-        for scan1, scan2, export in zip(det_data1, det_data2, new["export"]):
+        for scan1, scan2, export in zip(dataset1, dataset2, new["export"]):
             scan1["export"] = export
             scan2["export"] = export
         _update_preview()
@@ -426,14 +426,14 @@ def create():
 
     def _get_selected_scan():
         ind = scan_table_source.selected.indices[0]
-        return det_data1[ind], det_data2[ind]
+        return dataset1[ind], dataset2[ind]
 
     merge_from_select = Select(title="scan:", width=145)
 
     def merge_button_callback():
         scan_into1, scan_into2 = _get_selected_scan()
-        scan_from1 = det_data1[int(merge_from_select.value)]
-        scan_from2 = det_data2[int(merge_from_select.value)]
+        scan_from1 = dataset1[int(merge_from_select.value)]
+        scan_from2 = dataset2[int(merge_from_select.value)]
 
         if scan_into1 is scan_from1:
             print("WARNING: Selected scans for merging are identical")
@@ -577,7 +577,7 @@ def create():
     fit_output_textinput = TextAreaInput(title="Fit results:", width=750, height=200)
 
     def proc_all_button_callback():
-        for scan in [*det_data1, *det_data2]:
+        for scan in [*dataset1, *dataset2]:
             if scan["export"]:
                 pyzebra.fit_scan(
                     scan, fit_params, fit_from=fit_from_spinner.value, fit_to=fit_to_spinner.value
@@ -628,7 +628,7 @@ def create():
             temp_file = temp_dir + "/temp"
             export_data1 = []
             export_data2 = []
-            for scan1, scan2 in zip(det_data1, det_data2):
+            for scan1, scan2 in zip(dataset1, dataset2):
                 if scan1["export"]:
                     export_data1.append(scan1)
                     export_data2.append(scan2)

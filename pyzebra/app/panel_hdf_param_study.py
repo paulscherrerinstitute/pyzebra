@@ -48,8 +48,7 @@ IMAGE_PLOT_H = int(IMAGE_H * 2) + 27
 
 def create():
     doc = curdoc()
-    zebra_data = []
-    det_data = {}
+    dataset = []
     cami_meta = {}
 
     num_formatter = NumberFormatter(format="0.00", nan_format="")
@@ -108,15 +107,15 @@ def create():
 
     def _init_datatable():
         file_list = []
-        for scan in zebra_data:
+        for scan in dataset:
             file_list.append(os.path.basename(scan["original_filename"]))
 
         scan_table_source.data.update(
             file=file_list,
-            param=[None] * len(zebra_data),
-            frame=[None] * len(zebra_data),
-            x_pos=[None] * len(zebra_data),
-            y_pos=[None] * len(zebra_data),
+            param=[None] * len(dataset),
+            frame=[None] * len(dataset),
+            x_pos=[None] * len(dataset),
+            y_pos=[None] * len(dataset),
         )
         scan_table_source.selected.indices = []
         scan_table_source.selected.indices = [0]
@@ -127,7 +126,7 @@ def create():
         frame = []
         x_pos = []
         y_pos = []
-        for scan in zebra_data:
+        for scan in dataset:
             if "fit" in scan:
                 framei = scan["fit"]["frame"]
                 x_posi = scan["fit"]["x_pos"]
@@ -150,13 +149,13 @@ def create():
                 print("Could not read data from the file.")
                 return
 
-        zebra_data.extend(new_data)
+        dataset.extend(new_data)
 
         _init_datatable()
 
     def file_open_button_callback():
-        nonlocal zebra_data
-        zebra_data = []
+        nonlocal dataset
+        dataset = []
         _file_open()
 
     file_open_button = Button(label="Open New", width=100)
@@ -170,8 +169,6 @@ def create():
 
     # Scan select
     def scan_table_select_callback(_attr, old, new):
-        nonlocal det_data
-
         if not new:
             # skip empty selections
             return
@@ -186,21 +183,21 @@ def create():
             # skip unnecessary update caused by selection drop
             return
 
-        det_data = zebra_data[new[0]]
+        scan = dataset[new[0]]
 
-        zebra_mode = det_data["zebra_mode"]
+        zebra_mode = scan["zebra_mode"]
         if zebra_mode == "nb":
             metadata_table_source.data.update(geom=["normal beam"])
         else:  # zebra_mode == "bi"
             metadata_table_source.data.update(geom=["bisecting"])
 
-        if "mf" in det_data:
-            metadata_table_source.data.update(mf=[det_data["mf"][0]])
+        if "mf" in scan:
+            metadata_table_source.data.update(mf=[scan["mf"][0]])
         else:
             metadata_table_source.data.update(mf=[None])
 
-        if "temp" in det_data:
-            metadata_table_source.data.update(temp=[det_data["temp"][0]])
+        if "temp" in scan:
+            metadata_table_source.data.update(temp=[scan["temp"][0]])
         else:
             metadata_table_source.data.update(temp=[None])
 
@@ -240,12 +237,15 @@ def create():
         autosize_mode="none",
     )
 
+    def _get_selected_scan():
+        return dataset[scan_table_source.selected.indices[0]]
+
     def param_select_callback(_attr, _old, new):
         if new == "user defined":
-            param = [None] * len(zebra_data)
+            param = [None] * len(dataset)
         else:
             # TODO: which value to take?
-            param = [scan[new][0] for scan in zebra_data]
+            param = [scan[new][0] for scan in dataset]
 
         scan_table_source.data["param"] = param
         _update_param_plot()
@@ -259,7 +259,8 @@ def create():
     param_select.on_change("value", param_select_callback)
 
     def update_overview_plot():
-        h5_data = det_data["data"]
+        scan = _get_selected_scan()
+        h5_data = scan["data"]
         n_im, n_y, n_x = h5_data.shape
         overview_x = np.mean(h5_data, axis=1)
         overview_y = np.mean(h5_data, axis=2)
@@ -290,10 +291,10 @@ def create():
         frame_range.reset_end = n_im
         frame_range.bounds = (0, n_im)
 
-        scan_motor = det_data["scan_motor"]
+        scan_motor = scan["scan_motor"]
         overview_plot_y.axis[1].axis_label = f"Scanning motor, {scan_motor}"
 
-        var = det_data[scan_motor]
+        var = scan[scan_motor]
         var_start = var[0]
         var_end = var[-1] + (var[-1] - var[0]) / (n_im - 1)
 
@@ -470,7 +471,7 @@ def create():
         x = []
         y = []
         fit_param = fit_param_select.value
-        for s, p in zip(zebra_data, scan_table_source.data["param"]):
+        for s, p in zip(dataset, scan_table_source.data["param"]):
             if "fit" in s and fit_param:
                 x.append(p)
                 y.append(s["fit"][fit_param])
@@ -498,7 +499,7 @@ def create():
     fit_param_select.on_change("value", fit_param_select_callback)
 
     def proc_all_button_callback():
-        for scan in zebra_data:
+        for scan in dataset:
             pyzebra.fit_event(
                 scan,
                 int(np.floor(frame_range.start)),
@@ -511,7 +512,7 @@ def create():
 
         _update_table()
 
-        for scan in zebra_data:
+        for scan in dataset:
             if "fit" in scan:
                 options = list(scan["fit"].keys())
                 fit_param_select.options = options
@@ -524,8 +525,9 @@ def create():
     proc_all_button.on_click(proc_all_button_callback)
 
     def proc_button_callback():
+        scan = _get_selected_scan()
         pyzebra.fit_event(
-            det_data,
+            scan,
             int(np.floor(frame_range.start)),
             int(np.ceil(frame_range.end)),
             int(np.floor(det_y_range.start)),
@@ -536,7 +538,7 @@ def create():
 
         _update_table()
 
-        for scan in zebra_data:
+        for scan in dataset:
             if "fit" in scan:
                 options = list(scan["fit"].keys())
                 fit_param_select.options = options

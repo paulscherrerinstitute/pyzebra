@@ -93,9 +93,9 @@ def load_1D(filepath):
     """
     with open(filepath, "r") as infile:
         _, ext = os.path.splitext(filepath)
-        det_variables = parse_1D(infile, data_type=ext)
+        dataset = parse_1D(infile, data_type=ext)
 
-    return det_variables
+    return dataset
 
 
 def parse_1D(fileobj, data_type):
@@ -133,7 +133,7 @@ def parse_1D(fileobj, data_type):
         metadata["zebra_mode"] = "nb"
 
     # read data
-    scan = []
+    dataset = []
     if data_type == ".ccl":
         ccl_first_line = CCL_FIRST_LINE + CCL_ANGLES[metadata["zebra_mode"]]
         ccl_second_line = CCL_SECOND_LINE
@@ -143,47 +143,49 @@ def parse_1D(fileobj, data_type):
             if not line or line.isspace():
                 continue
 
-            s = {}
-            s["export"] = True
+            scan = {}
+            scan["export"] = True
 
             # first line
             for param, (param_name, param_type) in zip(line.split(), ccl_first_line):
-                s[param_name] = param_type(param)
+                scan[param_name] = param_type(param)
 
             # second line
             next_line = next(fileobj)
             for param, (param_name, param_type) in zip(next_line.split(), ccl_second_line):
-                s[param_name] = param_type(param)
+                scan[param_name] = param_type(param)
 
-            if s["scan_motor"] != "om":
+            if scan["scan_motor"] != "om":
                 raise Exception("Unsupported variable name in ccl file.")
 
             # "om" -> "omega"
-            s["scan_motor"] = "omega"
-            s["scan_motors"] = ["omega", ]
+            scan["scan_motor"] = "omega"
+            scan["scan_motors"] = ["omega", ]
             # overwrite metadata, because it only refers to the scan center
-            half_dist = (s["n_points"] - 1) / 2 * s["angle_step"]
-            s["omega"] = np.linspace(s["omega"] - half_dist, s["omega"] + half_dist, s["n_points"])
+            half_dist = (scan["n_points"] - 1) / 2 * scan["angle_step"]
+            scan["omega"] = np.linspace(
+                scan["omega"] - half_dist, scan["omega"] + half_dist, scan["n_points"]
+            )
 
             # subsequent lines with counts
             counts = []
-            while len(counts) < s["n_points"]:
+            while len(counts) < scan["n_points"]:
                 counts.extend(map(float, next(fileobj).split()))
-            s["counts"] = np.array(counts)
-            s["counts_err"] = np.sqrt(np.maximum(s["counts"], 1))
+            scan["counts"] = np.array(counts)
+            scan["counts_err"] = np.sqrt(np.maximum(scan["counts"], 1))
 
-            if s["h"].is_integer() and s["k"].is_integer() and s["l"].is_integer():
-                s["h"], s["k"], s["l"] = map(int, (s["h"], s["k"], s["l"]))
+            if scan["h"].is_integer() and scan["k"].is_integer() and scan["l"].is_integer():
+                scan["h"], scan["k"], scan["l"] = map(int, (scan["h"], scan["k"], scan["l"]))
 
-            scan.append({**metadata, **s})
+            dataset.append({**metadata, **scan})
 
     elif data_type == ".dat":
         # TODO: this might need to be adapted in the future, when "gamma" will be added to dat files
         if metadata["zebra_mode"] == "nb":
             metadata["gamma"] = metadata["twotheta"]
 
-        s = defaultdict(list)
-        s["export"] = True
+        scan = defaultdict(list)
+        scan["export"] = True
 
         match = re.search("Scanning Variables: (.*), Steps: (.*)", next(fileobj))
         motors = [motor.lower() for motor in match.group(1).split(", ")]
@@ -192,8 +194,8 @@ def parse_1D(fileobj, data_type):
         match = re.search("(.*) Points, Mode: (.*), Preset (.*)", next(fileobj))
         if match.group(2) != "Monitor":
             raise Exception("Unknown mode in dat file.")
-        s["n_points"] = int(match.group(1))
-        s["monitor"] = float(match.group(3))
+        scan["n_points"] = int(match.group(1))
+        scan["monitor"] = float(match.group(3))
 
         col_names = list(map(str.lower, next(fileobj).split()))
 
@@ -203,56 +205,56 @@ def parse_1D(fileobj, data_type):
                 break
 
             for name, val in zip(col_names, line.split()):
-                s[name].append(float(val))
+                scan[name].append(float(val))
 
         for name in col_names:
-            s[name] = np.array(s[name])
+            scan[name] = np.array(scan[name])
 
-        s["counts_err"] = np.sqrt(np.maximum(s["counts"], 1))
+        scan["counts_err"] = np.sqrt(np.maximum(scan["counts"], 1))
 
-        s["scan_motors"] = []
+        scan["scan_motors"] = []
         for motor, step in zip(motors, steps):
             if step == 0:
                 # it's not a scan motor, so keep only the median value
-                s[motor] = np.median(s[motor])
+                scan[motor] = np.median(scan[motor])
             else:
-                s["scan_motors"].append(motor)
+                scan["scan_motors"].append(motor)
 
         # "om" -> "omega"
-        if "om" in s["scan_motors"]:
-            s["scan_motors"][s["scan_motors"].index("om")] = "omega"
-            s["omega"] = s["om"]
-            del s["om"]
+        if "om" in scan["scan_motors"]:
+            scan["scan_motors"][scan["scan_motors"].index("om")] = "omega"
+            scan["omega"] = scan["om"]
+            del scan["om"]
 
         # "tt" -> "temp"
-        if "tt" in s["scan_motors"]:
-            s["scan_motors"][s["scan_motors"].index("tt")] = "temp"
-            s["temp"] = s["tt"]
-            del s["tt"]
+        if "tt" in scan["scan_motors"]:
+            scan["scan_motors"][scan["scan_motors"].index("tt")] = "temp"
+            scan["temp"] = scan["tt"]
+            del scan["tt"]
 
         # "mf" stays "mf"
         # "phi" stays "phi"
 
-        s["scan_motor"] = s["scan_motors"][0]
+        scan["scan_motor"] = scan["scan_motors"][0]
 
-        if "h" not in s:
-            s["h"] = s["k"] = s["l"] = float("nan")
+        if "h" not in scan:
+            scan["h"] = scan["k"] = scan["l"] = float("nan")
 
         for param in ("mf", "temp"):
             if param not in metadata:
-                s[param] = 0
+                scan[param] = 0
 
-        s["idx"] = 1
+        scan["idx"] = 1
 
-        scan.append({**metadata, **s})
+        dataset.append({**metadata, **scan})
 
     else:
         print("Unknown file extention")
 
-    return scan
+    return dataset
 
 
-def export_1D(data, path, export_target, hkl_precision=2):
+def export_1D(dataset, path, export_target, hkl_precision=2):
     """Exports data in the .comm/.incomm format for fullprof or .col/.incol format for jana.
 
     Scans with integer/real hkl values are saved in .comm/.incomm or .col/.incol files
@@ -262,11 +264,11 @@ def export_1D(data, path, export_target, hkl_precision=2):
     if export_target not in EXPORT_TARGETS:
         raise ValueError(f"Unknown export target: {export_target}.")
 
-    zebra_mode = data[0]["zebra_mode"]
+    zebra_mode = dataset[0]["zebra_mode"]
     exts = EXPORT_TARGETS[export_target]
     file_content = {ext: [] for ext in exts}
 
-    for scan in data:
+    for scan in dataset:
         if "fit" not in scan:
             continue
 
@@ -306,7 +308,7 @@ def export_1D(data, path, export_target, hkl_precision=2):
                 out_file.writelines(content)
 
 
-def export_ccl_compare(data1, data2, path, export_target, hkl_precision=2):
+def export_ccl_compare(dataset1, dataset2, path, export_target, hkl_precision=2):
     """Exports compare data in the .comm/.incomm format for fullprof or .col/.incol format for jana.
 
     Scans with integer/real hkl values are saved in .comm/.incomm or .col/.incol files
@@ -316,11 +318,11 @@ def export_ccl_compare(data1, data2, path, export_target, hkl_precision=2):
     if export_target not in EXPORT_TARGETS:
         raise ValueError(f"Unknown export target: {export_target}.")
 
-    zebra_mode = data1[0]["zebra_mode"]
+    zebra_mode = dataset1[0]["zebra_mode"]
     exts = EXPORT_TARGETS[export_target]
     file_content = {ext: [] for ext in exts}
 
-    for scan1, scan2 in zip(data1, data2):
+    for scan1, scan2 in zip(dataset1, dataset2):
         if "fit" not in scan1:
             continue
 
@@ -363,9 +365,9 @@ def export_ccl_compare(data1, data2, path, export_target, hkl_precision=2):
                 out_file.writelines(content)
 
 
-def export_param_study(data, param_data, path):
+def export_param_study(dataset, param_data, path):
     file_content = []
-    for scan, param in zip(data, param_data):
+    for scan, param in zip(dataset, param_data):
         if "fit" not in scan:
             continue
 
