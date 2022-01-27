@@ -87,6 +87,8 @@ def read_detector_data(filepath, cami_meta=None):
             if "zebra_mode" in cami_meta:
                 scan["zebra_mode"] = cami_meta["zebra_mode"][0]
 
+        scan["monitor"] = h5f["/entry1/control/data"][0]
+
         # om, sometimes ph
         if scan["zebra_mode"] == "nb":
             scan["omega"] = h5f["/entry1/area_detector2/rotation_angle"][:]
