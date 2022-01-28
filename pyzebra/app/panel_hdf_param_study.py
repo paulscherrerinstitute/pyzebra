@@ -260,10 +260,10 @@ def create():
 
     def update_overview_plot():
         scan = _get_selected_scan()
-        h5_data = scan["data"]
-        n_im, n_y, n_x = h5_data.shape
-        overview_x = np.mean(h5_data, axis=1)
-        overview_y = np.mean(h5_data, axis=2)
+        counts = scan["counts"]
+        n_im, n_y, n_x = counts.shape
+        overview_x = np.mean(counts, axis=1)
+        overview_y = np.mean(counts, axis=2)
 
         # normalize for simpler colormapping
         overview_max_val = max(np.max(overview_x), np.max(overview_y))

@@ -68,13 +68,13 @@ def read_detector_data(filepath, cami_meta=None):
         ndarray: A 3D array of data, omega, gamma, nu.
     """
     with h5py.File(filepath, "r") as h5f:
-        data = h5f["/entry1/area_detector2/data"][:]
+        counts = h5f["/entry1/area_detector2/data"][:]
 
-        # reshape data to a correct shape (2006 issue)
-        n, cols, rows = data.shape
-        data = data.reshape(n, rows, cols)
+        # reshape images (counts) to a correct shape (2006 issue)
+        n, cols, rows = counts.shape
+        counts = counts.reshape(n, rows, cols)
 
-        scan = {"data": data}
+        scan = {"counts": counts}
         scan["original_filename"] = filepath
 
         if "/entry1/zebra_mode" in h5f:
@@ -145,7 +145,7 @@ def read_detector_data(filepath, cami_meta=None):
 
 
 def fit_event(scan, fr_from, fr_to, y_from, y_to, x_from, x_to):
-    data_roi = scan["data"][fr_from:fr_to, y_from:y_to, x_from:x_to]
+    data_roi = scan["counts"][fr_from:fr_to, y_from:y_to, x_from:x_to]
 
     model = GaussianModel()
     fr = np.arange(fr_from, fr_to)

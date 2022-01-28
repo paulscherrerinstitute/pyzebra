@@ -115,7 +115,7 @@ def create():
             print("Could not read data from the file.")
             return
 
-        last_im_index = scan["data"].shape[0] - 1
+        last_im_index = scan["counts"].shape[0] - 1
 
         index_spinner.value = 0
         index_spinner.high = last_im_index
@@ -157,7 +157,7 @@ def create():
         if index is None:
             index = index_spinner.value
 
-        current_image = scan["data"][index]
+        current_image = scan["counts"][index]
         proj_v_line_source.data.update(
             x=np.arange(0, IMAGE_W) + 0.5, y=np.mean(current_image, axis=0)
         )
@@ -223,10 +223,10 @@ def create():
         )
 
     def update_overview_plot():
-        h5_data = scan["data"]
-        n_im, n_y, n_x = h5_data.shape
-        overview_x = np.mean(h5_data, axis=1)
-        overview_y = np.mean(h5_data, axis=2)
+        counts = scan["counts"]
+        n_im, n_y, n_x = counts.shape
+        overview_x = np.mean(counts, axis=1)
+        overview_y = np.mean(counts, axis=2)
 
         # normalize for simpler colormapping
         overview_max_val = max(np.max(overview_x), np.max(overview_y))
@@ -438,13 +438,13 @@ def create():
 
     def box_edit_callback(_attr, _old, new):
         if new["x"]:
-            h5_data = scan["data"]
-            x_val = np.arange(h5_data.shape[0])
+            counts = scan["counts"]
+            x_val = np.arange(counts.shape[0])
             left = int(np.floor(new["x"][0]))
             right = int(np.ceil(new["x"][0] + new["width"][0]))
             bottom = int(np.floor(new["y"][0]))
             top = int(np.ceil(new["y"][0] + new["height"][0]))
-            y_val = np.sum(h5_data[:, bottom:top, left:right], axis=(1, 2))
+            y_val = np.sum(counts[:, bottom:top, left:right], axis=(1, 2))
         else:
             x_val = []
             y_val = []
