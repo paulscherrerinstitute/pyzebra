@@ -54,11 +54,16 @@ def _parameters_match(scan1, scan2):
 
         if param == scan1["scan_motor"] == scan2["scan_motor"]:
             # check if ranges of variable parameter overlap
-            range1 = scan1[param]
-            range2 = scan2[param]
+            r1_start, r1_end = scan1[param][0], scan1[param][-1]
+            r2_start, r2_end = scan2[param][0], scan2[param][-1]
+            # support reversed ranges
+            if r1_start > r1_end:
+                r1_start, r1_end = r1_end, r1_start
+            if r2_start > r2_end:
+                r2_start, r2_end = r2_end, r2_start
             # maximum gap between ranges of the scanning parameter (default 0)
             max_range_gap = MAX_RANGE_GAP.get(param, 0)
-            if max(range1[0] - range2[-1], range2[0] - range1[-1]) > max_range_gap:
+            if max(r1_start - r2_end, r2_start - r1_end) > max_range_gap:
                 return False
 
         elif np.max(np.abs(scan1[param] - scan2[param])) > PARAM_PRECISIONS[param]:
