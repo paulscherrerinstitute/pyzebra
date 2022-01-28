@@ -89,18 +89,18 @@ def read_detector_data(filepath, cami_meta=None):
 
         scan["monitor"] = h5f["/entry1/control/data"][0]
 
-        # om, sometimes ph
         if scan["zebra_mode"] == "nb":
             scan["omega"] = h5f["/entry1/area_detector2/rotation_angle"][:]
         else:  # bi
             scan["omega"] = h5f["/entry1/sample/rotation_angle"][:]
 
-        scan["gamma"] = h5f["/entry1/ZEBRA/area_detector2/polar_angle"][:]  # gammad
-        scan["nu"] = h5f["/entry1/ZEBRA/area_detector2/tilt_angle"][:]  # nud
+        scan["gamma"] = h5f["/entry1/ZEBRA/area_detector2/polar_angle"][:]
+        scan["twotheta"] = h5f["/entry1/ZEBRA/area_detector2/polar_angle"][:]
+        scan["nu"] = h5f["/entry1/ZEBRA/area_detector2/tilt_angle"][:]
         scan["ddist"] = h5f["/entry1/ZEBRA/area_detector2/distance"][:]
         scan["wave"] = h5f["/entry1/ZEBRA/monochromator/wavelength"][:]
-        scan["chi"] = h5f["/entry1/sample/chi"][:]  # ch
-        scan["phi"] = h5f["/entry1/sample/phi"][:]  # ph
+        scan["chi"] = h5f["/entry1/sample/chi"][:]
+        scan["phi"] = h5f["/entry1/sample/phi"][:]
         scan["ub"] = h5f["/entry1/sample/UB"][:].reshape(3, 3)
         scan["name"] = h5f["/entry1/sample/name"][0].decode()
         scan["cell"] = h5f["/entry1/sample/cell"][:]
