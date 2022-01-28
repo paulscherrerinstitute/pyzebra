@@ -74,7 +74,7 @@ def read_detector_data(filepath, cami_meta=None):
         n, cols, rows = counts.shape
         counts = counts.reshape(n, rows, cols)
 
-        scan = {"counts": counts}
+        scan = {"counts": counts, "counts_err": np.sqrt(np.maximum(counts, 1))}
         scan["original_filename"] = filepath
 
         if "/entry1/zebra_mode" in h5f:
@@ -88,6 +88,7 @@ def read_detector_data(filepath, cami_meta=None):
                 scan["zebra_mode"] = cami_meta["zebra_mode"][0]
 
         scan["monitor"] = h5f["/entry1/control/data"][0]
+        scan["idx"] = 1
 
         if scan["zebra_mode"] == "nb":
             scan["omega"] = h5f["/entry1/area_detector2/rotation_angle"][:]
@@ -115,6 +116,8 @@ def read_detector_data(filepath, cami_meta=None):
                     break
             else:
                 raise ValueError("No angles that vary")
+
+        scan["scan_motors"] = [scan["scan_motor"], ]
 
         # optional parameters
         if "/entry1/sample/magnetic_field" in h5f:
