@@ -382,7 +382,11 @@ def export_param_study(dataset, param_data, path):
 
         fit_str = ""
         for fit_param in scan["fit"].params.values():
-            fit_str = fit_str + f"{fit_param.value:<20.2f}" + f"{fit_param.stderr:<20.2f}"
+            fit_param_val = fit_param.value
+            fit_param_std = fit_param.stderr
+            if fit_param_std is None:
+                fit_param_std = 0
+            fit_str = fit_str + f"{fit_param_val:<20.2f}" + f"{fit_param_std:<20.2f}"
 
         _, fname_str = os.path.split(scan["original_filename"])
 

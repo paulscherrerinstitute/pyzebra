@@ -376,6 +376,8 @@ def create():
                 x.append(p)
                 param_fit_val = s["fit"].params[fit_param].value
                 param_fit_std = s["fit"].params[fit_param].stderr
+                if param_fit_std is None:
+                    param_fit_std = 0
                 y.append(param_fit_val)
                 y_lower.append(param_fit_val - param_fit_std)
                 y_upper.append(param_fit_val + param_fit_std)
