@@ -68,7 +68,7 @@ def read_detector_data(filepath, cami_meta=None):
         ndarray: A 3D array of data, omega, gamma, nu.
     """
     with h5py.File(filepath, "r") as h5f:
-        counts = h5f["/entry1/area_detector2/data"][:]
+        counts = h5f["/entry1/area_detector2/data"][:].astype(np.float64)
 
         # reshape images (counts) to a correct shape (2006 issue)
         n, cols, rows = counts.shape
