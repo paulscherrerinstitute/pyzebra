@@ -22,6 +22,8 @@ MAX_RANGE_GAP = {
     "omega": 0.5,
 }
 
+MOTOR_POS_PRECISION = 0.01
+
 AREA_METHODS = ("fit_area", "int_area")
 
 
@@ -122,7 +124,7 @@ def merge_scans(scan_into, scan_from):
     err_tmp = err_all[:1]
     num_tmp = np.array([1])
     for pos, val, err in zip(pos_all[1:], val_all[1:], err_all[1:]):
-        if pos - pos_tmp[-1] < 0.0005:
+        if pos - pos_tmp[-1] < MOTOR_POS_PRECISION:
             # the repeated motor position
             val_tmp[-1] += val
             err_tmp[-1] += err
