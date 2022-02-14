@@ -11,6 +11,7 @@ from bokeh.models import (
     BoxEditTool,
     BoxZoomTool,
     Button,
+    CellEditor,
     CheckboxGroup,
     ColumnDataSource,
     DataRange1d,
@@ -52,7 +53,7 @@ IMAGE_PLOT_H = int(IMAGE_H * 2) + 27
 
 def create():
     doc = curdoc()
-    scan = {}
+    dataset = []
     cami_meta = {}
 
     num_formatter = NumberFormatter(format="0.00", nan_format="")
@@ -107,14 +108,15 @@ def create():
     upload_cami_button = FileInput(accept=".cami", width=200)
     upload_cami_button.on_change("value", upload_cami_button_callback)
 
-    def _file_open(file, cami_meta):
-        nonlocal scan
+    def upload_hdf_button_callback(_attr, _old, new):
+        nonlocal dataset
         try:
-            scan = pyzebra.read_detector_data(file, cami_meta)
+            scan = pyzebra.read_detector_data(io.BytesIO(base64.b64decode(new)), None)
         except KeyError:
             print("Could not read data from the file.")
             return
 
+        dataset = [scan]
         last_im_index = scan["counts"].shape[0] - 1
 
         index_spinner.value = 0
@@ -131,32 +133,200 @@ def create():
         else:  # zebra_mode == "bi"
             metadata_table_source.data.update(geom=["bisecting"])
 
-        update_image(0)
-        update_overview_plot()
-
-    def upload_hdf_button_callback(_attr, _old, new):
-        _file_open(io.BytesIO(base64.b64decode(new)), None)
+        _init_datatable()
 
     upload_hdf_div = Div(text="or upload .hdf file:", margin=(5, 5, 0, 5))
     upload_hdf_button = FileInput(accept=".hdf", width=200)
     upload_hdf_button.on_change("value", upload_hdf_button_callback)
 
     def file_open_button_callback():
-        if not file_select.value:
-            return
+        nonlocal dataset
+        new_data = []
+        cm = cami_meta if data_source.value == "cami file" else None
+        for f_path in file_select.value:
+            f_name = os.path.basename(f_path)
+            try:
+                file_data = [pyzebra.read_detector_data(f_path, cm)]
+            except:
+                print(f"Error loading {f_name}")
+                continue
 
-        if data_source.value == "proposal number":
-            _file_open(file_select.value[0], None)
-        else:
-            _file_open(file_select.value[0], cami_meta)
+            pyzebra.normalize_dataset(file_data, monitor_spinner.value)
+
+            if not new_data:  # first file
+                new_data = file_data
+            else:
+                pyzebra.merge_datasets(new_data, file_data)
+
+        if new_data:
+            dataset = new_data
+            _init_datatable()
 
     file_open_button = Button(label="Open New", width=100)
     file_open_button.on_click(file_open_button_callback)
 
-    def update_image(index=None):
+    def file_append_button_callback():
+        file_data = []
+        for f_path in file_select.value:
+            f_name = os.path.basename(f_path)
+            try:
+                file_data = [pyzebra.read_detector_data(f_path, None)]
+            except:
+                print(f"Error loading {f_name}")
+                continue
+
+            pyzebra.normalize_dataset(file_data, monitor_spinner.value)
+            pyzebra.merge_datasets(dataset, file_data)
+
+        if file_data:
+            _init_datatable()
+
+    file_append_button = Button(label="Append", width=100)
+    file_append_button.on_click(file_append_button_callback)
+
+    def _init_datatable():
+        scan_list = [s["idx"] for s in dataset]
+        export = [s["export"] for s in dataset]
+
+        twotheta = [np.median(s["twotheta"]) if "twotheta" in s else None for s in dataset]
+        gamma = [np.median(s["gamma"]) if "gamma" in s else None for s in dataset]
+        omega = [np.median(s["omega"]) if "omega" in s else None for s in dataset]
+        chi = [np.median(s["chi"]) if "chi" in s else None for s in dataset]
+        phi = [np.median(s["phi"]) if "phi" in s else None for s in dataset]
+        nu = [np.median(s["nu"]) if "nu" in s else None for s in dataset]
+
+        scan_table_source.data.update(
+            scan=scan_list,
+            fit=[0] * len(scan_list),
+            export=export,
+            twotheta=twotheta,
+            gamma=gamma,
+            omega=omega,
+            chi=chi,
+            phi=phi,
+            nu=nu,
+        )
+        scan_table_source.selected.indices = []
+        scan_table_source.selected.indices = [0]
+
+        merge_options = [(str(i), f"{i} ({idx})") for i, idx in enumerate(scan_list)]
+        merge_from_select.options = merge_options
+        merge_from_select.value = merge_options[0][0]
+
+    def scan_table_select_callback(_attr, old, new):
+        if not new:
+            # skip empty selections
+            return
+
+        # Avoid selection of multiple indicies (via Shift+Click or Ctrl+Click)
+        if len(new) > 1:
+            # drop selection to the previous one
+            scan_table_source.selected.indices = old
+            return
+
+        if len(old) > 1:
+            # skip unnecessary update caused by selection drop
+            return
+
+        scan = _get_selected_scan()
+        last_im_index = scan["counts"].shape[0] - 1
+
+        index_spinner.value = 0
+        index_spinner.high = last_im_index
+        if last_im_index == 0:
+            index_slider.disabled = True
+        else:
+            index_slider.disabled = False
+            index_slider.end = last_im_index
+
+        zebra_mode = scan["zebra_mode"]
+        if zebra_mode == "nb":
+            metadata_table_source.data.update(geom=["normal beam"])
+        else:  # zebra_mode == "bi"
+            metadata_table_source.data.update(geom=["bisecting"])
+
+        _update_image()
+        _update_overview_plot()
+
+    def scan_table_source_callback(_attr, _old, new):
+        # unfortunately, we don't know if the change comes from data update or user input
+        # also `old` and `new` are the same for non-scalars
+        for scan, export in zip(dataset, new["export"]):
+            scan["export"] = export
+
+    scan_table_source = ColumnDataSource(
+        dict(scan=[], fit=[], export=[], twotheta=[], gamma=[], omega=[], chi=[], phi=[], nu=[],)
+    )
+    scan_table_source.on_change("data", scan_table_source_callback)
+    scan_table_source.selected.on_change("indices", scan_table_select_callback)
+
+    scan_table = DataTable(
+        source=scan_table_source,
+        columns=[
+            TableColumn(field="scan", title="Scan", editor=CellEditor(), width=50),
+            TableColumn(field="fit", title="Fit", editor=CellEditor(), width=50),
+            TableColumn(field="export", title="Export", editor=CellEditor(), width=50),
+            TableColumn(field="twotheta", title="2theta", editor=CellEditor(), width=50),
+            TableColumn(field="gamma", title="gamma", editor=CellEditor(), width=50),
+            TableColumn(field="omega", title="omega", editor=CellEditor(), width=50),
+            TableColumn(field="chi", title="chi", editor=CellEditor(), width=50),
+            TableColumn(field="phi", title="phi", editor=CellEditor(), width=50),
+            TableColumn(field="nu", title="nu", editor=CellEditor(), width=50),
+        ],
+        width=310,  # +60 because of the index column, but excluding twotheta onwards
+        height=350,
+        autosize_mode="none",
+        editable=True,
+    )
+
+    def _get_selected_scan():
+        return dataset[scan_table_source.selected.indices[0]]
+
+    def _update_table():
+        export = [scan["export"] for scan in dataset]
+        scan_table_source.data.update(export=export)
+
+    def monitor_spinner_callback(_attr, old, new):
+        if dataset:
+            pyzebra.normalize_dataset(dataset, new)
+            _update_image()
+            _update_overview_plot()
+
+    monitor_spinner = Spinner(title="Monitor:", mode="int", value=100_000, low=1, width=145)
+    monitor_spinner.on_change("value", monitor_spinner_callback)
+
+    merge_from_select = Select(title="scan:", width=145)
+
+    def merge_button_callback():
+        scan_into = _get_selected_scan()
+        scan_from = dataset[int(merge_from_select.value)]
+
+        if scan_into is scan_from:
+            print("WARNING: Selected scans for merging are identical")
+            return
+
+        pyzebra.merge_h5_scans(scan_into, scan_from)
+        _update_table()
+        _update_image()
+        _update_overview_plot()
+
+    merge_button = Button(label="Merge into current", width=145)
+    merge_button.on_click(merge_button_callback)
+
+    def restore_button_callback():
+        pyzebra.restore_scan(_get_selected_scan())
+        _update_table()
+        _update_image()
+        _update_overview_plot()
+
+    restore_button = Button(label="Restore scan", width=145)
+    restore_button.on_click(restore_button_callback)
+
+    def _update_image(index=None):
         if index is None:
             index = index_spinner.value
 
+        scan = _get_selected_scan()
         current_image = scan["counts"][index]
         proj_v_line_source.data.update(
             x=np.arange(0, IMAGE_W) + 0.5, y=np.mean(current_image, axis=0)
@@ -222,7 +392,8 @@ def create():
             gamma=[gamma_c], nu=[nu_c], omega=[omega_c], chi=[chi_c], phi=[phi_c],
         )
 
-    def update_overview_plot():
+    def _update_overview_plot():
+        scan = _get_selected_scan()
         counts = scan["counts"]
         n_im, n_y, n_x = counts.shape
         overview_x = np.mean(counts, axis=1)
@@ -288,28 +459,10 @@ def create():
         nu_range.reset_end = nu_end
         nu_range.bounds = (min(nu_start, nu_end), max(nu_start, nu_end))
 
-    def file_select_callback(_attr, old, new):
-        if not new:
-            # skip empty selections
-            return
-
-        # Avoid selection of multiple indicies (via Shift+Click or Ctrl+Click)
-        if len(new) > 1:
-            # drop selection to the previous one
-            file_select.value = old
-            return
-
-        if len(old) > 1:
-            # skip unnecessary update caused by selection drop
-            return
-
-        file_open_button_callback()
-
     file_select = MultiSelect(title="Available .hdf files:", width=210, height=250)
-    file_select.on_change("value", file_select_callback)
 
     def index_callback(_attr, _old, new):
-        update_image(new)
+        _update_image(new)
 
     index_slider = Slider(value=0, start=0, end=1, show_value=False, width=400)
 
@@ -374,7 +527,8 @@ def create():
 
     # calculate hkl-indices of first mouse entry
     def mouse_enter_callback(_event):
-        if scan and np.array_equal(image_source.data["h"][0], np.zeros((1, 1))):
+        if dataset and np.array_equal(image_source.data["h"][0], np.zeros((1, 1))):
+            scan = _get_selected_scan()
             index = index_spinner.value
             h, k, l = calculate_hkl(scan, index)
             image_source.data.update(h=[h], k=[k], l=[l])
@@ -438,6 +592,7 @@ def create():
 
     def box_edit_callback(_attr, _old, new):
         if new["x"]:
+            scan = _get_selected_scan()
             counts = scan["counts"]
             x_val = np.arange(counts.shape[0])
             left = int(np.floor(new["x"][0]))
@@ -600,7 +755,7 @@ def create():
             display_min_spinner.disabled = False
             display_max_spinner.disabled = False
 
-        update_image()
+        _update_image()
 
     main_auto_checkbox = CheckboxGroup(
         labels=["Frame Intensity Range"], active=[0], width=145, margin=[10, 5, 0, 5]
@@ -646,7 +801,7 @@ def create():
             proj_display_min_spinner.disabled = False
             proj_display_max_spinner.disabled = False
 
-        update_overview_plot()
+        _update_overview_plot()
 
     proj_auto_checkbox = CheckboxGroup(
         labels=["Projections Intensity Range"], active=[0], width=145, margin=[10, 5, 0, 5]
@@ -738,6 +893,7 @@ def create():
     )
 
     def add_event_button_callback():
+        scan = _get_selected_scan()
         pyzebra.fit_event(
             scan,
             int(np.floor(frame_range.start)),
@@ -848,7 +1004,7 @@ def create():
         upload_hdf_div,
         upload_hdf_button,
         file_select,
-        file_open_button,
+        row(file_open_button, file_append_button),
     )
 
     layout_image = column(gridplot([[proj_v, None], [plot, proj_h]], merge_tools=False))
@@ -874,9 +1030,15 @@ def create():
         ),
     )
 
+    scan_layout = column(
+        scan_table,
+        row(monitor_spinner, column(Spacer(height=19), restore_button)),
+        row(column(Spacer(height=19), merge_button), merge_from_select),
+    )
+
     tab_layout = row(
         column(import_layout, colormap_layout),
-        column(layout_overview, layout_controls),
+        column(row(scan_layout, layout_overview), layout_controls),
         column(roi_avg_plot, layout_image),
     )
 

@@ -76,6 +76,7 @@ def read_detector_data(filepath, cami_meta=None):
 
         scan = {"counts": counts, "counts_err": np.sqrt(np.maximum(counts, 1))}
         scan["original_filename"] = filepath
+        scan["export"] = True
 
         if "/entry1/zebra_mode" in h5f:
             scan["zebra_mode"] = h5f["/entry1/zebra_mode"][0].decode()
