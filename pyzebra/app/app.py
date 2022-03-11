@@ -14,6 +14,7 @@ import panel_hdf_param_study
 import panel_hdf_viewer
 import panel_param_study
 import panel_spind
+import panel_ccl_prepare
 
 doc = curdoc()
 
@@ -55,6 +56,7 @@ doc.add_root(
                 Panel(child=column(proposal_textinput, apply_button), title="user config"),
                 panel_hdf_viewer.create(),
                 panel_hdf_anatric.create(),
+                panel_ccl_prepare.create(),
                 panel_ccl_integrate.create(),
                 panel_ccl_compare.create(),
                 panel_param_study.create(),
