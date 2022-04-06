@@ -4,5 +4,6 @@ from pyzebra.ccl_process import *
 from pyzebra.h5 import *
 from pyzebra.utils import *
 from pyzebra.xtal import *
+from pyzebra.sxtal_refgen import *
 
 __version__ = "0.6.5"
