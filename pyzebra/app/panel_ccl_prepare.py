@@ -1,3 +1,6 @@
+import base64
+import io
+
 from bokeh.layouts import column, row
 from bokeh.models import (
     Button,
@@ -16,10 +19,36 @@ from bokeh.models import (
     TextInput,
 )
 
+import pyzebra
+
 
 def create():
+    def _update_ang_lims(ang_lims):
+        sttgamma_min.value, sttgamma_max.value, _ = ang_lims["gamma"]
+        omega_min.value, omega_max.value, _ = ang_lims["omega"]
+        chinu_min.value, chinu_max.value, _ = ang_lims.get("chi") or ang_lims.get("nu")
+        phi_min.value, phi_max.value, _ = ang_lims["phi"]
+
+    def geom_radiogroup_callback(_attr, _old, new):
+        if new == 0:
+            geom_file = pyzebra.get_zebraBI_default_geom_file()
+        else:
+            geom_file = pyzebra.get_zebraNB_default_geom_file()
+
+        _update_ang_lims(pyzebra.read_ang_limits(geom_file))
+
     geom_radiogroup_div = Div(text="Geometry:")
     geom_radiogroup = RadioGroup(labels=["bisecting", "normal beam"], width=150)
+    geom_radiogroup.on_change("active", geom_radiogroup_callback)
+
+    def open_geom_callback(_attr, _old, new):
+        with io.StringIO(base64.b64decode(new).decode()) as geom_file:
+            _update_ang_lims(pyzebra.read_ang_limits(geom_file))
+
+    open_geom_div = Div(text="or open GEOM:")
+    open_geom = FileInput(accept=".geom", width=200)
+    open_geom.on_change("value", open_geom_callback)
+
     open_cfl_div = Div(text="or open CFL:")
     open_cfl = FileInput(accept=".cfl", width=200)
 
@@ -36,8 +65,6 @@ def create():
     phi_min = NumericInput(title="phi", width=50, mode="float")
     phi_max = NumericInput(title="\u200B", width=50, mode="float")
 
-    open_geom_div = Div(text="or open GEOM:")
-    open_geom = FileInput(accept=".geom", width=200)
     open_cif_div = Div(text="or open CIF:")
     open_cif = FileInput(accept=".cif", width=200)
 
