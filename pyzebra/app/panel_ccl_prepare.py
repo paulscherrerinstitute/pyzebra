@@ -49,12 +49,6 @@ def create():
     open_geom = FileInput(accept=".geom", width=200)
     open_geom.on_change("value", open_geom_callback)
 
-    open_cfl_div = Div(text="or open CFL:")
-    open_cfl = FileInput(accept=".cfl", width=200)
-
-    wavelen_select = Select(title="Wavelength:", width=70)
-    wavelen_input = NumericInput(title="\u200B", width=70, mode="float")
-
     anglim_div = Div(text="Angular min/max limits:")
     sttgamma_min = NumericInput(title="stt/gamma", width=50, mode="float")
     sttgamma_max = NumericInput(title="\u200B", width=50, mode="float")
@@ -65,8 +59,24 @@ def create():
     phi_min = NumericInput(title="phi", width=50, mode="float")
     phi_max = NumericInput(title="\u200B", width=50, mode="float")
 
+    open_cfl_div = Div(text="or open CFL:")
+    open_cfl = FileInput(accept=".cfl", width=200)
+
     open_cif_div = Div(text="or open CIF:")
     open_cif = FileInput(accept=".cif", width=200)
+
+    wavelen_input = NumericInput(title="\u200B", width=70, mode="float")
+
+    def wavelen_select_callback(_attr, _old, new):
+        if new:
+            wavelen_input.value = float(new)
+        else:
+            wavelen_input.value = None
+
+    wavelen_select = Select(
+        title="Wavelength:", options=["", "0.788", "1.178", "1.383", "2.305"], width=70
+    )
+    wavelen_select.on_change("value", wavelen_select_callback)
 
     cryst_div = Div(text="Crystal structure:")
     cryst_space_group = TextInput(title="space group", width=100)
