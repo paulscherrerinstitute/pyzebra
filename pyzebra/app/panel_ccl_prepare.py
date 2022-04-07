@@ -95,8 +95,8 @@ def create():
     ub_matrix = TextInput(title="\u200B", width=600)
 
     ranges_div = Div(text="Ranges:")
-    ranges_hkl = TextInput(title="HKL")
-    ranges_expression = TextInput(title="sin(​θ​)/λ", width=200)
+    ranges_hkl = TextInput(title="HKL", value="-25 25 -25 25 -25 25")
+    ranges_expression = TextInput(title="sin(​θ​)/λ", value="0.0 0.7", width=200)
 
     mag_struct_div = Div(text="Magnetic structure (optional):")
     mag_struct_lattice = TextInput(title="lattice", width=150)
