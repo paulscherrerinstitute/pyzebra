@@ -82,7 +82,16 @@ def create():
     cryst_space_group = TextInput(title="space group", width=100)
     cryst_cell = TextInput(title="cell", width=500)
 
+    def ub_matrix_calc_callback():
+        params = dict()
+        params["SPGR"] = cryst_space_group.value
+        params["CELL"] = cryst_cell.value
+        ub = pyzebra.calc_ub_matrix(params)
+        ub_matrix.value = " ".join(ub)
+
     ub_matrix_calc = Button(label="UB matrix:", button_type="primary", width=100)
+    ub_matrix_calc.on_click(ub_matrix_calc_callback)
+
     ub_matrix = TextInput(title="\u200B", width=600)
 
     ranges_div = Div(text="Ranges:")

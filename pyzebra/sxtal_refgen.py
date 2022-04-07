@@ -1,4 +1,7 @@
 import io
+import os
+import tempfile
+import subprocess
 
 SXTAL_REFGEN_PATH = "/afs/psi.ch/project/sinq/rhel7/bin/Sxtal_Refgen"
 
@@ -88,3 +91,35 @@ def export_geom(path, ang_lims):
                     ang, _, _, _ = next_line.split()
                     vals = ang_lims[ang.lower()]
                     out_file.write(f"{'':<8}{ang:<10}{vals[0]:<10}{vals[1]:<10}{vals[2]:<10}\n")
+
+
+def calc_ub_matrix(params):
+    with tempfile.TemporaryDirectory() as temp_dir:
+        cfl_file = os.path.join(temp_dir, "ub_matrix.cfl")
+
+        with open(cfl_file, "w") as f:
+            for key, value in params.items():
+                f.write(f"{key} {value}\n")
+
+        comp_proc = subprocess.run(
+            [SXTAL_REFGEN_PATH, cfl_file],
+            cwd=temp_dir,
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+        print(" ".join(comp_proc.args))
+        print(comp_proc.stdout)
+
+        sfa_file = os.path.join(temp_dir, "ub_matrix.sfa")
+        ub_matrix = []
+        with open(sfa_file, "r") as f:
+            for line in f:
+                if "BL_M" in line:  # next 3 lines contain the matrix
+                    for _ in range(3):
+                        next_line = next(f)
+                        *vals, _ = next_line.split(maxsplit=3)
+                        ub_matrix.extend(vals)
+
+    return ub_matrix
