@@ -39,22 +39,17 @@ def create():
             chinu_ti.value = " ".join(ang_lims["chi"][:2])
             phi_ti.value = " ".join(ang_lims["phi"][:2])
 
-    def geom_radiogroup_callback(_attr, _old, new):
-        if new == 0:
-            geom_file = pyzebra.get_zebraBI_default_geom_file()
-        else:
-            geom_file = pyzebra.get_zebraNB_default_geom_file()
-
-        _update_ang_lims(pyzebra.read_ang_limits(geom_file))
-
-    geom_radiogroup_div = Div(text="Geometry:")
-    geom_radiogroup = RadioGroup(labels=["bisecting", "normal beam"], width=150)
-    geom_radiogroup.on_change("active", geom_radiogroup_callback)
-    geom_radiogroup.active = 0
+    def _update_params(params):
+        wavelen_input.value = float(params["WAVE"])
+        cryst_space_group.value = params["SPGR"]
+        cryst_cell.value = params["CELL"]
+        ub_matrix.value = " ".join(params["UBMAT"])
+        ranges_hkl.value = params["HLIM"]
+        ranges_expression.value = params["SRANG"]
 
     def open_geom_callback(_attr, _old, new):
         with io.StringIO(base64.b64decode(new).decode()) as geom_file:
-            _update_ang_lims(pyzebra.read_ang_limits(geom_file))
+            _update_ang_lims(pyzebra.read_geom_file(geom_file))
 
     open_geom_div = Div(text="or open GEOM:")
     open_geom = FileInput(accept=".geom", width=200)
@@ -98,6 +93,21 @@ def create():
     ranges_div = Div(text="Ranges:")
     ranges_hkl = TextInput(title="HKL", value="-25 25 -25 25 -25 25")
     ranges_expression = TextInput(title="sin(​θ​)/λ", value="0.0 0.7", width=200)
+
+    def geom_radiogroup_callback(_attr, _old, new):
+        if new == 0:
+            geom_file = pyzebra.get_zebraBI_default_geom_file()
+        else:
+            geom_file = pyzebra.get_zebraNB_default_geom_file()
+        cfl_file = pyzebra.get_zebra_default_cfl_file()
+
+        _update_ang_lims(pyzebra.read_geom_file(geom_file))
+        _update_params(pyzebra.read_cfl_file(cfl_file))
+
+    geom_radiogroup_div = Div(text="Geometry:")
+    geom_radiogroup = RadioGroup(labels=["bisecting", "normal beam"], width=150)
+    geom_radiogroup.on_change("active", geom_radiogroup_callback)
+    geom_radiogroup.active = 0
 
     mag_struct_div = Div(text="Magnetic structure (optional):")
     mag_struct_lattice = TextInput(title="lattice", width=150)
