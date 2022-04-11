@@ -48,15 +48,20 @@ def create():
         ranges_expression.value = params["SRANG"]
 
     def open_geom_callback(_attr, _old, new):
-        with io.StringIO(base64.b64decode(new).decode()) as geom_file:
-            _update_ang_lims(pyzebra.read_geom_file(geom_file))
+        with io.StringIO(base64.b64decode(new).decode()) as fileobj:
+            _update_ang_lims(pyzebra.read_geom_file(fileobj))
 
     open_geom_div = Div(text="or open GEOM:")
     open_geom = FileInput(accept=".geom", width=200)
     open_geom.on_change("value", open_geom_callback)
 
+    def open_cfl_callback(_attr, _old, new):
+        with io.StringIO(base64.b64decode(new).decode()) as fileobj:
+            _update_params(pyzebra.read_cfl_file(fileobj))
+
     open_cfl_div = Div(text="or open CFL:")
     open_cfl = FileInput(accept=".cfl", width=200)
+    open_cfl.on_change("value", open_cfl_callback)
 
     open_cif_div = Div(text="or open CIF:")
     open_cif = FileInput(accept=".cif", width=200)
