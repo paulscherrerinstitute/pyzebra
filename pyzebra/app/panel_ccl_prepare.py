@@ -32,8 +32,12 @@ def create():
     def _update_ang_lims(ang_lims):
         sttgamma_ti.value = " ".join(ang_lims["gamma"][:2])
         omega_ti.value = " ".join(ang_lims["omega"][:2])
-        chinu_ti.value = " ".join((ang_lims.get("chi") or ang_lims.get("nu"))[:2])
-        phi_ti.value = " ".join(ang_lims["phi"][:2])
+        if len(ang_lims) == 3:  # NB geom
+            chinu_ti.value = " ".join(ang_lims["nu"][:2])
+            phi_ti.value = ""
+        else:  # len(ang_lims) == 4, BI geom
+            chinu_ti.value = " ".join(ang_lims["chi"][:2])
+            phi_ti.value = " ".join(ang_lims["phi"][:2])
 
     def geom_radiogroup_callback(_attr, _old, new):
         if new == 0:

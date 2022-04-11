@@ -76,15 +76,17 @@ def read_ang_limits(fileobj):
 def export_geom(path, ang_lims):
     if "chi" in ang_lims:  # BI geometry
         default_file = get_zebraBI_default_geom_file()
+        n_ang = 4
     else:  # NB geometry
         default_file = get_zebraNB_default_geom_file()
+        n_ang = 3
 
     with open(path, "w") as out_file:
         for line in default_file:
             out_file.write(line)
 
             if line.startswith("ANG_LIMITS"):
-                for _ in range(4):
+                for _ in range(n_ang):
                     next_line = next(default_file)
                     ang, _, _, _ = next_line.split()
                     vals = ang_lims[ang.lower()]
