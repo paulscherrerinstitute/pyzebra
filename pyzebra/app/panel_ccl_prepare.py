@@ -24,10 +24,10 @@ import pyzebra
 
 def create():
     def _update_ang_lims(ang_lims):
-        sttgamma_min.value, sttgamma_max.value, _ = ang_lims["gamma"]
-        omega_min.value, omega_max.value, _ = ang_lims["omega"]
-        chinu_min.value, chinu_max.value, _ = ang_lims.get("chi") or ang_lims.get("nu")
-        phi_min.value, phi_max.value, _ = ang_lims["phi"]
+        sttgamma_ti.value = " ".join(ang_lims["gamma"][:2])
+        omega_ti.value = " ".join(ang_lims["omega"][:2])
+        chinu_ti.value = " ".join((ang_lims.get("chi") or ang_lims.get("nu"))[:2])
+        phi_ti.value = " ".join(ang_lims["phi"][:2])
 
     def geom_radiogroup_callback(_attr, _old, new):
         if new == 0:
@@ -50,14 +50,10 @@ def create():
     open_geom.on_change("value", open_geom_callback)
 
     anglim_div = Div(text="Angular min/max limits:")
-    sttgamma_min = NumericInput(title="stt/gamma", width=50, mode="float")
-    sttgamma_max = NumericInput(title="\u200B", width=50, mode="float")
-    omega_min = NumericInput(title="omega", width=50, mode="float")
-    omega_max = NumericInput(title="\u200B", width=50, mode="float")
-    chinu_min = NumericInput(title="chi/nu", width=50, mode="float")
-    chinu_max = NumericInput(title="\u200B", width=50, mode="float")
-    phi_min = NumericInput(title="phi", width=50, mode="float")
-    phi_max = NumericInput(title="\u200B", width=50, mode="float")
+    sttgamma_ti = TextInput(title="stt/gamma", width=100)
+    omega_ti = TextInput(title="omega", width=100)
+    chinu_ti = TextInput(title="chi/nu", width=100)
+    phi_ti = TextInput(title="phi", width=100)
 
     open_cfl_div = Div(text="or open CFL:")
     open_cfl = FileInput(accept=".cfl", width=200)
@@ -145,8 +141,8 @@ def create():
 
     anglim_layout = column(
         anglim_div,
-        row(sttgamma_min, sttgamma_max, Spacer(width=10), omega_min, omega_max),
-        row(chinu_min, chinu_max, Spacer(width=10), phi_min, phi_max),
+        row(sttgamma_ti, Spacer(width=10), omega_ti),
+        row(chinu_ti, Spacer(width=10), phi_ti),
     )
 
     column1_layout = column(

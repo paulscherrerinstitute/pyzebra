@@ -68,7 +68,7 @@ def read_ang_limits(fileobj):
             break
 
         ang, ang_min, ang_max, ang_offset = line.split()
-        ang_lims[ang.lower()] = [float(ang_min), float(ang_max), float(ang_offset)]
+        ang_lims[ang.lower()] = [ang_min, ang_max, ang_offset]
 
     return ang_lims
 
