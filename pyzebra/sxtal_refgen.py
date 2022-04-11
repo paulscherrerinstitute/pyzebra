@@ -97,6 +97,9 @@ def read_geom_file(fileobj):
 
     # read angular limits
     for line in fileobj:
+        if "!" in line:  # remove comments that start with ! sign
+            line, _ = line.split(sep="!", maxsplit=1)
+
         if not line or line.isspace():
             break
 
@@ -162,6 +165,9 @@ def read_cfl_file(fileobj):
     params = {"SPGR": None, "CELL": None, "WAVE": None, "UBMAT": None, "HLIM": None, "SRANG": None}
     param_names = tuple(params)
     for line in fileobj:
+        if "!" in line:  # remove comments that start with ! sign
+            line, _ = line.split(sep="!", maxsplit=1)
+
         if line.startswith(param_names):
             if line.startswith("UBMAT"):  # next 3 lines contain the matrix
                 param, val = "UBMAT", []
