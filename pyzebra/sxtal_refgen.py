@@ -5,7 +5,8 @@ import subprocess
 
 SXTAL_REFGEN_PATH = "/afs/psi.ch/project/sinq/rhel7/bin/Sxtal_Refgen"
 
-_zebraBI_default_geom = """GEOM          2 Bissecting - HiCHI
+_zebraBI_default_geom = """!
+GEOM          2 Bissecting - HiCHI
 BLFR          z-up
 DIST_UNITS    mm
 ANGL_UNITS    deg
@@ -17,36 +18,33 @@ GAPS_DET       0  0
 SETTING       1 0 0   0 1 0   0 0 1
 NUM_ANG  4
 ANG_LIMITS         Min      Max    Offset
-        Gamma     2.0    60.5     0.00
-        Omega     0.0    120.0     0.00
-        Chi      80.0    210.0     0.00
+        Gamma     0.0    128.0     0.00
+        Omega     0.0     64.0     0.00
+        Chi      80.0    211.0     0.00
         Phi       0.0    360.0     0.00
 
-DET_OFF      0       0      0"""
+DET_OFF      0       0      0
+"""
 
-_zebraNB_default_geom = """!  File with an example of instrument SXTAL file
-!  Case of D3
-!
-INFO          Lifting arm diffractometer (hot neutrons)
-NAME          D3
+_zebraNB_default_geom = """!
 GEOM          3 Normal Beam
 BLFR          z-up
 DIST_UNITS    mm
 ANGL_UNITS    deg
 DET_TYPE      Point  ipsd 1
-DIST_DET      660
+DIST_DET      448
 DIM_XY         1.0   1.0    1    1
 GAPS_DET       0  0
 
 SETTING       1 0 0   0 1 0   0 0 1
-NUM_ANG  4
+NUM_ANG  3
 ANG_LIMITS         Min      Max    Offset
-        Gamma     -1.5    128.     0.00
-        Omega   -180.0   180.0     0.00
-        Nu        -15      15     0.00
-        Phi        0.0     45.0     0.00
+        Gamma      0.0     128.0     0.00
+        Omega   -180.0     180.0     0.00
+        Nu       -15.0      15.0     0.00
 
-DET_OFF      0       0      0"""
+DET_OFF      0       0      0
+"""
 
 
 def get_zebraBI_default_geom_file():
