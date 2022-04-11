@@ -23,6 +23,12 @@ import pyzebra
 
 
 def create():
+    anglim_div = Div(text="Angular min/max limits:")
+    sttgamma_ti = TextInput(title="stt/gamma", width=100)
+    omega_ti = TextInput(title="omega", width=100)
+    chinu_ti = TextInput(title="chi/nu", width=100)
+    phi_ti = TextInput(title="phi", width=100)
+
     def _update_ang_lims(ang_lims):
         sttgamma_ti.value = " ".join(ang_lims["gamma"][:2])
         omega_ti.value = " ".join(ang_lims["omega"][:2])
@@ -40,6 +46,7 @@ def create():
     geom_radiogroup_div = Div(text="Geometry:")
     geom_radiogroup = RadioGroup(labels=["bisecting", "normal beam"], width=150)
     geom_radiogroup.on_change("active", geom_radiogroup_callback)
+    geom_radiogroup.active = 0
 
     def open_geom_callback(_attr, _old, new):
         with io.StringIO(base64.b64decode(new).decode()) as geom_file:
@@ -48,12 +55,6 @@ def create():
     open_geom_div = Div(text="or open GEOM:")
     open_geom = FileInput(accept=".geom", width=200)
     open_geom.on_change("value", open_geom_callback)
-
-    anglim_div = Div(text="Angular min/max limits:")
-    sttgamma_ti = TextInput(title="stt/gamma", width=100)
-    omega_ti = TextInput(title="omega", width=100)
-    chinu_ti = TextInput(title="chi/nu", width=100)
-    phi_ti = TextInput(title="phi", width=100)
 
     open_cfl_div = Div(text="or open CFL:")
     open_cfl = FileInput(accept=".cfl", width=200)
