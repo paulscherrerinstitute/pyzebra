@@ -109,21 +109,24 @@ def read_geom_file(fileobj):
     return ang_lims
 
 
-def export_geom_file(path, ang_lims):
+def export_geom_file(path, ang_lims, template=None):
     if "chi" in ang_lims:  # BI geometry
-        default_file = get_zebraBI_default_geom_file()
+        template_file = get_zebraBI_default_geom_file()
         n_ang = 4
     else:  # NB geometry
-        default_file = get_zebraNB_default_geom_file()
+        template_file = get_zebraNB_default_geom_file()
         n_ang = 3
 
+    if template is not None:
+        template_file = template
+
     with open(path, "w") as out_file:
-        for line in default_file:
+        for line in template_file:
             out_file.write(line)
 
             if line.startswith("ANG_LIMITS"):
                 for _ in range(n_ang):
-                    next_line = next(default_file)
+                    next_line = next(template_file)
                     ang, _, _, _ = next_line.split()
                     vals = ang_lims[ang.lower()]
                     out_file.write(f"{'':<8}{ang:<10}{vals[0]:<10}{vals[1]:<10}{vals[2]:<10}\n")
