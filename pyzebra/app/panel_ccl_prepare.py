@@ -25,6 +25,7 @@ import pyzebra
 def create():
     ang_lims = None
     cif_data = None
+    params = None
 
     anglim_div = Div(text="Angular min/max limits:")
     sttgamma_ti = TextInput(title="stt/gamma", width=100)
@@ -67,8 +68,10 @@ def create():
     open_geom.on_change("value", open_geom_callback)
 
     def open_cfl_callback(_attr, _old, new):
+        nonlocal params
         with io.StringIO(base64.b64decode(new).decode()) as fileobj:
-            _update_params(pyzebra.read_cfl_file(fileobj))
+            params = pyzebra.read_cfl_file(fileobj)
+            _update_params(params)
 
     open_cfl_div = Div(text="or open CFL:")
     open_cfl = FileInput(accept=".cfl", width=200)
@@ -118,7 +121,7 @@ def create():
     ranges_expression = TextInput(title="sin(​θ​)/λ", value="0.0 0.7", width=200)
 
     def geom_radiogroup_callback(_attr, _old, new):
-        nonlocal ang_lims
+        nonlocal ang_lims, params
         if new == 0:
             geom_file = pyzebra.get_zebraBI_default_geom_file()
         else:
@@ -127,7 +130,8 @@ def create():
 
         ang_lims = pyzebra.read_geom_file(geom_file)
         _update_ang_lims(ang_lims)
-        _update_params(pyzebra.read_cfl_file(cfl_file))
+        params = pyzebra.read_cfl_file(cfl_file)
+        _update_params(params)
 
     geom_radiogroup_div = Div(text="Geometry:")
     geom_radiogroup = RadioGroup(labels=["bisecting", "normal beam"], width=150)
