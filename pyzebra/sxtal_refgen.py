@@ -180,3 +180,59 @@ def read_cfl_file(fileobj):
             params[param] = val
 
     return params
+
+
+def read_cif_file(fileobj):
+    params = {"SPGR": None, "CELL": None, "ATOM": []}
+
+    cell_params = {
+        "_cell_length_a": None,
+        "_cell_length_b": None,
+        "_cell_length_c": None,
+        "_cell_angle_alpha": None,
+        "_cell_angle_beta": None,
+        "_cell_angle_gamma": None,
+    }
+    cell_param_names = tuple(cell_params)
+
+    atom_param_pos = {
+        "_atom_site_label": 0,
+        "_atom_site_type_symbol": None,
+        "_atom_site_fract_x": None,
+        "_atom_site_fract_y": None,
+        "_atom_site_fract_z": None,
+        "_atom_site_U_iso_or_equiv": None,
+        "_atom_site_occupancy": None,
+    }
+    atom_param_names = tuple(atom_param_pos)
+
+    for line in fileobj:
+        line = line.strip()
+        if line.startswith("_space_group_name_H-M_alt"):
+            _, val = line.split(maxsplit=1)
+            params["SPGR"] = val.strip("'")
+
+        elif line.startswith(cell_param_names):
+            param, val = line.split(maxsplit=1)
+            cell_params[param] = val
+
+        elif line.startswith("_atom_site_label"):  # assume this is the start of atom data
+            for ind, line in enumerate(fileobj, start=1):
+                line = line.strip()
+
+                # read fields
+                if line.startswith("_atom_site"):
+                    if line.startswith(atom_param_names):
+                        atom_param_pos[line] = ind
+                    continue
+
+                # read data till an empty line
+                if not line:
+                    break
+                vals = line.split()
+                params["ATOM"].append(" ".join([vals[ind] for ind in atom_param_pos.values()]))
+
+    if None not in cell_params.values():
+        params["CELL"] = " ".join(cell_params.values())
+
+    return params

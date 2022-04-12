@@ -23,6 +23,8 @@ import pyzebra
 
 
 def create():
+    cif_data = None
+
     anglim_div = Div(text="Angular min/max limits:")
     sttgamma_ti = TextInput(title="stt/gamma", width=100)
     omega_ti = TextInput(title="omega", width=100)
@@ -40,12 +42,18 @@ def create():
             phi_ti.value = " ".join(ang_lims["phi"][:2])
 
     def _update_params(params):
-        wavelen_input.value = float(params["WAVE"])
-        cryst_space_group.value = params["SPGR"]
-        cryst_cell.value = params["CELL"]
-        ub_matrix.value = " ".join(params["UBMAT"])
-        ranges_hkl.value = params["HLIM"]
-        ranges_expression.value = params["SRANG"]
+        if "WAVE" in params:
+            wavelen_input.value = float(params["WAVE"])
+        if "SPGR" in params:
+            cryst_space_group.value = params["SPGR"]
+        if "CELL" in params:
+            cryst_cell.value = params["CELL"]
+        if "UBMAT" in params:
+            ub_matrix.value = " ".join(params["UBMAT"])
+        if "HLIM" in params:
+            ranges_hkl.value = params["HLIM"]
+        if "SRANG" in params:
+            ranges_expression.value = params["SRANG"]
 
     def open_geom_callback(_attr, _old, new):
         with io.StringIO(base64.b64decode(new).decode()) as fileobj:
@@ -63,8 +71,15 @@ def create():
     open_cfl = FileInput(accept=".cfl", width=200)
     open_cfl.on_change("value", open_cfl_callback)
 
+    def open_cif_callback(_attr, _old, new):
+        nonlocal cif_data
+        with io.StringIO(base64.b64decode(new).decode()) as fileobj:
+            cif_data = pyzebra.read_cif_file(fileobj)
+            _update_params(cif_data)
+
     open_cif_div = Div(text="or open CIF:")
     open_cif = FileInput(accept=".cif", width=200)
+    open_cif.on_change("value", open_cif_callback)
 
     wavelen_input = NumericInput(title="\u200B", width=70, mode="float")
 
