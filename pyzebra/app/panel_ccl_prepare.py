@@ -23,6 +23,7 @@ import pyzebra
 
 
 def create():
+    ang_lims = None
     cif_data = None
 
     anglim_div = Div(text="Angular min/max limits:")
@@ -56,8 +57,10 @@ def create():
             ranges_expression.value = params["SRANG"]
 
     def open_geom_callback(_attr, _old, new):
+        nonlocal ang_lims
         with io.StringIO(base64.b64decode(new).decode()) as fileobj:
-            _update_ang_lims(pyzebra.read_geom_file(fileobj))
+            ang_lims = pyzebra.read_geom_file(fileobj)
+        _update_ang_lims(ang_lims)
 
     open_geom_div = Div(text="or open GEOM:")
     open_geom = FileInput(accept=".geom", width=200)
@@ -115,13 +118,15 @@ def create():
     ranges_expression = TextInput(title="sin(​θ​)/λ", value="0.0 0.7", width=200)
 
     def geom_radiogroup_callback(_attr, _old, new):
+        nonlocal ang_lims
         if new == 0:
             geom_file = pyzebra.get_zebraBI_default_geom_file()
         else:
             geom_file = pyzebra.get_zebraNB_default_geom_file()
         cfl_file = pyzebra.get_zebra_default_cfl_file()
 
-        _update_ang_lims(pyzebra.read_geom_file(geom_file))
+        ang_lims = pyzebra.read_geom_file(geom_file)
+        _update_ang_lims(ang_lims)
         _update_params(pyzebra.read_cfl_file(cfl_file))
 
     geom_radiogroup_div = Div(text="Geometry:")

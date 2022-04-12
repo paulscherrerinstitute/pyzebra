@@ -5,8 +5,7 @@ import subprocess
 
 SXTAL_REFGEN_PATH = "/afs/psi.ch/project/sinq/rhel7/bin/Sxtal_Refgen"
 
-_zebraBI_default_geom = """!
-GEOM          2 Bissecting - HiCHI
+_zebraBI_default_geom = """GEOM          2 Bissecting - HiCHI
 BLFR          z-up
 DIST_UNITS    mm
 ANGL_UNITS    deg
@@ -26,8 +25,7 @@ ANG_LIMITS         Min      Max    Offset
 DET_OFF      0       0      0
 """
 
-_zebraNB_default_geom = """!
-GEOM          3 Normal Beam
+_zebraNB_default_geom = """GEOM          3 Normal Beam
 BLFR          z-up
 DIST_UNITS    mm
 ANGL_UNITS    deg
