@@ -241,3 +241,47 @@ def read_cif_file(fileobj):
         params["CELL"] = " ".join(cell_params.values())
 
     return params
+
+
+def export_cfl_file(path, params, template=None):
+    param_names = tuple(params)
+    if template is None:
+        template_file = get_zebra_default_cfl_file()
+    else:
+        template_file = template
+
+    atom_done = False
+    with open(path, "w") as out_file:
+        for line in template_file:
+            if line.startswith(param_names):
+                if line.startswith("UBMAT"):  # only UBMAT values are not on the same line
+                    out_file.write(line)
+                    for i in range(3):
+                        next(template_file)
+                        out_file.write(" ".join(params["UBMAT"][3 * i : 3 * (i + 1)]) + "\n")
+
+                elif line.startswith("ATOM"):
+                    if "ATOM" in params:
+                        # replace all ATOM with values in params
+                        while line.startswith("ATOM"):
+                            line = next(template_file)
+                        for atom_line in params["ATOM"]:
+                            out_file.write(f"ATOM {atom_line}\n")
+                        atom_done = True
+
+                else:
+                    param, _ = line.split(maxsplit=1)
+                    out_file.write(f"{param} {params[param]}\n")
+
+            elif line.startswith("INSTR"):
+                # replace it with a default name
+                out_file.write("INSTR  zebra.geom\n")
+
+            else:
+                out_file.write(line)
+
+        # append ATOM data if it's present and a template did not contain it
+        if "ATOM" in params and not atom_done:
+            out_file.write("\n")
+            for atom_line in params["ATOM"]:
+                out_file.write(f"ATOM {atom_line}\n")
