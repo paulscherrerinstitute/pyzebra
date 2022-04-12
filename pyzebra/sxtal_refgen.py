@@ -170,6 +170,7 @@ def read_cfl_file(fileobj):
     params = {"SPGR": None, "CELL": None, "WAVE": None, "UBMAT": None, "HLIM": None, "SRANG": None}
     param_names = tuple(params)
     for line in fileobj:
+        line = line.strip()
         if "!" in line:  # remove comments that start with ! sign
             line, _ = line.split(sep="!", maxsplit=1)
 
@@ -177,7 +178,7 @@ def read_cfl_file(fileobj):
             if line.startswith("UBMAT"):  # next 3 lines contain the matrix
                 param, val = "UBMAT", []
                 for _ in range(3):
-                    next_line = next(fileobj)
+                    next_line = next(fileobj).strip()
                     val.extend(next_line.split(maxsplit=2))
             else:
                 param, val = line.split(maxsplit=1)
