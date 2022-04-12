@@ -1,5 +1,8 @@
 import base64
 import io
+import os
+import subprocess
+import tempfile
 
 from bokeh.layouts import column, row
 from bokeh.models import (
@@ -141,7 +144,64 @@ def create():
     mag_struct_div = Div(text="Magnetic structure (optional):")
     mag_struct_lattice = TextInput(title="lattice", width=150)
     mag_struct_kvec = TextAreaInput(title="k vector", width=150)
-    mag_struct_go = Button(label="GO", button_type="primary", width=50)
+
+    def go1_button_callback():
+        if open_geom.value:
+            geom_template = io.StringIO(base64.b64decode(open_geom.value).decode())
+        else:
+            geom_template = None
+
+        if open_cfl.value:
+            cfl_template = io.StringIO(base64.b64decode(open_cfl.value).decode())
+        else:
+            cfl_template = None
+
+        ang_lims["gamma"][0], ang_lims["gamma"][1] = sttgamma_ti.value.strip().split()
+        ang_lims["omega"][0], ang_lims["omega"][1] = omega_ti.value.strip().split()
+        if ang_lims["geom"] == "nb":
+            ang_lims["nu"][0], ang_lims["nu"][1] = chinu_ti.value.strip().split()
+        else:  # ang_lims["geom"] == "bi"
+            ang_lims["chi"][0], ang_lims["chi"][1] = chinu_ti.value.strip().split()
+            ang_lims["phi"][0], ang_lims["phi"][1] = phi_ti.value.strip().split()
+
+        if cif_data:
+            params.update(cif_data)
+
+        params["WAVE"] = str(wavelen_input.value)
+        params["SPGR"] = cryst_space_group.value
+        params["CELL"] = cryst_cell.value
+        params["UBMAT"] = ub_matrix.value.split()
+        params["HLIM"] = ranges_hkl.value
+        params["SRANG"] = ranges_expression.value
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            geom_path = os.path.join(temp_dir, "zebra.geom")
+            pyzebra.export_geom_file(geom_path, ang_lims, geom_template)
+
+            print(f"Content of {geom_path}:")
+            with open(geom_path) as f:
+                print(f.read())
+
+            cfl_path = os.path.join(temp_dir, "zebra.cfl")
+            pyzebra.export_cfl_file(cfl_path, params, cfl_template)
+
+            print(f"Content of {cfl_path}:")
+            with open(cfl_path) as f:
+                print(f.read())
+
+            comp_proc = subprocess.run(
+                [pyzebra.SXTAL_REFGEN_PATH, cfl_path],
+                cwd=temp_dir,
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+            )
+            print(" ".join(comp_proc.args))
+            print(comp_proc.stdout)
+
+    go1_button = Button(label="GO", button_type="primary", width=50)
+    go1_button.on_click(go1_button_callback)
 
     sorting_div = Div(text="Sorting:")
     sorting_1 = TextInput(title="1st", width=50)
@@ -198,7 +258,7 @@ def create():
             mag_struct_div,
             mag_struct_lattice,
             mag_struct_kvec,
-            column(Spacer(height=18), mag_struct_go),
+            column(Spacer(height=18), go1_button),
         ),
         row(
             sorting_div,
