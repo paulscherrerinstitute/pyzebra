@@ -34,10 +34,10 @@ def create():
     def _update_ang_lims(ang_lims):
         sttgamma_ti.value = " ".join(ang_lims["gamma"][:2])
         omega_ti.value = " ".join(ang_lims["omega"][:2])
-        if len(ang_lims) == 3:  # NB geom
+        if ang_lims["geom"] == "nb":
             chinu_ti.value = " ".join(ang_lims["nu"][:2])
             phi_ti.value = ""
-        else:  # len(ang_lims) == 4, BI geom
+        else:  # ang_lims["geom"] == "bi"
             chinu_ti.value = " ".join(ang_lims["chi"][:2])
             phi_ti.value = " ".join(ang_lims["phi"][:2])
 

@@ -90,30 +90,34 @@ def get_zebra_default_cfl_file():
 
 def read_geom_file(fileobj):
     ang_lims = dict()
-    # locate angular limits in .geom text file
-    for line in fileobj:
-        if line.startswith("ANG_LIMITS"):
-            break
-
-    # read angular limits
     for line in fileobj:
         if "!" in line:  # remove comments that start with ! sign
             line, _ = line.split(sep="!", maxsplit=1)
 
-        if not line or line.isspace():
-            break
+        if line.startswith("GEOM"):
+            _, val = line.split(maxsplit=1)
+            if val.startswith("2"):
+                ang_lims["geom"] = "bi"
+            else:  # val.startswith("3")
+                ang_lims["geom"] = "nb"
 
-        ang, ang_min, ang_max, ang_offset = line.split()
-        ang_lims[ang.lower()] = [ang_min, ang_max, ang_offset]
+        elif line.startswith("ANG_LIMITS"):
+            # read angular limits
+            for line in fileobj:
+                if not line or line.isspace():
+                    break
+
+                ang, ang_min, ang_max, ang_offset = line.split()
+                ang_lims[ang.lower()] = [ang_min, ang_max, ang_offset]
 
     return ang_lims
 
 
 def export_geom_file(path, ang_lims, template=None):
-    if "chi" in ang_lims:  # BI geometry
+    if ang_lims["geom"] == "bi":
         template_file = get_zebraBI_default_geom_file()
         n_ang = 4
-    else:  # NB geometry
+    else:  # ang_lims["geom"] == "nb"
         template_file = get_zebraNB_default_geom_file()
         n_ang = 3
 
