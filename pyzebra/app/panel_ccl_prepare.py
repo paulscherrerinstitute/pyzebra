@@ -29,6 +29,7 @@ def create():
     ang_lims = None
     cif_data = None
     params = None
+    res_files = {}
 
     anglim_div = Div(text="Angular min/max limits:")
     sttgamma_ti = TextInput(title="stt/gamma", width=100)
@@ -200,6 +201,15 @@ def create():
             print(" ".join(comp_proc.args))
             print(comp_proc.stdout)
 
+            # display created lists
+            with open(os.path.join(temp_dir, "zebra.hkl")) as f:
+                res_files["zebra.hkl"] = f.read()
+
+            with open(os.path.join(temp_dir, "zebra.mhkl")) as f:
+                res_files["zebra.mhkl"] = f.read()
+
+            created_lists.options = list(res_files)
+
     go1_button = Button(label="GO", button_type="primary", width=50)
     go1_button.on_click(go1_button_callback)
 
@@ -212,7 +222,11 @@ def create():
     sorting_3_dt = TextInput(title="Δ", width=50)
     sorting_go = Button(label="GO", button_type="primary", width=50)
 
+    def created_lists_callback(_attr, _old, new):
+        preview_lists.value = res_files[new[0]]
+
     created_lists = MultiSelect(title="Created lists:", width=200, height=150)
+    created_lists.on_change("value", created_lists_callback)
     preview_lists = TextAreaInput(title="Preview selected list:", width=600, height=150)
 
     download_file = Button(label="Download file", button_type="success", width=200)
