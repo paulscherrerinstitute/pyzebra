@@ -244,7 +244,7 @@ def create():
     sorting_2_dt = TextInput(title="Δ", width=50)
     sorting_3 = TextInput(title="3rd", width=50)
     sorting_3_dt = TextInput(title="Δ", width=50)
-    sorting_go = Button(label="GO", button_type="primary", width=50)
+    sorting_go = Button(label="GO", button_type="primary", width=50, disabled=True)
 
     def created_lists_callback(_attr, _old, new):
         sel_file = new[0]
@@ -258,11 +258,11 @@ def create():
 
     download_file = Button(label="Download file", button_type="success", width=200)
     download_file.js_on_click(CustomJS(args={"js_data": js_data}, code=javaScript))
-    plot_list = Button(label="Plot selected list", button_type="primary", width=200)
+    plot_list = Button(label="Plot selected list", button_type="primary", width=200, disabled=True)
 
     measured_data_div = Div(text="Measured data:")
-    measured_data = FileInput(accept=".comm,.incomm", width=200)
-    plot_file = Button(label="Plot selected file", button_type="primary", width=200)
+    measured_data = FileInput(accept=".comm,.incomm", width=200, disabled=True)
+    plot_file = Button(label="Plot selected file", button_type="primary", width=200, disabled=True)
 
     plot = Plot(x_range=DataRange1d(), y_range=DataRange1d(), plot_height=450, plot_width=500)
     plot.toolbar.logo = None
@@ -278,7 +278,7 @@ def create():
     )
     disting_opt_rb = RadioGroup(labels=["scan direction", "resolution ellipsoid"], width=200)
 
-    clear_plot = Button(label="Clear plot", button_type="warning", width=200)
+    clear_plot = Button(label="Clear plot", button_type="warning", width=200, disabled=True)
 
     util_column1 = column(
         row(column(geom_radiogroup_div, geom_radiogroup), column(open_cfl_div, open_cfl)),
