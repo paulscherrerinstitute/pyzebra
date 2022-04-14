@@ -14,7 +14,6 @@ from bokeh.models import (
     Div,
     FileInput,
     MultiSelect,
-    NumericInput,
     Panel,
     Plot,
     RadioGroup,
@@ -73,7 +72,7 @@ def create():
 
     def _update_params(params):
         if "WAVE" in params:
-            wavelen_input.value = float(params["WAVE"])
+            wavelen_input.value = params["WAVE"]
         if "SPGR" in params:
             cryst_space_group.value = params["SPGR"]
         if "CELL" in params:
@@ -115,13 +114,13 @@ def create():
     open_cif = FileInput(accept=".cif", width=200)
     open_cif.on_change("value", open_cif_callback)
 
-    wavelen_input = NumericInput(title="\u200B", width=70, mode="float")
+    wavelen_input = TextInput(title="\u200B", width=70)
 
     def wavelen_select_callback(_attr, _old, new):
         if new:
-            wavelen_input.value = float(new)
+            wavelen_input.value = new
         else:
-            wavelen_input.value = None
+            wavelen_input.value = ""
 
     wavelen_select = Select(
         title="Wavelength:", options=["", "0.788", "1.178", "1.383", "2.305"], width=70
@@ -192,7 +191,7 @@ def create():
         if cif_data:
             params.update(cif_data)
 
-        params["WAVE"] = str(wavelen_input.value)
+        params["WAVE"] = wavelen_input.value
         params["SPGR"] = cryst_space_group.value
         params["CELL"] = cryst_cell.value
         params["UBMAT"] = ub_matrix.value.split()
