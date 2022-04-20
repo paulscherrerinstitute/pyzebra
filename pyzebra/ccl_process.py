@@ -169,23 +169,26 @@ def merge_h5_scans(scan_into, scan_from):
 
     scan_motor = scan_into["scan_motor"]  # the same as scan_from["scan_motor"]
 
-    pos_all = scan_into["init_scan"][scan_motor]
-    val_all = scan_into["init_scan"]["counts"]
-    err_all = scan_into["init_scan"]["counts_err"] ** 2
+    pos_all = [scan_into["init_scan"][scan_motor]]
+    val_all = [scan_into["init_scan"]["counts"]]
+    err_all = [scan_into["init_scan"]["counts_err"] ** 2]
     for scan in scan_into["merged_scans"]:
-        pos_all = np.append(pos_all, scan[scan_motor])
-        val_all = np.concatenate((val_all, scan["counts"]))
-        err_all = np.concatenate((err_all, scan["counts_err"] ** 2))
+        pos_all.append(scan[scan_motor])
+        val_all.append(scan["counts"])
+        err_all.append(scan["counts_err"] ** 2)
+    pos_all = np.concatenate(pos_all)
+    val_all = np.concatenate(val_all)
+    err_all = np.concatenate(err_all)
 
     sort_index = np.argsort(pos_all)
     pos_all = pos_all[sort_index]
     val_all = val_all[sort_index]
     err_all = err_all[sort_index]
 
-    pos_tmp = pos_all[:1]
-    val_tmp = val_all[:1]
-    err_tmp = err_all[:1]
-    num_tmp = np.array([1])
+    pos_tmp = [pos_all[0]]
+    val_tmp = [val_all[:1]]
+    err_tmp = [err_all[:1]]
+    num_tmp = [1]
     for pos, val, err in zip(pos_all[1:], val_all[1:], err_all[1:]):
         if pos - pos_tmp[-1] < MOTOR_POS_PRECISION:
             # the repeated motor position
@@ -194,10 +197,14 @@ def merge_h5_scans(scan_into, scan_from):
             num_tmp[-1] += 1
         else:
             # a new motor position
-            pos_tmp = np.append(pos_tmp, pos)
-            val_tmp = np.concatenate((val_tmp, val[None, :]))
-            err_tmp = np.concatenate((err_tmp, err[None, :]))
-            num_tmp = np.append(num_tmp, 1)
+            pos_tmp.append(pos)
+            val_tmp.append(val[None, :])
+            err_tmp.append(err[None, :])
+            num_tmp.append(1)
+    pos_tmp = np.array(pos_tmp)
+    val_tmp = np.concatenate(val_tmp)
+    err_tmp = np.concatenate(err_tmp)
+    num_tmp = np.array(num_tmp)
 
     scan_into[scan_motor] = pos_tmp
     scan_into["counts"] = val_tmp / num_tmp[:, None, None]
