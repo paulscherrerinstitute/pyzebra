@@ -47,6 +47,7 @@ for (let i = 0; i < js_data.data['fname'].length; i++) {
 }
 """
 
+
 def create():
     ang_lims = None
     cif_data = None
@@ -54,7 +55,7 @@ def create():
     res_files = {}
     js_data = ColumnDataSource(data=dict(content=[""], fname=[""]))
 
-    anglim_div = Div(text="Angular min/max limits:")
+    anglim_div = Div(text="Angular min/max limits:", margin=(5, 5, 0, 5))
     sttgamma_ti = TextInput(title="stt/gamma", width=100)
     omega_ti = TextInput(title="omega", width=100)
     chinu_ti = TextInput(title="chi/nu", width=100)
@@ -82,11 +83,11 @@ def create():
         if "HLIM" in params:
             ranges_hkl.value = params["HLIM"]
         if "SRANG" in params:
-            ranges_expression.value = params["SRANG"]
+            ranges_srang.value = params["SRANG"]
         if "lattiCE" in params:
-            mag_struct_lattice.value = params["lattiCE"]
+            magstruct_lattice.value = params["lattiCE"]
         if "kvect" in params:
-            mag_struct_kvec.value = params["kvect"]
+            magstruct_kvec.value = params["kvect"]
 
     def open_geom_callback(_attr, _old, new):
         nonlocal ang_lims
@@ -94,7 +95,7 @@ def create():
             ang_lims = pyzebra.read_geom_file(fileobj)
         _update_ang_lims(ang_lims)
 
-    open_geom_div = Div(text="or open GEOM:")
+    open_geom_div = Div(text="Open GEOM:")
     open_geom = FileInput(accept=".geom", width=200)
     open_geom.on_change("value", open_geom_callback)
 
@@ -104,7 +105,7 @@ def create():
             params = pyzebra.read_cfl_file(fileobj)
             _update_params(params)
 
-    open_cfl_div = Div(text="or open CFL:")
+    open_cfl_div = Div(text="Open CFL:")
     open_cfl = FileInput(accept=".cfl", width=200)
     open_cfl.on_change("value", open_cfl_callback)
 
@@ -114,11 +115,12 @@ def create():
             cif_data = pyzebra.read_cif_file(fileobj)
             _update_params(cif_data)
 
-    open_cif_div = Div(text="or open CIF:")
+    open_cif_div = Div(text="Open CIF:")
     open_cif = FileInput(accept=".cif", width=200)
     open_cif.on_change("value", open_cif_callback)
 
-    wavelen_input = TextInput(title="\u200B", width=70)
+    wavelen_div = Div(text="Wavelength:", margin=(5, 5, 0, 5))
+    wavelen_input = TextInput(title="value", width=70)
 
     def wavelen_select_callback(_attr, _old, new):
         if new:
@@ -127,13 +129,13 @@ def create():
             wavelen_input.value = ""
 
     wavelen_select = Select(
-        title="Wavelength:", options=["", "0.788", "1.178", "1.383", "2.305"], width=70
+        title="preset", options=["", "0.788", "1.178", "1.383", "2.305"], width=70
     )
     wavelen_select.on_change("value", wavelen_select_callback)
 
-    cryst_div = Div(text="Crystal structure:")
+    cryst_div = Div(text="Crystal structure:", margin=(5, 5, 0, 5))
     cryst_space_group = TextInput(title="space group", width=100)
-    cryst_cell = TextInput(title="cell", width=500)
+    cryst_cell = TextInput(title="cell", width=250)
 
     def ub_matrix_calc_callback():
         params = dict()
@@ -147,13 +149,13 @@ def create():
 
     ub_matrix = TextInput(title="\u200B", width=600)
 
-    ranges_div = Div(text="Ranges:")
-    ranges_hkl = TextInput(title="HKL", value="-25 25 -25 25 -25 25")
-    ranges_expression = TextInput(title="sin(​θ​)/λ", value="0.0 0.7", width=200)
+    ranges_div = Div(text="Ranges:", margin=(5, 5, 0, 5))
+    ranges_hkl = TextInput(title="HKL", value="-25 25 -25 25 -25 25", width=250)
+    ranges_srang = TextInput(title="sin(​θ​)/λ", value="0.0 0.7", width=100)
 
-    mag_struct_div = Div(text="Magnetic structure (optional):")
-    mag_struct_lattice = TextInput(title="lattice", width=150)
-    mag_struct_kvec = TextAreaInput(title="k vector", width=150)
+    magstruct_div = Div(text="Magnetic structure:", margin=(5, 5, 0, 5))
+    magstruct_lattice = TextInput(title="lattice", width=100)
+    magstruct_kvec = TextAreaInput(title="k vector", width=150)
 
     def geom_radiogroup_callback(_attr, _old, new):
         nonlocal ang_lims, params
@@ -168,12 +170,12 @@ def create():
         params = pyzebra.read_cfl_file(cfl_file)
         _update_params(params)
 
-    geom_radiogroup_div = Div(text="Geometry:")
+    geom_radiogroup_div = Div(text="Geometry:", margin=(5, 5, 0, 5))
     geom_radiogroup = RadioGroup(labels=["bisecting", "normal beam"], width=150)
     geom_radiogroup.on_change("active", geom_radiogroup_callback)
     geom_radiogroup.active = 0
 
-    def go1_button_callback():
+    def go_button_callback():
         ang_lims["gamma"][0], ang_lims["gamma"][1] = sttgamma_ti.value.strip().split()
         ang_lims["omega"][0], ang_lims["omega"][1] = omega_ti.value.strip().split()
         if ang_lims["geom"] == "nb":
@@ -190,9 +192,9 @@ def create():
         params["CELL"] = cryst_cell.value
         params["UBMAT"] = ub_matrix.value.split()
         params["HLIM"] = ranges_hkl.value
-        params["SRANG"] = ranges_expression.value
-        params["lattiCE"] = mag_struct_lattice.value
-        kvects = mag_struct_kvec.value.split("\n")
+        params["SRANG"] = ranges_srang.value
+        params["lattiCE"] = magstruct_lattice.value
+        kvects = magstruct_kvec.value.split("\n")
 
         with tempfile.TemporaryDirectory() as temp_dir:
             geom_path = os.path.join(temp_dir, "zebra.geom")
@@ -243,17 +245,16 @@ def create():
 
             created_lists.options = list(res_files)
 
-    go1_button = Button(label="GO", button_type="primary", width=50)
-    go1_button.on_click(go1_button_callback)
+    go_button = Button(label="GO", button_type="primary", width=50)
+    go_button.on_click(go_button_callback)
 
-    sorting_div = Div(text="Sorting:")
-    sorting_1 = TextInput(title="1st", width=50)
-    sorting_1_dt = TextInput(title="Δ", width=50)
-    sorting_2 = TextInput(title="2nd", width=50)
-    sorting_2_dt = TextInput(title="Δ", width=50)
-    sorting_3 = TextInput(title="3rd", width=50)
-    sorting_3_dt = TextInput(title="Δ", width=50)
-    sorting_go = Button(label="GO", button_type="primary", width=50, disabled=True)
+    sorting_cb = CheckboxGroup(labels=["Apply sorting"], width=120)
+    sorting_1 = Select(title="1st", width=70)
+    sorting_1_dt = TextInput(title="Δ", width=70)
+    sorting_2 = Select(title="2nd", width=70)
+    sorting_2_dt = TextInput(title="Δ", width=70)
+    sorting_3 = Select(title="3rd", width=70)
+    sorting_3_dt = TextInput(title="Δ", width=70)
 
     def created_lists_callback(_attr, _old, new):
         sel_file = new[0]
@@ -289,40 +290,35 @@ def create():
 
     clear_plot = Button(label="Clear plot", button_type="warning", width=200, disabled=True)
 
-    util_column1 = column(
-        row(column(geom_radiogroup_div, geom_radiogroup), column(open_cfl_div, open_cfl)),
-        row(wavelen_select, wavelen_input, column(open_cif_div, open_cif)),
-    )
+    fileinput_layout = row(open_cfl_div, open_cfl, open_cif_div, open_cif, open_geom_div, open_geom)
 
-    anglim_layout = column(
-        anglim_div,
-        row(sttgamma_ti, Spacer(width=10), omega_ti),
-        row(chinu_ti, Spacer(width=10), phi_ti),
+    geom_layout = column(geom_radiogroup_div, geom_radiogroup)
+    wavelen_layout = column(wavelen_div, row(wavelen_select, wavelen_input))
+    anglim_layout = column(anglim_div, row(sttgamma_ti, omega_ti, chinu_ti, phi_ti))
+    cryst_layout = column(cryst_div, row(cryst_space_group, cryst_cell))
+    ubmat_layout = row(column(Spacer(height=18), ub_matrix_calc), ub_matrix)
+    ranges_layout = column(ranges_div, row(ranges_hkl, ranges_srang))
+    magstruct_layout = column(magstruct_div, row(magstruct_lattice, magstruct_kvec))
+    sorting_layout = row(
+        column(Spacer(height=25), sorting_cb),
+        sorting_1,
+        sorting_1_dt,
+        Spacer(width=30),
+        sorting_2,
+        sorting_2_dt,
+        Spacer(width=30),
+        sorting_3,
+        sorting_3_dt,
     )
 
     column1_layout = column(
-        row(util_column1, row(anglim_layout, column(open_geom_div, open_geom))),
-        row(cryst_div, cryst_space_group, cryst_cell),
-        row(column(Spacer(height=18), ub_matrix_calc), ub_matrix),
-        row(ranges_div, ranges_hkl, ranges_expression),
-        row(
-            mag_struct_div,
-            mag_struct_lattice,
-            mag_struct_kvec,
-            column(Spacer(height=18), go1_button),
-        ),
-        row(
-            sorting_div,
-            sorting_1,
-            sorting_1_dt,
-            Spacer(width=50),
-            sorting_2,
-            sorting_2_dt,
-            Spacer(width=50),
-            sorting_3,
-            sorting_3_dt,
-            column(Spacer(height=18), sorting_go),
-        ),
+        fileinput_layout,
+        Spacer(height=10),
+        row(geom_layout, wavelen_layout, Spacer(width=50), anglim_layout),
+        cryst_layout,
+        ubmat_layout,
+        row(ranges_layout, Spacer(width=50), magstruct_layout),
+        row(sorting_layout, Spacer(width=30), column(Spacer(height=18), go_button)),
         row(created_lists, preview_lists),
         row(download_file, plot_list),
     )
