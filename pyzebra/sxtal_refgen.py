@@ -174,8 +174,18 @@ def calc_ub_matrix(params):
 
 
 def read_cfl_file(fileobj):
-    params = {"SPGR": None, "CELL": None, "WAVE": None, "UBMAT": None, "HLIM": None, "SRANG": None}
+    params = {
+        "SPGR": None,
+        "CELL": None,
+        "WAVE": None,
+        "UBMAT": None,
+        "HLIM": None,
+        "SRANG": None,
+        "lattiCE": None,
+        "kvect": None,
+    }
     param_names = tuple(params)
+
     for line in fileobj:
         line = line.strip()
         if "!" in line:  # remove comments that start with ! sign

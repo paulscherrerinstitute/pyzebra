@@ -83,6 +83,10 @@ def create():
             ranges_hkl.value = params["HLIM"]
         if "SRANG" in params:
             ranges_expression.value = params["SRANG"]
+        if "lattiCE" in params:
+            mag_struct_lattice.value = params["lattiCE"]
+        if "kvect" in params:
+            mag_struct_kvec.value = params["kvect"]
 
     def open_geom_callback(_attr, _old, new):
         nonlocal ang_lims
@@ -147,6 +151,10 @@ def create():
     ranges_hkl = TextInput(title="HKL", value="-25 25 -25 25 -25 25")
     ranges_expression = TextInput(title="sin(​θ​)/λ", value="0.0 0.7", width=200)
 
+    mag_struct_div = Div(text="Magnetic structure (optional):")
+    mag_struct_lattice = TextInput(title="lattice", width=150)
+    mag_struct_kvec = TextAreaInput(title="k vector", width=150)
+
     def geom_radiogroup_callback(_attr, _old, new):
         nonlocal ang_lims, params
         if new == 0:
@@ -165,21 +173,7 @@ def create():
     geom_radiogroup.on_change("active", geom_radiogroup_callback)
     geom_radiogroup.active = 0
 
-    mag_struct_div = Div(text="Magnetic structure (optional):")
-    mag_struct_lattice = TextInput(title="lattice", width=150)
-    mag_struct_kvec = TextAreaInput(title="k vector", width=150)
-
     def go1_button_callback():
-        if open_geom.value:
-            geom_template = io.StringIO(base64.b64decode(open_geom.value).decode())
-        else:
-            geom_template = None
-
-        if open_cfl.value:
-            cfl_template = io.StringIO(base64.b64decode(open_cfl.value).decode())
-        else:
-            cfl_template = None
-
         ang_lims["gamma"][0], ang_lims["gamma"][1] = sttgamma_ti.value.strip().split()
         ang_lims["omega"][0], ang_lims["omega"][1] = omega_ti.value.strip().split()
         if ang_lims["geom"] == "nb":
@@ -197,39 +191,55 @@ def create():
         params["UBMAT"] = ub_matrix.value.split()
         params["HLIM"] = ranges_hkl.value
         params["SRANG"] = ranges_expression.value
+        params["lattiCE"] = mag_struct_lattice.value
+        kvects = mag_struct_kvec.value.split("\n")
 
         with tempfile.TemporaryDirectory() as temp_dir:
             geom_path = os.path.join(temp_dir, "zebra.geom")
+            if open_geom.value:
+                geom_template = io.StringIO(base64.b64decode(open_geom.value).decode())
+            else:
+                geom_template = None
             pyzebra.export_geom_file(geom_path, ang_lims, geom_template)
 
             print(f"Content of {geom_path}:")
             with open(geom_path) as f:
                 print(f.read())
 
-            cfl_path = os.path.join(temp_dir, "zebra.cfl")
-            pyzebra.export_cfl_file(cfl_path, params, cfl_template)
+            # run sxtal_refgen for each kvect provided
+            for i, kvect in enumerate(kvects, start=1):
+                params["kvect"] = kvect
 
-            print(f"Content of {cfl_path}:")
-            with open(cfl_path) as f:
-                print(f.read())
+                cfl_path = os.path.join(temp_dir, f"zebra_{i}.cfl")
+                if open_cfl.value:
+                    cfl_template = io.StringIO(base64.b64decode(open_cfl.value).decode())
+                else:
+                    cfl_template = None
+                pyzebra.export_cfl_file(cfl_path, params, cfl_template)
 
-            comp_proc = subprocess.run(
-                [pyzebra.SXTAL_REFGEN_PATH, cfl_path],
-                cwd=temp_dir,
-                check=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-            )
-            print(" ".join(comp_proc.args))
-            print(comp_proc.stdout)
+                print(f"Content of {cfl_path}:")
+                with open(cfl_path) as f:
+                    print(f.read())
 
-            # display created lists
-            with open(os.path.join(temp_dir, "zebra.hkl")) as f:
-                res_files["zebra.hkl"] = f.read()
+                comp_proc = subprocess.run(
+                    [pyzebra.SXTAL_REFGEN_PATH, cfl_path],
+                    cwd=temp_dir,
+                    check=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                )
+                print(" ".join(comp_proc.args))
+                print(comp_proc.stdout)
 
-            with open(os.path.join(temp_dir, "zebra.mhkl")) as f:
-                res_files["zebra.mhkl"] = f.read()
+                if i == 1:  # all hkl files are identical, so keep only one
+                    hkl_fname = f"zebra_{i}.hkl"
+                    with open(os.path.join(temp_dir, hkl_fname)) as f:
+                        res_files[hkl_fname] = f.read()
+
+                mhkl_fname = f"zebra_{i}.mhkl"
+                with open(os.path.join(temp_dir, mhkl_fname)) as f:
+                    res_files[mhkl_fname] = f.read()
 
             created_lists.options = list(res_files)
 
