@@ -211,8 +211,12 @@ def create():
             # run sxtal_refgen for each kvect provided
             for i, kvect in enumerate(kvects, start=1):
                 params["kvect"] = kvect
+                if open_cfl.filename:
+                    base_fname = f"{os.path.splitext(open_cfl.filename)[0]}_{i}"
+                else:
+                    base_fname = f"zebra_{i}"
 
-                cfl_path = os.path.join(temp_dir, f"zebra_{i}.cfl")
+                cfl_path = os.path.join(temp_dir, base_fname + ".cfl")
                 if open_cfl.value:
                     cfl_template = io.StringIO(base64.b64decode(open_cfl.value).decode())
                 else:
@@ -235,11 +239,11 @@ def create():
                 print(comp_proc.stdout)
 
                 if i == 1:  # all hkl files are identical, so keep only one
-                    hkl_fname = f"zebra_{i}.hkl"
+                    hkl_fname = base_fname + ".hkl"
                     with open(os.path.join(temp_dir, hkl_fname)) as f:
                         res_files[hkl_fname] = f.read()
 
-                mhkl_fname = f"zebra_{i}.mhkl"
+                mhkl_fname = base_fname + ".mhkl"
                 with open(os.path.join(temp_dir, mhkl_fname)) as f:
                     res_files[mhkl_fname] = f.read()
 
