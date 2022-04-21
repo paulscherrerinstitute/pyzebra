@@ -108,6 +108,9 @@ def read_geom_file(fileobj):
                 ang, ang_min, ang_max, ang_offset = line.split()
                 ang_lims[ang.lower()] = [ang_min, ang_max, ang_offset]
 
+            if "2theta" in ang_lims:  # treat 2theta as gamma
+                ang_lims["gamma"] = ang_lims.pop("2theta")
+
     return ang_lims
 
 
@@ -130,7 +133,11 @@ def export_geom_file(path, ang_lims, template=None):
                 for _ in range(n_ang):
                     next_line = next(template_file)
                     ang, _, _, _ = next_line.split()
+
+                    if ang == "2theta":  # treat 2theta as gamma
+                        ang = "Gamma"
                     vals = ang_lims[ang.lower()]
+
                     out_file.write(f"{'':<8}{ang:<10}{vals[0]:<10}{vals[1]:<10}{vals[2]:<10}\n")
 
 
