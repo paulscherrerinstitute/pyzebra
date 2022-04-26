@@ -1,7 +1,10 @@
 import io
 import os
-import tempfile
 import subprocess
+import tempfile
+from math import ceil, floor
+
+import numpy as np
 
 SXTAL_REFGEN_PATH = "/afs/psi.ch/project/sinq/rhel7/bin/Sxtal_Refgen"
 
@@ -303,3 +306,178 @@ def export_cfl_file(path, params, template=None):
             out_file.write("\n")
             for atom_line in params["ATOM"]:
                 out_file.write(f"ATOM {atom_line}\n")
+
+
+def sort_hkl_file_bi(file_in, file_out, priority, chunks):
+    with open(file_in) as fileobj:
+        file_in_data = fileobj.readlines()
+
+    data = np.genfromtxt(file_in, skip_header=3)
+    stt = data[:, 4]
+    omega = data[:, 5]
+    chi = data[:, 6]
+    phi = data[:, 7]
+
+    lines = file_in_data[3:]
+    lines_update = []
+
+    angles = {"2theta": stt, "omega": omega, "chi": chi, "phi": phi}
+
+    # Reverse flag
+    to_reverse = False
+    to_reverse_p2 = False
+    to_reverse_p3 = False
+
+    # Get indices within first priority
+    ang_p1 = angles[priority[0]]
+    begin_p1 = floor(min(ang_p1))
+    end_p1 = ceil(max(ang_p1))
+    delta_p1 = chunks[0]
+    for p1 in range(begin_p1, end_p1, delta_p1):
+        ind_p1 = [j for j, x in enumerate(ang_p1) if p1 <= x and x < p1 + delta_p1]
+
+        stt_new = [stt[x] for x in ind_p1]
+        omega_new = [omega[x] for x in ind_p1]
+        chi_new = [chi[x] for x in ind_p1]
+        phi_new = [phi[x] for x in ind_p1]
+        lines_new = [lines[x] for x in ind_p1]
+
+        angles_p2 = {"stt": stt_new, "omega": omega_new, "chi": chi_new, "phi": phi_new}
+
+        # Get indices for second priority
+        ang_p2 = angles_p2[priority[1]]
+        if len(ang_p2) > 0 and to_reverse_p2:
+            begin_p2 = ceil(max(ang_p2))
+            end_p2 = floor(min(ang_p2))
+            delta_p2 = -chunks[1]
+        elif len(ang_p2) > 0 and not to_reverse_p2:
+            end_p2 = ceil(max(ang_p2))
+            begin_p2 = floor(min(ang_p2))
+            delta_p2 = chunks[1]
+        else:
+            end_p2 = 0
+            begin_p2 = 0
+            delta_p2 = 1
+
+        to_reverse_p2 = not to_reverse_p2
+
+        for p2 in range(begin_p2, end_p2, delta_p2):
+            min_p2 = min([p2, p2 + delta_p2])
+            max_p2 = max([p2, p2 + delta_p2])
+            ind_p2 = [j for j, x in enumerate(ang_p2) if min_p2 <= x and x < max_p2]
+
+            stt_new2 = [stt_new[x] for x in ind_p2]
+            omega_new2 = [omega_new[x] for x in ind_p2]
+            chi_new2 = [chi_new[x] for x in ind_p2]
+            phi_new2 = [phi_new[x] for x in ind_p2]
+            lines_new2 = [lines_new[x] for x in ind_p2]
+
+            angles_p3 = {"stt": stt_new2, "omega": omega_new2, "chi": chi_new2, "phi": phi_new2}
+
+            # Get indices for third priority
+            ang_p3 = angles_p3[priority[2]]
+            if len(ang_p3) > 0 and to_reverse_p3:
+                begin_p3 = ceil(max(ang_p3)) + chunks[2]
+                end_p3 = floor(min(ang_p3)) - chunks[2]
+                delta_p3 = -chunks[2]
+            elif len(ang_p3) > 0 and not to_reverse_p3:
+                end_p3 = ceil(max(ang_p3)) + chunks[2]
+                begin_p3 = floor(min(ang_p3)) - chunks[2]
+                delta_p3 = chunks[2]
+            else:
+                end_p3 = 0
+                begin_p3 = 0
+                delta_p3 = 1
+
+            to_reverse_p3 = not to_reverse_p3
+
+            for p3 in range(begin_p3, end_p3, delta_p3):
+                min_p3 = min([p3, p3 + delta_p3])
+                max_p3 = max([p3, p3 + delta_p3])
+                ind_p3 = [j for j, x in enumerate(ang_p3) if min_p3 <= x and x < max_p3]
+
+                angle_new3 = [angles_p3[priority[3]][x] for x in ind_p3]
+
+                ind_final = [x for _, x in sorted(zip(angle_new3, ind_p3), reverse=to_reverse)]
+
+                to_reverse = not to_reverse
+
+                for i in ind_final:
+                    lines_update.append(lines_new2[i])
+
+    with open(file_out, "w") as fileobj:
+        for _ in range(3):
+            fileobj.write(file_in_data.pop(0))
+
+        fileobj.writelines(lines_update)
+
+
+def sort_hkl_file_nb(file_in, file_out, priority, chunks):
+    with open(file_in) as fileobj:
+        file_in_data = fileobj.readlines()
+
+    data = np.genfromtxt(file_in, skip_header=3)
+    gamma = data[:, 4]
+    omega = data[:, 5]
+    nu = data[:, 6]
+
+    lines = file_in_data[3:]
+    lines_update = []
+
+    angles = {"gamma": gamma, "omega": omega, "nu": nu}
+
+    to_reverse = False
+    to_reverse_p2 = False
+
+    # Get indices within first priority
+    ang_p1 = angles[priority[0]]
+    begin_p1 = floor(min(ang_p1))
+    end_p1 = ceil(max(ang_p1))
+    delta_p1 = chunks[0]
+    for p1 in range(begin_p1, end_p1, delta_p1):
+        ind_p1 = [j for j, x in enumerate(ang_p1) if p1 <= x and x < p1 + delta_p1]
+
+        # Get angles from within nu range
+        lines_new = [lines[x] for x in ind_p1]
+        gamma_new = [gamma[x] for x in ind_p1]
+        omega_new = [omega[x] for x in ind_p1]
+        nu_new = [nu[x] for x in ind_p1]
+
+        angles_p2 = {"gamma": gamma_new, "omega": omega_new, "nu": nu_new}
+
+        # Get indices for second priority
+        ang_p2 = angles_p2[priority[1]]
+        if len(gamma_new) > 0 and to_reverse_p2:
+            begin_p2 = ceil(max(ang_p2))
+            end_p2 = floor(min(ang_p2))
+            delta_p2 = -chunks[1]
+        elif len(gamma_new) > 0 and not to_reverse_p2:
+            end_p2 = ceil(max(ang_p2))
+            begin_p2 = floor(min(ang_p2))
+            delta_p2 = chunks[1]
+        else:
+            end_p2 = 0
+            begin_p2 = 0
+            delta_p2 = 1
+
+        to_reverse_p2 = not to_reverse_p2
+
+        for p2 in range(begin_p2, end_p2, delta_p2):
+            min_p2 = min([p2, p2 + delta_p2])
+            max_p2 = max([p2, p2 + delta_p2])
+            ind_p2 = [j for j, x in enumerate(ang_p2) if min_p2 <= x and x < max_p2]
+
+            angle_new2 = [angles_p2[priority[2]][x] for x in ind_p2]
+
+            ind_final = [x for _, x in sorted(zip(angle_new2, ind_p2), reverse=to_reverse)]
+
+            to_reverse = not to_reverse
+
+            for i in ind_final:
+                lines_update.append(lines_new[i])
+
+    with open(file_out, "w") as fileobj:
+        for _ in range(3):
+            fileobj.write(file_in_data.pop(0))
+
+        fileobj.writelines(lines_update)

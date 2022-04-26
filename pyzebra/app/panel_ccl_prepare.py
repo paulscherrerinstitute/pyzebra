@@ -14,6 +14,7 @@ from bokeh.models import (
     Div,
     FileInput,
     MultiSelect,
+    NumericInput,
     Panel,
     Plot,
     RadioGroup,
@@ -47,6 +48,9 @@ for (let i = 0; i < js_data.data['fname'].length; i++) {
 }
 """
 
+ANG_CHUNK_DEFAULTS = {"2theta": 30, "gamma": 30, "omega": 30, "chi": 35, "phi": 35, "nu": 10}
+SORT_OPT_BI = ["2theta", "chi", "phi", "omega"]
+SORT_OPT_NB = ["gamma", "nu", "omega"]
 
 def create():
     ang_lims = None
@@ -157,18 +161,44 @@ def create():
     magstruct_lattice = TextInput(title="lattice", width=100)
     magstruct_kvec = TextAreaInput(title="k vector", width=150)
 
+    def sorting0_callback(_attr, _old, new):
+        sorting_0_dt.value = ANG_CHUNK_DEFAULTS[new]
+
+    def sorting1_callback(_attr, _old, new):
+        sorting_1_dt.value = ANG_CHUNK_DEFAULTS[new]
+
+    def sorting2_callback(_attr, _old, new):
+        sorting_2_dt.value = ANG_CHUNK_DEFAULTS[new]
+
+    sorting_0 = Select(title="1st", width=100)
+    sorting_0.on_change("value", sorting0_callback)
+    sorting_0_dt = NumericInput(title="Δ", width=70)
+    sorting_1 = Select(title="2nd", width=100)
+    sorting_1.on_change("value", sorting1_callback)
+    sorting_1_dt = NumericInput(title="Δ", width=70)
+    sorting_2 = Select(title="3rd", width=100)
+    sorting_2.on_change("value", sorting2_callback)
+    sorting_2_dt = NumericInput(title="Δ", width=70)
+
     def geom_radiogroup_callback(_attr, _old, new):
         nonlocal ang_lims, params
         if new == 0:
             geom_file = pyzebra.get_zebraBI_default_geom_file()
+            sort_opt = SORT_OPT_BI
         else:
             geom_file = pyzebra.get_zebraNB_default_geom_file()
+            sort_opt = SORT_OPT_NB
         cfl_file = pyzebra.get_zebra_default_cfl_file()
 
         ang_lims = pyzebra.read_geom_file(geom_file)
         _update_ang_lims(ang_lims)
         params = pyzebra.read_cfl_file(cfl_file)
         _update_params(params)
+
+        sorting_0.options = sorting_1.options = sorting_2.options = sort_opt
+        sorting_0.value = sort_opt[0]
+        sorting_1.value = sort_opt[1]
+        sorting_2.value = sort_opt[2]
 
     geom_radiogroup_div = Div(text="Geometry:", margin=(5, 5, 0, 5))
     geom_radiogroup = RadioGroup(labels=["bisecting", "normal beam"], width=150)
@@ -208,6 +238,14 @@ def create():
             with open(geom_path) as f:
                 print(f.read())
 
+            priority = [sorting_0.value, sorting_1.value, sorting_2.value]
+            chunks = [sorting_0_dt.value, sorting_1_dt.value, sorting_2_dt.value]
+            if geom_radiogroup.active == 0:
+                sort_hkl_file = pyzebra.sort_hkl_file_bi
+                priority.extend(set(SORT_OPT_BI) - set(priority))
+            else:
+                sort_hkl_file = pyzebra.sort_hkl_file_nb
+
             # run sxtal_refgen for each kvect provided
             for i, kvect in enumerate(kvects, start=1):
                 params["kvect"] = kvect
@@ -240,25 +278,31 @@ def create():
 
                 if i == 1:  # all hkl files are identical, so keep only one
                     hkl_fname = base_fname + ".hkl"
-                    with open(os.path.join(temp_dir, hkl_fname)) as f:
+                    hkl_fpath = os.path.join(temp_dir, hkl_fname)
+                    with open(hkl_fpath) as f:
                         res_files[hkl_fname] = f.read()
 
+                    hkl_fname_sorted = base_fname + "_sorted.hkl"
+                    hkl_fpath_sorted = os.path.join(temp_dir, hkl_fname_sorted)
+                    sort_hkl_file(hkl_fpath, hkl_fpath_sorted, priority, chunks)
+                    with open(hkl_fpath_sorted) as f:
+                        res_files[hkl_fname_sorted] = f.read()
+
                 mhkl_fname = base_fname + ".mhkl"
-                with open(os.path.join(temp_dir, mhkl_fname)) as f:
+                mhkl_fpath = os.path.join(temp_dir, mhkl_fname)
+                with open(mhkl_fpath) as f:
                     res_files[mhkl_fname] = f.read()
+
+                mhkl_fname_sorted = base_fname + "_sorted.mhkl"
+                mhkl_fpath_sorted = os.path.join(temp_dir, hkl_fname_sorted)
+                sort_hkl_file(mhkl_fpath, mhkl_fpath_sorted, priority, chunks)
+                with open(mhkl_fpath_sorted) as f:
+                    res_files[mhkl_fname_sorted] = f.read()
 
             created_lists.options = list(res_files)
 
     go_button = Button(label="GO", button_type="primary", width=50)
     go_button.on_click(go_button_callback)
-
-    sorting_cb = CheckboxGroup(labels=["Apply sorting"], width=120)
-    sorting_1 = Select(title="1st", width=70)
-    sorting_1_dt = TextInput(title="Δ", width=70)
-    sorting_2 = Select(title="2nd", width=70)
-    sorting_2_dt = TextInput(title="Δ", width=70)
-    sorting_3 = Select(title="3rd", width=70)
-    sorting_3_dt = TextInput(title="Δ", width=70)
 
     def created_lists_callback(_attr, _old, new):
         sel_file = new[0]
@@ -304,15 +348,14 @@ def create():
     ranges_layout = column(ranges_div, row(ranges_hkl, ranges_srang))
     magstruct_layout = column(magstruct_div, row(magstruct_lattice, magstruct_kvec))
     sorting_layout = row(
-        column(Spacer(height=25), sorting_cb),
+        sorting_0,
+        sorting_0_dt,
+        Spacer(width=30),
         sorting_1,
         sorting_1_dt,
         Spacer(width=30),
         sorting_2,
         sorting_2_dt,
-        Spacer(width=30),
-        sorting_3,
-        sorting_3_dt,
     )
 
     column1_layout = column(
