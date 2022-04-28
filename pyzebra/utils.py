@@ -1,7 +1,7 @@
 import os
 
 ZEBRA_PROPOSALS_PATHS = [
-    f"/afs/psi.ch/project/sinqdata/{year}/zebra/" for year in (2016, 2017, 2018, 2020, 2021)
+    f"/afs/psi.ch/project/sinqdata/{year}/zebra/" for year in (2016, 2017, 2018, 2020, 2021, 2022)
 ]
 
 def find_proposal_path(proposal):
