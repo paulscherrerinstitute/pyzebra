@@ -36,14 +36,18 @@ proposal_textinput.on_change("value_input", proposal_textinput_callback)
 doc.proposal_textinput = proposal_textinput
 
 def apply_button_callback():
-    try:
-        proposal_path = pyzebra.find_proposal_path(proposal_textinput.value)
-    except ValueError as e:
-        print(e)
-        return
+    proposal = proposal_textinput.value.strip()
+    if proposal:
+        try:
+            proposal_path = pyzebra.find_proposal_path(proposal)
+        except ValueError as e:
+            print(e)
+            return
+        apply_button.disabled = True
+    else:
+        proposal_path = ""
 
     proposal_textinput.name = proposal_path
-    apply_button.disabled = True
 
 apply_button = Button(label="Apply", button_type="primary")
 apply_button.on_click(apply_button_callback)
