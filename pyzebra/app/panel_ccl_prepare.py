@@ -52,6 +52,7 @@ ANG_CHUNK_DEFAULTS = {"2theta": 30, "gamma": 30, "omega": 30, "chi": 35, "phi": 
 SORT_OPT_BI = ["2theta", "chi", "phi", "omega"]
 SORT_OPT_NB = ["gamma", "nu", "omega"]
 
+
 def create():
     ang_lims = None
     cif_data = None
@@ -319,24 +320,37 @@ def create():
     plot_list = Button(label="Plot selected list", button_type="primary", width=200, disabled=True)
 
     measured_data_div = Div(text="Measured data:")
-    measured_data = FileInput(accept=".comm,.incomm", width=200, disabled=True)
-    plot_file = Button(label="Plot selected file", button_type="primary", width=200, disabled=True)
+    measured_data = FileInput(accept=".ccl", multiple=True, width=200)
 
-    plot = Plot(x_range=DataRange1d(), y_range=DataRange1d(), plot_height=450, plot_width=500)
+    def plot_file_callback():
+        pass
+
+    plot_file = Button(label="Plot selected file(s)", button_type="primary", width=200)
+    plot_file.on_click(plot_file_callback)
+
+    plot = Plot(x_range=DataRange1d(), y_range=DataRange1d(), plot_height=450, plot_width=600)
     plot.toolbar.logo = None
 
-    hkl_normal = TextInput(title="HKL normal", width=100)
-    delta = TextInput(title="delta", width=100)
-    in_plane_x = TextInput(title="in-plane X", width=100)
-    in_plane_y = TextInput(title="in-plane Y", width=100)
+    hkl_div = Div(text="HKL:", margin=(5, 5, 0, 5))
+    hkl_normal = TextInput(title="normal", value="0 0 1", width=100)
+    hkl_delta = NumericInput(title="delta", value=0.1, mode="float", width=70)
+    hkl_in_plane_x = TextInput(title="in-plane X", value="1 0 0", width=100)
+    hkl_in_plane_y = TextInput(title="in-plane Y", value="0 1 0", width=100)
 
-    disting_opt_div = Div(text="Distinguish options:")
+    disting_opt_div = Div(text="Distinguish options:", margin=(5, 5, 0, 5))
     disting_opt_cb = CheckboxGroup(
-        labels=["files (symbols)", "intensities (size)", "k vectors nucl/magn (colors)"], width=200,
+        labels=["files (symbols)", "intensities (size)", "k vectors nucl/magn (colors)"],
+        active=[0, 1, 2],
+        width=200,
     )
-    disting_opt_rb = RadioGroup(labels=["scan direction", "resolution ellipsoid"], width=200)
+    disting_opt_rb = RadioGroup(
+        labels=["scan direction", "resolution ellipsoid"], active=0, width=200
+    )
 
-    clear_plot = Button(label="Clear plot", button_type="warning", width=200, disabled=True)
+    k_vectors = TextAreaInput(
+        title="k vectors:", value="0.0 0.0 0.0\n0.5 0.0 0.0\n0.5 0.5 0.0", width=150,
+    )
+    res_mult = NumericInput(title="Resolution mult:", value=10, mode="int", width=100)
 
     fileinput_layout = row(open_cfl_div, open_cfl, open_cif_div, open_cif, open_geom_div, open_geom)
 
@@ -370,12 +384,16 @@ def create():
         row(download_file, plot_list),
     )
 
+    hkl_layout = column(
+        hkl_div, row(hkl_normal, hkl_delta, Spacer(width=10), hkl_in_plane_x, hkl_in_plane_y)
+    )
+    disting_layout = column(disting_opt_div, row(disting_opt_cb, disting_opt_rb))
+
     column2_layout = column(
-        row(column(measured_data_div, measured_data), plot_file),
+        row(measured_data_div, measured_data, plot_file),
         plot,
-        row(hkl_normal, delta, Spacer(width=50), in_plane_x, in_plane_y),
-        row(disting_opt_div, disting_opt_cb, disting_opt_rb),
-        row(clear_plot),
+        row(hkl_layout, k_vectors),
+        row(disting_layout, res_mult),
     )
 
     tab_layout = row(column1_layout, column2_layout)
