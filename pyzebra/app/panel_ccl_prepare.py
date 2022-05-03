@@ -4,25 +4,38 @@ import os
 import subprocess
 import tempfile
 
+import numpy as np
 from bokeh.layouts import column, row
 from bokeh.models import (
+    Arrow,
+    BoxZoomTool,
     Button,
     CheckboxGroup,
     ColumnDataSource,
     CustomJS,
-    DataRange1d,
     Div,
+    Ellipse,
     FileInput,
+    LinearAxis,
+    MultiLine,
     MultiSelect,
+    NormalHead,
     NumericInput,
     Panel,
+    PanTool,
     Plot,
     RadioGroup,
+    Range1d,
+    ResetTool,
+    Scatter,
     Select,
     Spacer,
+    Text,
     TextAreaInput,
     TextInput,
+    WheelZoomTool,
 )
+from bokeh.palettes import Dark2
 
 import pyzebra
 
@@ -322,14 +335,356 @@ def create():
     measured_data_div = Div(text="Measured data:")
     measured_data = FileInput(accept=".ccl", multiple=True, width=200)
 
+    min_grid_x = -10
+    max_grid_x = 10
+    min_grid_y = -5
+    max_grid_y = 5
+    cmap = Dark2[8]
+    syms = ["circle", "inverted_triangle", "square", "diamond", "star", "triangle"]
+
+    # Define resolution function
+    def _res_fun(stt, wave, res_mult):
+        expr = np.tan(stt / 2 * np.pi / 180)
+        fwhm = np.sqrt(0.4639 * expr ** 2 - 0.4452 * expr + 0.1506) * res_mult  # res in deg
+        return fwhm
+
+    def _bg(x, a, b):
+        """Linear background function """
+        return a * x + b
+
     def plot_file_callback():
-        pass
+        orth_dir = list(map(float, hkl_normal.value.split()))
+        cut_tol = hkl_delta.value
+        cut_or = 0  # TODO: add slider or numeric input?
+        x_dir = list(map(float, hkl_in_plane_x.value.split()))
+        y_dir = list(map(float, hkl_in_plane_y.value.split()))
+
+        k = np.array(k_vectors.value.split()).astype(float).reshape(3, 3)
+        tol_k = 0.1
+
+        # Plotting options
+        grid_flag = 1
+        grid_minor_flag = 1
+        grid_div = 2  # Number of minor division lines per unit
+
+        # different symbols based on file number
+        file_flag = 0 in disting_opt_cb.active
+        # scale marker size according to intensity
+        intensity_flag = 1 in disting_opt_cb.active
+        # use color to mark different propagation vectors
+        prop_legend_flag = 2 in disting_opt_cb.active
+        # use resolution ellipsis
+        res_flag = disting_opt_rb.active
+        # multiplier for resolution function (in case of samples with large mosaicity)
+        res_mult = res_mult_ni.value
+
+        md_fnames = measured_data.filename
+        md_fdata = measured_data.value
+
+        # Load first data cile, read angles and define matrices to perform conversion to cartesian coordinates and back
+        with io.StringIO(base64.b64decode(md_fdata[0]).decode()) as file:
+            _, ext = os.path.splitext(md_fnames[0])
+            try:
+                file_data = pyzebra.parse_1D(file, ext)
+            except:
+                print(f"Error loading {md_fnames[0]}")
+                return
+
+        alpha = file_data[0]["alpha_cell"] * np.pi / 180.0
+        beta = file_data[0]["beta_cell"] * np.pi / 180.0
+        gamma = file_data[0]["gamma_cell"] * np.pi / 180.0
+
+        # reciprocal angle parameters
+        alpha_star = np.arccos(
+            (np.cos(beta) * np.cos(gamma) - np.cos(alpha)) / (np.sin(beta) * np.sin(gamma))
+        )
+        beta_star = np.arccos(
+            (np.cos(alpha) * np.cos(gamma) - np.cos(beta)) / (np.sin(alpha) * np.sin(gamma))
+        )
+        gamma_star = np.arccos(
+            (np.cos(alpha) * np.cos(beta) - np.cos(gamma)) / (np.sin(alpha) * np.sin(beta))
+        )
+
+        # conversion matrix:
+        M = np.array(
+            [
+                [1, 1 * np.cos(gamma_star), 1 * np.cos(beta_star)],
+                [0, 1 * np.sin(gamma_star), -np.sin(beta_star) * np.cos(alpha)],
+                [0, 0, 1 * np.sin(beta_star) * np.sin(alpha)],
+            ]
+        )
+        M_inv = np.linalg.inv(M)
+
+        # Calculate in-plane y-direction
+        x_c = np.matmul(M, x_dir)
+        y_c = np.matmul(M, y_dir)
+        o_c = np.matmul(M, orth_dir)
+
+        # Normalize all directions
+        y_c = y_c / np.linalg.norm(y_c)
+        x_c = x_c / np.linalg.norm(x_c)
+        o_c = o_c / np.linalg.norm(o_c)
+
+        # Calculations
+        # Read all data
+        hkl_coord = []
+        intensity_vec = []
+        num_vec = []
+        k_flag_vec = []
+        file_flag_vec = []
+        res_vec_x = []
+        res_vec_y = []
+        res_N = 10
+
+        for j in range(len(md_fnames)):
+            with io.StringIO(base64.b64decode(md_fdata[j]).decode()) as file:
+                _, ext = os.path.splitext(md_fnames[j])
+                try:
+                    file_data = pyzebra.parse_1D(file, ext)
+                except:
+                    print(f"Error loading {md_fnames[j]}")
+                    return
+
+            # Loop throguh all data
+            for i in range(len(file_data)):
+                om = file_data[i]["omega"]
+                gammad = file_data[i]["twotheta"]
+                chi = file_data[i]["chi"]
+                phi = file_data[i]["phi"]
+                nud = 0  # 1d detector
+                ub = file_data[i]["ub"]
+                ddist = float(file_data[i]["detectorDistance"])
+                counts = file_data[i]["counts"]
+                mon = file_data[i]["monitor"]
+
+                # Determine wavelength from mcvl value (is wavelength stored anywhere???)
+                mcvl = file_data[i]["mcvl"]
+                if mcvl == 2.2:
+                    wave = 1.178
+                elif mcvl == 7.0:
+                    wave = 1.383
+                else:
+                    wave = 2.3
+
+                # Calculate resolution in degrees
+                res = _res_fun(gammad, wave, res_mult)
+                # convert to resolution in hkl along scan line
+                ang2hkl_1d = pyzebra.ang2hkl_1d
+                res_x = []
+                res_y = []
+                scan_om = np.linspace(om[0], om[-1], num=res_N)
+                for i2 in range(res_N):
+                    expr1 = ang2hkl_1d(
+                        wave, ddist, gammad, scan_om[i2] + res / 2, chi, phi, nud, ub
+                    )
+                    expr2 = ang2hkl_1d(
+                        wave, ddist, gammad, scan_om[i2] - res / 2, chi, phi, nud, ub
+                    )
+                    hkl_temp = np.abs(expr1 - expr2) / 2
+                    hkl_temp = np.matmul(M, hkl_temp)
+                    res_x.append(hkl_temp[0])
+                    res_y.append(hkl_temp[1])
+
+                # Get first and final hkl
+                hkl1 = ang2hkl_1d(wave, ddist, gammad, om[0], chi, phi, nud, ub)
+                hkl2 = ang2hkl_1d(wave, ddist, gammad, om[-1], chi, phi, nud, ub)
+
+                # Get hkl at best intensity
+                hkl_m = ang2hkl_1d(wave, ddist, gammad, om[np.argmax(counts)], chi, phi, nud, ub)
+
+                # Estimate intensity for marker size scaling
+                y1 = counts[0]
+                y2 = counts[-1]
+                x1 = om[0]
+                x2 = om[-1]
+                a = (y1 - y2) / (x1 - x2)
+                b = y1 - a * x1
+                intensity_exp = np.sum(counts - _bg(om, a, b))
+                c = int(intensity_exp / mon * 10000)
+
+                # Recognize k_flag_vec
+                found = 0
+                for j2 in range(len(k)):
+                    # Check if all three components match
+                    test1 = (
+                        np.abs(min(1 - np.mod(hkl_m[0], 1), np.mod(hkl_m[0], 1)) - k[j2][0]) < tol_k
+                    )
+                    test2 = (
+                        np.abs(min(1 - np.mod(hkl_m[1], 1), np.mod(hkl_m[1], 1)) - k[j2][1]) < tol_k
+                    )
+                    test3 = (
+                        np.abs(min(1 - np.mod(hkl_m[2], 1), np.mod(hkl_m[2], 1)) - k[j2][2]) < tol_k
+                    )
+
+                    if test1 and test2 and test3:
+                        found = 1
+                        k_flag_vec.append(j2)
+                        break
+
+                if not found:
+                    k_flag_vec.append(len(k))
+
+                # Save data
+                hkl_list = [
+                    hkl1[0],
+                    hkl1[1],
+                    hkl1[2],
+                    hkl2[0],
+                    hkl2[1],
+                    hkl2[2],
+                    hkl_m[0],
+                    hkl_m[1],
+                    hkl_m[2],
+                ]
+                hkl_coord.append(hkl_list)
+                num_vec.append(i)
+                intensity_vec.append(c)
+                file_flag_vec.append(j)
+                res_vec_x.append(res_x)
+                res_vec_y.append(res_y)
+
+        plot.x_range.start = plot.x_range.reset_start = -2
+        plot.x_range.end = plot.x_range.reset_end = 5
+        plot.y_range.start = plot.y_range.reset_start = -4
+        plot.y_range.end = plot.y_range.reset_end = 3.5
+
+        xs, ys = [], []
+        xs_minor, ys_minor = [], []
+        if grid_flag:
+            for yy in np.arange(min_grid_y, max_grid_y, 1):
+                hkl1 = np.matmul(M, [0, yy, 0])
+                xs.append([-5, 5])
+                ys.append([hkl1[1], hkl1[1]])
+
+            for xx in np.arange(min_grid_x, max_grid_x, 1):
+                hkl1 = [xx, min_grid_x, 0]
+                hkl2 = [xx, max_grid_x, 0]
+                hkl1 = np.matmul(M, hkl1)
+                hkl2 = np.matmul(M, hkl2)
+                xs.append([hkl1[0], hkl2[0]])
+                ys.append([hkl1[1], hkl2[1]])
+
+            if grid_minor_flag:
+                for yy in np.arange(min_grid_y, max_grid_y, 1 / grid_div):
+                    hkl1 = np.matmul(M, [0, yy, 0])
+                    xs_minor.append([min_grid_y, max_grid_y])
+                    ys_minor.append([hkl1[1], hkl1[1]])
+
+                for xx in np.arange(min_grid_x, max_grid_x, 1 / grid_div):
+                    hkl1 = [xx, min_grid_x, 0]
+                    hkl2 = [xx, max_grid_x, 0]
+                    hkl1 = np.matmul(M, hkl1)
+                    hkl2 = np.matmul(M, hkl2)
+                    xs_minor.append([hkl1[0], hkl2[0]])
+                    ys_minor.append([hkl1[1], hkl2[1]])
+
+        grid_source.data.update(xs=xs, ys=ys)
+        minor_grid_source.data.update(xs=xs_minor, ys=ys_minor)
+
+        scan_x, scan_y, width, height, ellipse_color = [], [], [], [], []
+        scanl_xs, scanl_ys, scanl_x, scanl_y, scanl_m, scanl_s, scanl_c = [], [], [], [], [], [], []
+        for j in range(len(num_vec)):
+            # Get middle hkl from list
+            hklm = [x for x in hkl_coord[j][6:9]]
+            hklm = np.matmul(M, hklm)
+
+            # Decide if point is in the cut
+            proj = np.dot(hklm, o_c)
+            if abs(proj - cut_or) >= cut_tol:
+                continue
+
+            hkl1 = [x for x in hkl_coord[j][0:3]]
+            hkl2 = [x for x in hkl_coord[j][3:6]]
+            hkl1 = np.matmul(M, hkl1)
+            hkl2 = np.matmul(M, hkl2)
+
+            if intensity_flag:
+                markersize = max(1, int(intensity_vec[j] / max(intensity_vec) * 20))
+            else:
+                markersize = 4
+
+            if file_flag:
+                plot_symbol = syms[file_flag_vec[j]]
+            else:
+                plot_symbol = "circle"
+
+            if prop_legend_flag:
+                col_value = cmap[k_flag_vec[j]]
+            else:
+                col_value = "black"
+
+            if res_flag:
+                # Generate series of ellipses along scan line
+                scan_x.extend(np.linspace(hkl1[0], hkl2[0], num=res_N))
+                scan_y.extend(np.linspace(hkl1[1], hkl2[1], num=res_N))
+                width.extend(np.array(res_vec_x[j]) * 2)
+                height.extend(np.array(res_vec_y[j]) * 2)
+                ellipse_color.extend([col_value] * res_N)
+            else:
+                # Plot scan line
+                scanl_xs.append([hkl1[0], hkl2[0]])
+                scanl_ys.append([hkl1[1], hkl2[1]])
+                scanl_c.append(col_value)
+
+                # Plot middle point of scan
+                scanl_x.append(hklm[0])
+                scanl_y.append(hklm[1])
+                scanl_m.append(plot_symbol)
+                scanl_s.append(markersize)
+
+        ellipse_source.data.update(x=scan_x, y=scan_y, w=width, h=height, c=ellipse_color)
+        scan_source.data.update(
+            xs=scanl_xs, ys=scanl_ys, x=scanl_x, y=scanl_y, m=scanl_m, s=scanl_s, c=scanl_c
+        )
+
+        arrow1.visible = True
+        arrow1.x_end = x_c[0]
+        arrow1.y_end = x_c[1]
+        arrow2.visible = True
+        arrow2.x_end = y_c[0]
+        arrow2.y_end = y_c[1]
+
+        kvect_source.data.update(
+            text_x=[x_c[0] / 2, y_c[0] / 2 - 0.1],
+            text_y=[x_c[1] - 0.1, y_c[1] / 2],
+            text=["h", "k"],
+        )
 
     plot_file = Button(label="Plot selected file(s)", button_type="primary", width=200)
     plot_file.on_click(plot_file_callback)
 
-    plot = Plot(x_range=DataRange1d(), y_range=DataRange1d(), plot_height=450, plot_width=600)
+    plot = Plot(x_range=Range1d(), y_range=Range1d(), plot_height=450, plot_width=600)
+    plot.add_tools(PanTool(), WheelZoomTool(), BoxZoomTool(), ResetTool())
     plot.toolbar.logo = None
+
+    plot.add_layout(LinearAxis(), place="left")
+    plot.add_layout(LinearAxis(), place="below")
+
+    arrow1 = Arrow(x_start=0, y_start=0, x_end=0, y_end=0, end=NormalHead(size=10), visible=False)
+    plot.add_layout(arrow1)
+    arrow2 = Arrow(x_start=0, y_start=0, x_end=0, y_end=0, end=NormalHead(size=10), visible=False)
+    plot.add_layout(arrow2)
+
+    kvect_source = ColumnDataSource(dict(text_x=[], text_y=[], text=[]))
+    plot.add_glyph(kvect_source, Text(x="text_x", y="text_y", text="text"))
+
+    grid_source = ColumnDataSource(dict(xs=[], ys=[]))
+    minor_grid_source = ColumnDataSource(dict(xs=[], ys=[]))
+    plot.add_glyph(grid_source, MultiLine(xs="xs", ys="ys", line_color="gray"))
+    plot.add_glyph(
+        minor_grid_source, MultiLine(xs="xs", ys="ys", line_color="gray", line_dash="dotted")
+    )
+
+    ellipse_source = ColumnDataSource(dict(x=[], y=[], w=[], h=[], c=[]))
+    plot.add_glyph(
+        ellipse_source, Ellipse(x="x", y="y", width="w", height="h", fill_color="c", line_color="c")
+    )
+
+    scan_source = ColumnDataSource(dict(xs=[], ys=[], x=[], y=[], m=[], s=[], c=[]))
+    plot.add_glyph(scan_source, MultiLine(xs="xs", ys="ys", line_color="c"))
+    plot.add_glyph(
+        scan_source, Scatter(x="x", y="y", marker="m", size="s", fill_color="c", line_color="c")
+    )
 
     hkl_div = Div(text="HKL:", margin=(5, 5, 0, 5))
     hkl_normal = TextInput(title="normal", value="0 0 1", width=100)
@@ -350,7 +705,7 @@ def create():
     k_vectors = TextAreaInput(
         title="k vectors:", value="0.0 0.0 0.0\n0.5 0.0 0.0\n0.5 0.5 0.0", width=150,
     )
-    res_mult = NumericInput(title="Resolution mult:", value=10, mode="int", width=100)
+    res_mult_ni = NumericInput(title="Resolution mult:", value=10, mode="int", width=100)
 
     fileinput_layout = row(open_cfl_div, open_cfl, open_cif_div, open_cif, open_geom_div, open_geom)
 
@@ -393,7 +748,7 @@ def create():
         row(measured_data_div, measured_data, plot_file),
         plot,
         row(hkl_layout, k_vectors),
-        row(disting_layout, res_mult),
+        row(disting_layout, res_mult_ni),
     )
 
     tab_layout = row(column1_layout, column2_layout)
