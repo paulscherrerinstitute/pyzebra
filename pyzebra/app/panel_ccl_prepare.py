@@ -30,6 +30,7 @@ from bokeh.models import (
     Scatter,
     Select,
     Spacer,
+    Spinner,
     Text,
     TextAreaInput,
     TextInput,
@@ -355,7 +356,7 @@ def create():
     def plot_file_callback():
         orth_dir = list(map(float, hkl_normal.value.split()))
         cut_tol = hkl_delta.value
-        cut_or = 0  # TODO: add slider or numeric input?
+        cut_or = hkl_cut.value
         x_dir = list(map(float, hkl_in_plane_x.value.split()))
         y_dir = list(map(float, hkl_in_plane_y.value.split()))
 
@@ -687,10 +688,11 @@ def create():
     )
 
     hkl_div = Div(text="HKL:", margin=(5, 5, 0, 5))
-    hkl_normal = TextInput(title="normal", value="0 0 1", width=100)
+    hkl_normal = TextInput(title="normal", value="0 0 1", width=70)
+    hkl_cut = Spinner(title="cut", value=0, step=0.1, width=70)
     hkl_delta = NumericInput(title="delta", value=0.1, mode="float", width=70)
-    hkl_in_plane_x = TextInput(title="in-plane X", value="1 0 0", width=100)
-    hkl_in_plane_y = TextInput(title="in-plane Y", value="0 1 0", width=100)
+    hkl_in_plane_x = TextInput(title="in-plane X", value="1 0 0", width=70)
+    hkl_in_plane_y = TextInput(title="in-plane Y", value="0 1 0", width=70)
 
     disting_opt_div = Div(text="Distinguish options:", margin=(5, 5, 0, 5))
     disting_opt_cb = CheckboxGroup(
@@ -740,7 +742,8 @@ def create():
     )
 
     hkl_layout = column(
-        hkl_div, row(hkl_normal, hkl_delta, Spacer(width=10), hkl_in_plane_x, hkl_in_plane_y)
+        hkl_div,
+        row(hkl_normal, hkl_cut, hkl_delta, Spacer(width=10), hkl_in_plane_x, hkl_in_plane_y),
     )
     disting_layout = column(disting_opt_div, row(disting_opt_cb, disting_opt_rb))
 
