@@ -657,12 +657,19 @@ def create():
             text=["h", "k"],
         )
 
-        # Generate legend for different file entries (symbol)
+        # Legend items for different file entries (symbol)
         legend_items = []
         if not res_flag and file_flag:
             labels, inds = np.unique(scan_source.data["l"], return_index=True)
             for label, ind in zip(labels, inds):
                 legend_items.append(LegendItem(label=label, renderers=[scatter], index=ind))
+
+        # Legend items for propagation vector (color)
+        if prop_legend_flag:
+            labels, inds = np.unique(scan_source.data["c"], return_index=True)
+            for label, ind in zip(labels, inds):
+                label = f"k={k[cmap.index(label)]}"
+                legend_items.append(LegendItem(label=label, renderers=[mline], index=ind))
 
         plot.legend.items = legend_items
 
@@ -697,7 +704,7 @@ def create():
     )
 
     scan_source = ColumnDataSource(dict(xs=[], ys=[], x=[], y=[], m=[], s=[], c=[], l=[]))
-    plot.add_glyph(scan_source, MultiLine(xs="xs", ys="ys", line_color="c"))
+    mline = plot.add_glyph(scan_source, MultiLine(xs="xs", ys="ys", line_color="c"))
     scatter = plot.add_glyph(
         scan_source, Scatter(x="x", y="y", marker="m", size="s", fill_color="c", line_color="c")
     )
