@@ -16,6 +16,8 @@ from bokeh.models import (
     Div,
     Ellipse,
     FileInput,
+    Legend,
+    LegendItem,
     LinearAxis,
     MultiLine,
     MultiSelect,
@@ -582,8 +584,9 @@ def create():
         grid_source.data.update(xs=xs, ys=ys)
         minor_grid_source.data.update(xs=xs_minor, ys=ys_minor)
 
-        scan_x, scan_y, width, height, ellipse_color = [], [], [], [], []
-        scanl_xs, scanl_ys, scanl_x, scanl_y, scanl_m, scanl_s, scanl_c = [], [], [], [], [], [], []
+        el_x, el_y, el_w, el_h, el_c = [], [], [], [], []
+        scan_xs, scan_ys, scan_x, scan_y = [], [], [], []
+        scan_m, scan_s, scan_c, scan_l = [], [], [], []
         for j in range(len(num_vec)):
             # Get middle hkl from list
             hklm = [x for x in hkl_coord[j][6:9]]
@@ -616,26 +619,29 @@ def create():
 
             if res_flag:
                 # Generate series of ellipses along scan line
-                scan_x.extend(np.linspace(hkl1[0], hkl2[0], num=res_N))
-                scan_y.extend(np.linspace(hkl1[1], hkl2[1], num=res_N))
-                width.extend(np.array(res_vec_x[j]) * 2)
-                height.extend(np.array(res_vec_y[j]) * 2)
-                ellipse_color.extend([col_value] * res_N)
+                el_x.extend(np.linspace(hkl1[0], hkl2[0], num=res_N))
+                el_y.extend(np.linspace(hkl1[1], hkl2[1], num=res_N))
+                el_w.extend(np.array(res_vec_x[j]) * 2)
+                el_h.extend(np.array(res_vec_y[j]) * 2)
+                el_c.extend([col_value] * res_N)
             else:
                 # Plot scan line
-                scanl_xs.append([hkl1[0], hkl2[0]])
-                scanl_ys.append([hkl1[1], hkl2[1]])
-                scanl_c.append(col_value)
+                scan_xs.append([hkl1[0], hkl2[0]])
+                scan_ys.append([hkl1[1], hkl2[1]])
 
                 # Plot middle point of scan
-                scanl_x.append(hklm[0])
-                scanl_y.append(hklm[1])
-                scanl_m.append(plot_symbol)
-                scanl_s.append(markersize)
+                scan_x.append(hklm[0])
+                scan_y.append(hklm[1])
+                scan_m.append(plot_symbol)
+                scan_s.append(markersize)
 
-        ellipse_source.data.update(x=scan_x, y=scan_y, w=width, h=height, c=ellipse_color)
+                # Color and legend label
+                scan_c.append(col_value)
+                scan_l.append(md_fnames[file_flag_vec[j]])
+
+        ellipse_source.data.update(x=el_x, y=el_y, w=el_w, h=el_h, c=el_c)
         scan_source.data.update(
-            xs=scanl_xs, ys=scanl_ys, x=scanl_x, y=scanl_y, m=scanl_m, s=scanl_s, c=scanl_c
+            xs=scan_xs, ys=scan_ys, x=scan_x, y=scan_y, m=scan_m, s=scan_s, c=scan_c, l=scan_l,
         )
 
         arrow1.visible = True
@@ -650,6 +656,15 @@ def create():
             text_y=[x_c[1] - 0.1, y_c[1] / 2],
             text=["h", "k"],
         )
+
+        # Generate legend for different file entries (symbol)
+        legend_items = []
+        if not res_flag and file_flag:
+            labels, inds = np.unique(scan_source.data["l"], return_index=True)
+            for label, ind in zip(labels, inds):
+                legend_items.append(LegendItem(label=label, renderers=[scatter], index=ind))
+
+        plot.legend.items = legend_items
 
     plot_file = Button(label="Plot selected file(s)", button_type="primary", width=200)
     plot_file.on_click(plot_file_callback)
@@ -681,11 +696,13 @@ def create():
         ellipse_source, Ellipse(x="x", y="y", width="w", height="h", fill_color="c", line_color="c")
     )
 
-    scan_source = ColumnDataSource(dict(xs=[], ys=[], x=[], y=[], m=[], s=[], c=[]))
+    scan_source = ColumnDataSource(dict(xs=[], ys=[], x=[], y=[], m=[], s=[], c=[], l=[]))
     plot.add_glyph(scan_source, MultiLine(xs="xs", ys="ys", line_color="c"))
-    plot.add_glyph(
+    scatter = plot.add_glyph(
         scan_source, Scatter(x="x", y="y", marker="m", size="s", fill_color="c", line_color="c")
     )
+
+    plot.add_layout(Legend(items=[], location="top_left", click_policy="hide"))
 
     hkl_div = Div(text="HKL:", margin=(5, 5, 0, 5))
     hkl_normal = TextInput(title="normal", value="0 0 1", width=70)
