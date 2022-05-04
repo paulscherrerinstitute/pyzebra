@@ -351,10 +351,6 @@ def create():
         fwhm = np.sqrt(0.4639 * expr ** 2 - 0.4452 * expr + 0.1506) * res_mult  # res in deg
         return fwhm
 
-    def _bg(x, a, b):
-        """Linear background function """
-        return a * x + b
-
     def plot_file_callback():
         orth_dir = list(map(float, hkl_normal.value.split()))
         cut_tol = hkl_delta.value
@@ -411,28 +407,26 @@ def create():
         # conversion matrix:
         M = np.array(
             [
-                [1, 1 * np.cos(gamma_star), 1 * np.cos(beta_star)],
-                [0, 1 * np.sin(gamma_star), -np.sin(beta_star) * np.cos(alpha)],
-                [0, 0, 1 * np.sin(beta_star) * np.sin(alpha)],
+                [1, np.cos(gamma_star), np.cos(beta_star)],
+                [0, np.sin(gamma_star), -np.sin(beta_star) * np.cos(alpha)],
+                [0, 0, np.sin(beta_star) * np.sin(alpha)],
             ]
         )
         M_inv = np.linalg.inv(M)
 
         # Calculate in-plane y-direction
-        x_c = np.matmul(M, x_dir)
-        y_c = np.matmul(M, y_dir)
-        o_c = np.matmul(M, orth_dir)
+        x_c = M @ x_dir
+        y_c = M @ y_dir
+        o_c = M @ orth_dir
 
         # Normalize all directions
         y_c = y_c / np.linalg.norm(y_c)
         x_c = x_c / np.linalg.norm(x_c)
         o_c = o_c / np.linalg.norm(o_c)
 
-        # Calculations
         # Read all data
         hkl_coord = []
         intensity_vec = []
-        num_vec = []
         k_flag_vec = []
         file_flag_vec = []
         res_vec_x = []
@@ -449,19 +443,19 @@ def create():
                     return
 
             # Loop throguh all data
-            for i in range(len(file_data)):
-                om = file_data[i]["omega"]
-                gammad = file_data[i]["twotheta"]
-                chi = file_data[i]["chi"]
-                phi = file_data[i]["phi"]
+            for scan in file_data:
+                om = scan["omega"]
+                gammad = scan["twotheta"]
+                chi = scan["chi"]
+                phi = scan["phi"]
                 nud = 0  # 1d detector
-                ub = file_data[i]["ub"]
-                ddist = float(file_data[i]["detectorDistance"])
-                counts = file_data[i]["counts"]
-                mon = file_data[i]["monitor"]
+                ub = scan["ub"]
+                ddist = float(scan["detectorDistance"])
+                counts = scan["counts"]
+                mon = scan["monitor"]
 
                 # Determine wavelength from mcvl value (is wavelength stored anywhere???)
-                mcvl = file_data[i]["mcvl"]
+                mcvl = scan["mcvl"]
                 if mcvl == 2.2:
                     wave = 1.178
                 elif mcvl == 7.0:
@@ -471,20 +465,15 @@ def create():
 
                 # Calculate resolution in degrees
                 res = _res_fun(gammad, wave, res_mult)
+
                 # convert to resolution in hkl along scan line
                 ang2hkl_1d = pyzebra.ang2hkl_1d
                 res_x = []
                 res_y = []
-                scan_om = np.linspace(om[0], om[-1], num=res_N)
-                for i2 in range(res_N):
-                    expr1 = ang2hkl_1d(
-                        wave, ddist, gammad, scan_om[i2] + res / 2, chi, phi, nud, ub
-                    )
-                    expr2 = ang2hkl_1d(
-                        wave, ddist, gammad, scan_om[i2] - res / 2, chi, phi, nud, ub
-                    )
-                    hkl_temp = np.abs(expr1 - expr2) / 2
-                    hkl_temp = np.matmul(M, hkl_temp)
+                for _om in np.linspace(om[0], om[-1], num=res_N):
+                    expr1 = ang2hkl_1d(wave, ddist, gammad, _om + res / 2, chi, phi, nud, ub)
+                    expr2 = ang2hkl_1d(wave, ddist, gammad, _om - res / 2, chi, phi, nud, ub)
+                    hkl_temp = M @ (np.abs(expr1 - expr2) / 2)
                     res_x.append(hkl_temp[0])
                     res_y.append(hkl_temp[1])
 
@@ -502,45 +491,20 @@ def create():
                 x2 = om[-1]
                 a = (y1 - y2) / (x1 - x2)
                 b = y1 - a * x1
-                intensity_exp = np.sum(counts - _bg(om, a, b))
+                intensity_exp = np.sum(counts - (a * om + b))
                 c = int(intensity_exp / mon * 10000)
 
                 # Recognize k_flag_vec
-                found = 0
-                for j2 in range(len(k)):
-                    # Check if all three components match
-                    test1 = (
-                        np.abs(min(1 - np.mod(hkl_m[0], 1), np.mod(hkl_m[0], 1)) - k[j2][0]) < tol_k
-                    )
-                    test2 = (
-                        np.abs(min(1 - np.mod(hkl_m[1], 1), np.mod(hkl_m[1], 1)) - k[j2][1]) < tol_k
-                    )
-                    test3 = (
-                        np.abs(min(1 - np.mod(hkl_m[2], 1), np.mod(hkl_m[2], 1)) - k[j2][2]) < tol_k
-                    )
-
-                    if test1 and test2 and test3:
-                        found = 1
+                min_hkl_m = np.minimum(1 - hkl_m % 1, hkl_m % 1)
+                for j2, _k in enumerate(k):
+                    if all(np.abs(min_hkl_m - _k) < tol_k):
                         k_flag_vec.append(j2)
                         break
-
-                if not found:
+                else:
                     k_flag_vec.append(len(k))
 
                 # Save data
-                hkl_list = [
-                    hkl1[0],
-                    hkl1[1],
-                    hkl1[2],
-                    hkl2[0],
-                    hkl2[1],
-                    hkl2[2],
-                    hkl_m[0],
-                    hkl_m[1],
-                    hkl_m[2],
-                ]
-                hkl_coord.append(hkl_list)
-                num_vec.append(i)
+                hkl_coord.append([hkl1, hkl2, hkl_m])
                 intensity_vec.append(c)
                 file_flag_vec.append(j)
                 res_vec_x.append(res_x)
@@ -555,29 +519,25 @@ def create():
         xs_minor, ys_minor = [], []
         if grid_flag:
             for yy in np.arange(min_grid_y, max_grid_y, 1):
-                hkl1 = np.matmul(M, [0, yy, 0])
-                xs.append([-5, 5])
+                hkl1 = M @ [0, yy, 0]
+                xs.append([min_grid_y, max_grid_y])
                 ys.append([hkl1[1], hkl1[1]])
 
             for xx in np.arange(min_grid_x, max_grid_x, 1):
-                hkl1 = [xx, min_grid_x, 0]
-                hkl2 = [xx, max_grid_x, 0]
-                hkl1 = np.matmul(M, hkl1)
-                hkl2 = np.matmul(M, hkl2)
+                hkl1 = M @ [xx, min_grid_x, 0]
+                hkl2 = M @ [xx, max_grid_x, 0]
                 xs.append([hkl1[0], hkl2[0]])
                 ys.append([hkl1[1], hkl2[1]])
 
             if grid_minor_flag:
                 for yy in np.arange(min_grid_y, max_grid_y, 1 / grid_div):
-                    hkl1 = np.matmul(M, [0, yy, 0])
+                    hkl1 = M @ [0, yy, 0]
                     xs_minor.append([min_grid_y, max_grid_y])
                     ys_minor.append([hkl1[1], hkl1[1]])
 
                 for xx in np.arange(min_grid_x, max_grid_x, 1 / grid_div):
-                    hkl1 = [xx, min_grid_x, 0]
-                    hkl2 = [xx, max_grid_x, 0]
-                    hkl1 = np.matmul(M, hkl1)
-                    hkl2 = np.matmul(M, hkl2)
+                    hkl1 = M @ [xx, min_grid_x, 0]
+                    hkl2 = M @ [xx, max_grid_x, 0]
                     xs_minor.append([hkl1[0], hkl2[0]])
                     ys_minor.append([hkl1[1], hkl2[1]])
 
@@ -587,20 +547,17 @@ def create():
         el_x, el_y, el_w, el_h, el_c = [], [], [], [], []
         scan_xs, scan_ys, scan_x, scan_y = [], [], [], []
         scan_m, scan_s, scan_c, scan_l = [], [], [], []
-        for j in range(len(num_vec)):
+        for j in range(len(hkl_coord)):
             # Get middle hkl from list
-            hklm = [x for x in hkl_coord[j][6:9]]
-            hklm = np.matmul(M, hklm)
+            hklm = M @ hkl_coord[j][2]
 
             # Decide if point is in the cut
             proj = np.dot(hklm, o_c)
             if abs(proj - cut_or) >= cut_tol:
                 continue
 
-            hkl1 = [x for x in hkl_coord[j][0:3]]
-            hkl2 = [x for x in hkl_coord[j][3:6]]
-            hkl1 = np.matmul(M, hkl1)
-            hkl2 = np.matmul(M, hkl2)
+            hkl1 = M @ hkl_coord[j][0]
+            hkl2 = M @ hkl_coord[j][1]
 
             if intensity_flag:
                 markersize = max(1, int(intensity_vec[j] / max(intensity_vec) * 20))
