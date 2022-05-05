@@ -623,10 +623,15 @@ def create():
 
         # Legend items for propagation vector (color)
         if prop_legend_flag:
-            labels, inds = np.unique(scan_source.data["c"], return_index=True)
+            if res_flag:
+                source, render = ellipse_source, ellipse
+            else:
+                source, render = scan_source, mline
+
+            labels, inds = np.unique(source.data["c"], return_index=True)
             for label, ind in zip(labels, inds):
                 label = f"k={k[cmap.index(label)]}"
-                legend_items.append(LegendItem(label=label, renderers=[mline], index=ind))
+                legend_items.append(LegendItem(label=label, renderers=[render], index=ind))
 
         plot.legend.items = legend_items
 
@@ -656,7 +661,7 @@ def create():
     )
 
     ellipse_source = ColumnDataSource(dict(x=[], y=[], w=[], h=[], c=[]))
-    plot.add_glyph(
+    ellipse = plot.add_glyph(
         ellipse_source, Ellipse(x="x", y="y", width="w", height="h", fill_color="c", line_color="c")
     )
 
