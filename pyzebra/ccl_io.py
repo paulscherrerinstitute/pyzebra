@@ -1,5 +1,6 @@
 import os
 import re
+from ast import literal_eval
 from collections import defaultdict
 
 import numpy as np
@@ -120,7 +121,7 @@ def parse_1D(fileobj, data_type):
 
             elif variable in META_UB_MATRIX:
                 if variable == "UB":
-                    metadata["ub"] = np.array(value)
+                    metadata["ub"] = np.array(literal_eval(value)).reshape(3, 3)
                 else:
                     if "ub" not in metadata:
                         metadata["ub"] = np.zeros((3, 3))
