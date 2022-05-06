@@ -159,6 +159,9 @@ def parse_1D(fileobj, data_type):
             for param, (param_name, param_type) in zip(next_line.split(), ccl_second_line):
                 scan[param_name] = param_type(param)
 
+            if "scan_motor" not in scan:
+                scan["scan_motor"] = "om"
+
             if scan["scan_motor"] != "om":
                 raise Exception("Unsupported variable name in ccl file.")
 
