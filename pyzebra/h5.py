@@ -70,9 +70,12 @@ def read_detector_data(filepath, cami_meta=None):
     with h5py.File(filepath, "r") as h5f:
         counts = h5f["/entry1/area_detector2/data"][:].astype(np.float64)
 
-        # reshape images (counts) to a correct shape (2006 issue)
         n, cols, rows = counts.shape
-        counts = counts.reshape(n, rows, cols)
+        if "/entry1/experiment_identifier" in h5f:  # old format
+            # reshape images (counts) to a correct shape (2006 issue)
+            counts = counts.reshape(n, rows, cols)
+        else:
+            counts = counts.swapaxes(1, 2)
 
         scan = {"counts": counts, "counts_err": np.sqrt(np.maximum(counts, 1))}
         scan["original_filename"] = filepath
