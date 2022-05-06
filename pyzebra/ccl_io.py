@@ -56,7 +56,7 @@ META_VARS_FLOAT = (
     "s2hl",
 )
 
-META_UB_MATRIX = ("ub1j", "ub2j", "ub3j")
+META_UB_MATRIX = ("ub1j", "ub2j", "ub3j", "ub")
 
 CCL_FIRST_LINE = (("idx", int), ("h", float), ("k", float), ("l", float))
 
@@ -119,10 +119,13 @@ def parse_1D(fileobj, data_type):
                 metadata[variable] = float(value)
 
             elif variable in META_UB_MATRIX:
-                if "ub" not in metadata:
-                    metadata["ub"] = np.zeros((3, 3))
-                row = int(variable[-2]) - 1
-                metadata["ub"][row, :] = list(map(float, value.split()))
+                if variable == "ub":
+                    metadata["ub"] = np.array(value)
+                else:
+                    if "ub" not in metadata:
+                        metadata["ub"] = np.zeros((3, 3))
+                    row = int(variable[-2]) - 1
+                    metadata["ub"][row, :] = list(map(float, value.split()))
 
         if "#data" in line:
             # this is the end of metadata and the start of data section
