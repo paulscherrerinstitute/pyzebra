@@ -109,24 +109,29 @@ def parse_1D(fileobj, data_type):
             variable = variable.strip()
             value = value.strip()
 
-            if variable in META_VARS_STR:
-                metadata[variable] = value
+            try:
+                if variable in META_VARS_STR:
+                    metadata[variable] = value
 
-            elif variable in META_VARS_FLOAT:
-                if variable == "2-theta":  # fix that angle name not to be an expression
-                    variable = "twotheta"
-                if variable in ("a", "b", "c", "alpha", "beta", "gamma"):
-                    variable += "_cell"
-                metadata[variable] = float(value)
+                elif variable in META_VARS_FLOAT:
+                    if variable == "2-theta":  # fix that angle name not to be an expression
+                        variable = "twotheta"
+                    if variable in ("a", "b", "c", "alpha", "beta", "gamma"):
+                        variable += "_cell"
+                    metadata[variable] = float(value)
 
-            elif variable in META_UB_MATRIX:
-                if variable == "UB":
-                    metadata["ub"] = np.array(literal_eval(value)).reshape(3, 3)
-                else:
-                    if "ub" not in metadata:
-                        metadata["ub"] = np.zeros((3, 3))
-                    row = int(variable[-2]) - 1
-                    metadata["ub"][row, :] = list(map(float, value.split()))
+                elif variable in META_UB_MATRIX:
+                    if variable == "UB":
+                        metadata["ub"] = np.array(literal_eval(value)).reshape(3, 3)
+                    else:
+                        if "ub" not in metadata:
+                            metadata["ub"] = np.zeros((3, 3))
+                        row = int(variable[-2]) - 1
+                        metadata["ub"][row, :] = list(map(float, value.split()))
+
+            except Exception:
+                print(f"Error reading {variable} with value '{value}'")
+                metadata[variable] = 0
 
         if "#data" in line:
             # this is the end of metadata and the start of data section
