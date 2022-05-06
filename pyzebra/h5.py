@@ -98,8 +98,8 @@ def read_detector_data(filepath, cami_meta=None):
 
         scan["gamma"] = h5f["/entry1/ZEBRA/area_detector2/polar_angle"][:]
         scan["twotheta"] = h5f["/entry1/ZEBRA/area_detector2/polar_angle"][:]
-        scan["nu"] = h5f["/entry1/ZEBRA/area_detector2/tilt_angle"][:]
-        scan["ddist"] = h5f["/entry1/ZEBRA/area_detector2/distance"][:]
+        scan["nu"] = h5f["/entry1/ZEBRA/area_detector2/tilt_angle"][0:1]
+        scan["ddist"] = h5f["/entry1/ZEBRA/area_detector2/distance"][0:1]
         scan["wave"] = h5f["/entry1/ZEBRA/monochromator/wavelength"][:]
         scan["chi"] = h5f["/entry1/sample/chi"][:]
         scan["phi"] = h5f["/entry1/sample/phi"][:]
