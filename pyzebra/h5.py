@@ -102,14 +102,23 @@ def read_detector_data(filepath, cami_meta=None):
             scan["omega"] = h5f["/entry1/sample/rotation_angle"][:]
         else:
             scan["omega"] = h5f["/entry1/area_detector2/rotation_angle"][:]
+        if len(scan["omega"]) == 1:
+            scan["omega"] = np.ones(n) * scan["omega"]
 
         scan["gamma"] = h5f["/entry1/ZEBRA/area_detector2/polar_angle"][:]
         scan["twotheta"] = h5f["/entry1/ZEBRA/area_detector2/polar_angle"][:]
+        if len(scan["gamma"]) == 1:
+            scan["gamma"] = np.ones(n) * scan["gamma"]
+            scan["twotheta"] = np.ones(n) * scan["twotheta"]
         scan["nu"] = h5f["/entry1/ZEBRA/area_detector2/tilt_angle"][:1]
         scan["ddist"] = h5f["/entry1/ZEBRA/area_detector2/distance"][:1]
         scan["wave"] = h5f["/entry1/ZEBRA/monochromator/wavelength"][:1]
         scan["chi"] = h5f["/entry1/sample/chi"][:]
+        if len(scan["chi"]) == 1:
+            scan["chi"] = np.ones(n) * scan["chi"]
         scan["phi"] = h5f["/entry1/sample/phi"][:]
+        if len(scan["phi"]) == 1:
+            scan["phi"] = np.ones(n) * scan["phi"]
         scan["ub"] = h5f["/entry1/sample/UB"][:].reshape(3, 3)
         scan["name"] = h5f["/entry1/sample/name"][0].decode()
         scan["cell"] = h5f["/entry1/sample/cell"][:]
