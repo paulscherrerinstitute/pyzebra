@@ -49,7 +49,7 @@ def _parameters_match(scan1, scan2):
     if zebra_mode != scan2["zebra_mode"]:
         return False
 
-    for param in ("ub", "temp", "mf", *(vars[0] for vars in CCL_ANGLES[zebra_mode])):
+    for param in ("ub", *(vars[0] for vars in CCL_ANGLES[zebra_mode])):
         if param.startswith("skip"):
             # ignore skip parameters, like the last angle in 'nb' zebra mode
             continue
