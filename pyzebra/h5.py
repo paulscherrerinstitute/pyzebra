@@ -133,6 +133,8 @@ def read_detector_data(filepath, cami_meta=None):
 
         if "/entry1/sample/temperature" in h5f:
             scan["temp"] = h5f["/entry1/sample/temperature"][:]
+        elif "/entry1/sample/Ts/value" in h5f:
+            scan["temp"] = h5f["/entry1/sample/Ts/value"][:]
 
         # overwrite metadata from .cami
         if cami_meta is not None:
