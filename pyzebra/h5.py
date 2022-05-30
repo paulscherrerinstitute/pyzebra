@@ -119,7 +119,10 @@ def read_detector_data(filepath, cami_meta=None):
         scan["phi"] = h5f["/entry1/sample/phi"][:]
         if len(scan["phi"]) == 1:
             scan["phi"] = np.ones(n) * scan["phi"]
-        scan["ub"] = h5f["/entry1/sample/UB"][:].reshape(3, 3)
+        if h5f["/entry1/sample/UB"].size == 0:
+            scan["ub"] = np.eye(3) * 0.177
+        else:
+            scan["ub"] = h5f["/entry1/sample/UB"][:].reshape(3, 3)
         scan["name"] = h5f["/entry1/sample/name"][0].decode()
         scan["cell"] = h5f["/entry1/sample/cell"][:]
 
