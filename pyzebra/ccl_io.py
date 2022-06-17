@@ -167,6 +167,9 @@ def parse_1D(fileobj, data_type):
             if "scan_motor" not in scan:
                 scan["scan_motor"] = "om"
 
+            if scan["scan_motor"] == "o2t":
+                scan["scan_motor"] = "om"
+
             if scan["scan_motor"] != "om":
                 raise Exception("Unsupported variable name in ccl file.")
 
