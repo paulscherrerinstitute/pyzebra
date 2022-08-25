@@ -143,8 +143,7 @@ def create():
                         # last digits are spind UB matrix
                         vals = list(map(float, c_rest))
                         ub_matrix_spind = np.transpose(np.array(vals).reshape(3, 3))
-                        ub_matrix = np.linalg.inv(ub_matrix_spind)
-                        ub_matrices.append(ub_matrix)
+                        ub_matrices.append(ub_matrix_spind)
                         spind_res["ub_matrix"].append(str(ub_matrix_spind * 1e-10))
 
                 print(f"Content of {spind_out_file}:")
@@ -168,11 +167,11 @@ def create():
     def results_table_select_callback(_attr, old, new):
         if new:
             ind = new[0]
-            ub_matrix = ub_matrices[ind]
+            ub_matrix_spind = ub_matrices[ind]
             res = ""
             for vec in diff_vec:
-                res += f"{ub_matrix @ vec}\n"
-            ub_matrix_textareainput.value = str(ub_matrix * 1e10)
+                res += f"{np.linalg.inv(ub_matrix_spind) @ vec}\n"
+            ub_matrix_textareainput.value = str(ub_matrix_spind * 1e-10)
             hkl_textareainput.value = res
         else:
             ub_matrix_textareainput.value = ""
