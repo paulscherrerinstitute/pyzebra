@@ -204,7 +204,8 @@ def parse_1D(fileobj, data_type):
 
         match = re.search("Scanning Variables: (.*), Steps: (.*)", next(fileobj))
         motors = [motor.lower() for motor in match.group(1).split(", ")]
-        steps = [float(step) for step in match.group(2).split()]
+        # Steps can be separated by " " or ", "
+        steps = [float(step.strip(",")) for step in match.group(2).split()]
 
         match = re.search("(.*) Points, Mode: (.*), Preset (.*)", next(fileobj))
         if match.group(2) != "Monitor":
