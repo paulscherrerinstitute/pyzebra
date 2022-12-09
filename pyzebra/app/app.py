@@ -25,6 +25,7 @@ bokeh_stream = StringIO()
 bokeh_handler = logging.StreamHandler(bokeh_stream)
 bokeh_handler.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
 bokeh_logger = logging.getLogger("bokeh")
+bokeh_logger.setLevel(logging.WARNING)
 bokeh_logger.addHandler(bokeh_handler)
 bokeh_log_textareainput = TextAreaInput(title="server output:", height=150)
 
