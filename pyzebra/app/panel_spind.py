@@ -128,7 +128,7 @@ def create():
 
             spind_out_file = os.path.join(temp_dir, "spind.txt")
             spind_res = dict(
-                label=[], crystal_id=[], match_rate=[], matched_peaks=[], column_5=[], ub_matrix=[],
+                label=[], crystal_id=[], match_rate=[], matched_peaks=[], column_5=[], ub_matrix=[]
             )
             try:
                 with open(spind_out_file) as f_out:

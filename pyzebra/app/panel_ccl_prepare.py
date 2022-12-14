@@ -348,7 +348,7 @@ def create():
     # Define resolution function
     def _res_fun(stt, wave, res_mult):
         expr = np.tan(stt / 2 * np.pi / 180)
-        fwhm = np.sqrt(0.4639 * expr ** 2 - 0.4452 * expr + 0.1506) * res_mult  # res in deg
+        fwhm = np.sqrt(0.4639 * expr**2 - 0.4452 * expr + 0.1506) * res_mult  # res in deg
         return fwhm
 
     def plot_file_callback():
@@ -598,7 +598,7 @@ def create():
 
         ellipse_source.data.update(x=el_x, y=el_y, w=el_w, h=el_h, c=el_c)
         scan_source.data.update(
-            xs=scan_xs, ys=scan_ys, x=scan_x, y=scan_y, m=scan_m, s=scan_s, c=scan_c, l=scan_l,
+            xs=scan_xs, ys=scan_ys, x=scan_x, y=scan_y, m=scan_m, s=scan_s, c=scan_c, l=scan_l
         )
 
         arrow1.visible = True
@@ -691,7 +691,7 @@ def create():
     )
 
     k_vectors = TextAreaInput(
-        title="k vectors:", value="0.0 0.0 0.0\n0.5 0.0 0.0\n0.5 0.5 0.0", width=150,
+        title="k vectors:", value="0.0 0.0 0.0\n0.5 0.0 0.0\n0.5 0.5 0.0", width=150
     )
     res_mult_ni = NumericInput(title="Resolution mult:", value=10, mode="int", width=100)
 

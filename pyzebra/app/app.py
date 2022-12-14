@@ -31,12 +31,15 @@ bokeh_logger.setLevel(logging.WARNING)
 bokeh_logger.addHandler(bokeh_handler)
 bokeh_log_textareainput = TextAreaInput(title="server output:", height=150)
 
+
 def proposal_textinput_callback(_attr, _old, _new):
     apply_button.disabled = False
+
 
 proposal_textinput = TextInput(title="Proposal number:", name="")
 proposal_textinput.on_change("value_input", proposal_textinput_callback)
 doc.proposal_textinput = proposal_textinput
+
 
 def apply_button_callback():
     proposal = proposal_textinput.value.strip()
@@ -51,6 +54,7 @@ def apply_button_callback():
         proposal_path = ""
 
     proposal_textinput.name = proposal_path
+
 
 apply_button = Button(label="Apply", button_type="primary")
 apply_button.on_click(apply_button_callback)

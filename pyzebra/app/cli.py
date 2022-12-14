@@ -39,7 +39,7 @@ def main():
     )
 
     parser.add_argument(
-        "--anatric-path", type=str, default=ANATRIC_PATH, help="path to anatric executable",
+        "--anatric-path", type=str, default=ANATRIC_PATH, help="path to anatric executable"
     )
 
     parser.add_argument(
@@ -49,9 +49,7 @@ def main():
         help="path to Sxtal_Refgen executable",
     )
 
-    parser.add_argument(
-        "--spind-path", type=str, default=None, help="path to spind scripts folder",
-    )
+    parser.add_argument("--spind-path", type=str, default=None, help="path to spind scripts folder")
 
     parser.add_argument(
         "--args",

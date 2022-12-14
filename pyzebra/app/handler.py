@@ -2,8 +2,7 @@ from bokeh.application.handlers import Handler
 
 
 class PyzebraHandler(Handler):
-    """Provides a mechanism for generic bokeh applications to build up new streamvis documents.
-    """
+    """Provides a mechanism for generic bokeh applications to build up new streamvis documents."""
 
     def __init__(self, anatric_path, spind_path):
         """Initialize a pyzebra handler for bokeh applications.

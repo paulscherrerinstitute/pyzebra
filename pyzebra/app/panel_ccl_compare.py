@@ -537,7 +537,7 @@ def create():
 
         n = len(params)
         fitparams = dict(
-            param=params, value=[None] * n, vary=[True] * n, min=[None] * n, max=[None] * n,
+            param=params, value=[None] * n, vary=[True] * n, min=[None] * n, max=[None] * n
         )
 
         if function == "linear":

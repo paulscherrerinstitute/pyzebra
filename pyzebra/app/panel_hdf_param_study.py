@@ -322,9 +322,7 @@ def create():
     # ---- tools
     wheelzoomtool = WheelZoomTool(maintain_focus=False)
     overview_plot_x.toolbar.logo = None
-    overview_plot_x.add_tools(
-        PanTool(), BoxZoomTool(), wheelzoomtool, ResetTool(),
-    )
+    overview_plot_x.add_tools(PanTool(), BoxZoomTool(), wheelzoomtool, ResetTool())
     overview_plot_x.toolbar.active_scroll = wheelzoomtool
 
     # ---- axes
@@ -360,9 +358,7 @@ def create():
     # ---- tools
     wheelzoomtool = WheelZoomTool(maintain_focus=False)
     overview_plot_y.toolbar.logo = None
-    overview_plot_y.add_tools(
-        PanTool(), BoxZoomTool(), wheelzoomtool, ResetTool(),
-    )
+    overview_plot_y.add_tools(PanTool(), BoxZoomTool(), wheelzoomtool, ResetTool())
     overview_plot_y.toolbar.active_scroll = wheelzoomtool
 
     # ---- axes

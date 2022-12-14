@@ -2,9 +2,10 @@ import h5py
 import numpy as np
 from lmfit.models import Gaussian2dModel, GaussianModel
 
-META_MATRIX = ("UB", )
-META_CELL = ("cell", )
-META_STR = ("name", )
+META_MATRIX = ("UB",)
+META_CELL = ("cell",)
+META_STR = ("name",)
+
 
 def read_h5meta(filepath):
     """Open and parse content of a h5meta file.
@@ -137,7 +138,7 @@ def read_detector_data(filepath, cami_meta=None):
             else:
                 raise ValueError("No angles that vary")
 
-        scan["scan_motors"] = [scan["scan_motor"], ]
+        scan["scan_motors"] = [scan["scan_motor"]]
 
         # optional parameters
         if "/entry1/sample/magnetic_field" in h5f:

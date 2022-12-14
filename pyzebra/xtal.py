@@ -362,8 +362,7 @@ def angtohkl(wave, ddist, gammad, om, ch, ph, nud, x, y):
 
 
 def ang2hkl(wave, ddist, gammad, om, ch, ph, nud, ub, x, y):
-    """Calculate hkl-indices of a reflection from its position (x,y,angles) at the 2d-detector
-    """
+    """Calculate hkl-indices of a reflection from its position (x,y,angles) at the 2d-detector"""
     ga, nu = det2pol(ddist, gammad, nud, x, y)
     z1 = z1frmd(wave, ga, om, ch, ph, nu)
     ubinv = np.linalg.inv(ub)
@@ -373,8 +372,7 @@ def ang2hkl(wave, ddist, gammad, om, ch, ph, nud, ub, x, y):
 
 
 def ang2hkl_1d(wave, ddist, ga, om, ch, ph, nu, ub):
-    """Calculate hkl-indices of a reflection from its position (angles) at the 1d-detector
-    """
+    """Calculate hkl-indices of a reflection from its position (angles) at the 1d-detector"""
     z1 = z1frmd(wave, ga, om, ch, ph, nu)
     ubinv = np.linalg.inv(ub)
     hkl = ubinv @ z1
@@ -383,8 +381,7 @@ def ang2hkl_1d(wave, ddist, ga, om, ch, ph, nu, ub):
 
 
 def ang_proc(wave, ddist, gammad, om, ch, ph, nud, x, y):
-    """Utility function to calculate ch, ph, ga, om
-    """
+    """Utility function to calculate ch, ph, ga, om"""
     ga, nu = det2pol(ddist, gammad, nud, x, y)
     z1 = z1frmd(wave, ga, om, ch, ph, nu)
     ch2, ph2 = eqchph(z1)
@@ -403,4 +400,4 @@ def gauss(x, *p):
         Gaussian function
     """
     A, mu, sigma = p
-    return A * np.exp(-((x - mu) ** 2) / (2.0 * sigma ** 2))
+    return A * np.exp(-((x - mu) ** 2) / (2.0 * sigma**2))

@@ -18,9 +18,7 @@ PARAM_PRECISIONS = {
     "ub": 0.01,
 }
 
-MAX_RANGE_GAP = {
-    "omega": 0.5,
-}
+MAX_RANGE_GAP = {"omega": 0.5}
 
 MOTOR_POS_PRECISION = 0.01
 

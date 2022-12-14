@@ -175,7 +175,7 @@ def parse_1D(fileobj, data_type):
 
             # "om" -> "omega"
             scan["scan_motor"] = "omega"
-            scan["scan_motors"] = ["omega", ]
+            scan["scan_motors"] = ["omega"]
             # overwrite metadata, because it only refers to the scan center
             half_dist = (scan["n_points"] - 1) / 2 * scan["angle_step"]
             scan["omega"] = np.linspace(
@@ -354,7 +354,7 @@ def export_ccl_compare(dataset1, dataset2, path, export_target, hkl_precision=2)
         area_n1, area_s1 = scan1["area"]
         area_n2, area_s2 = scan2["area"]
         area_n = area_n1 - area_n2
-        area_s = np.sqrt(area_s1 ** 2 + area_s2 ** 2)
+        area_s = np.sqrt(area_s1**2 + area_s2**2)
         area_str = f"{area_n:10.2f}{area_s:10.2f}"
 
         ang_str = ""

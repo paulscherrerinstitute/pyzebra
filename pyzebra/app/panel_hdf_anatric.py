@@ -169,7 +169,7 @@ def create():
         config.dataFactory_implementation = new
 
     dataFactory_implementation_select = Select(
-        title="DataFactory implement.:", options=DATA_FACTORY_IMPLEMENTATION, width=145,
+        title="DataFactory implement.:", options=DATA_FACTORY_IMPLEMENTATION, width=145
     )
     dataFactory_implementation_select.on_change("value", dataFactory_implementation_select_callback)
 
@@ -200,7 +200,7 @@ def create():
         config.reflectionPrinter_format = new
 
     reflectionPrinter_format_select = Select(
-        title="ReflectionPrinter format:", options=REFLECTION_PRINTER_FORMATS, width=145,
+        title="ReflectionPrinter format:", options=REFLECTION_PRINTER_FORMATS, width=145
     )
     reflectionPrinter_format_select.on_change("value", reflectionPrinter_format_select_callback)
 
