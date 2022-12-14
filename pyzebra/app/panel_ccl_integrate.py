@@ -8,40 +8,29 @@ import numpy as np
 from bokeh.io import curdoc
 from bokeh.layouts import column, row
 from bokeh.models import (
-    BasicTicker,
     Button,
     CellEditor,
     CheckboxEditor,
     CheckboxGroup,
     ColumnDataSource,
     CustomJS,
-    DataRange1d,
     DataTable,
     Div,
     Dropdown,
     FileInput,
-    Grid,
-    Legend,
-    Line,
-    LinearAxis,
-    MultiLine,
     MultiSelect,
     NumberEditor,
     Panel,
-    PanTool,
-    Plot,
     RadioGroup,
-    ResetTool,
-    Scatter,
     Select,
     Spacer,
     Span,
     Spinner,
     TableColumn,
     TextAreaInput,
-    WheelZoomTool,
     Whisker,
 )
+from bokeh.plotting import figure
 
 import pyzebra
 from pyzebra import AREA_METHODS, EXPORT_TARGETS
@@ -258,12 +247,12 @@ def create():
         x = scan[scan_motor]
 
         plot.axis[0].axis_label = scan_motor
-        plot_scatter_source.data.update(x=x, y=y, y_upper=y + y_err, y_lower=y - y_err)
+        scatter_source.data.update(x=x, y=y, y_upper=y + y_err, y_lower=y - y_err)
 
         fit = scan.get("fit")
         if fit is not None:
             x_fit = np.linspace(x[0], x[-1], 100)
-            plot_fit_source.data.update(x=x_fit, y=fit.eval(x=x_fit))
+            fit_source.data.update(x=x_fit, y=fit.eval(x=x_fit))
 
             x_bkg = []
             y_bkg = []
@@ -279,49 +268,40 @@ def create():
                     xs_peak.append(x_fit)
                     ys_peak.append(comps[f"f{i}_"])
 
-            plot_bkg_source.data.update(x=x_bkg, y=y_bkg)
-            plot_peak_source.data.update(xs=xs_peak, ys=ys_peak)
+            bkg_source.data.update(x=x_bkg, y=y_bkg)
+            peak_source.data.update(xs=xs_peak, ys=ys_peak)
 
             fit_output_textinput.value = fit.fit_report()
 
         else:
-            plot_fit_source.data.update(x=[], y=[])
-            plot_bkg_source.data.update(x=[], y=[])
-            plot_peak_source.data.update(xs=[], ys=[])
+            fit_source.data.update(x=[], y=[])
+            bkg_source.data.update(x=[], y=[])
+            peak_source.data.update(xs=[], ys=[])
             fit_output_textinput.value = ""
 
     # Main plot
-    plot = Plot(
-        x_range=DataRange1d(),
-        y_range=DataRange1d(only_visible=True),
+    plot = figure(
+        x_axis_label="Scan motor",
+        y_axis_label="Counts",
         plot_height=470,
         plot_width=700,
+        tools="pan,wheel_zoom,reset",
     )
 
-    plot.add_layout(LinearAxis(axis_label="Counts"), place="left")
-    plot.add_layout(LinearAxis(axis_label="Scan motor"), place="below")
-
-    plot.add_layout(Grid(dimension=0, ticker=BasicTicker()))
-    plot.add_layout(Grid(dimension=1, ticker=BasicTicker()))
-
-    plot_scatter_source = ColumnDataSource(dict(x=[0], y=[0], y_upper=[0], y_lower=[0]))
-    plot_scatter = plot.add_glyph(
-        plot_scatter_source, Scatter(x="x", y="y", line_color="steelblue", fill_color="steelblue")
+    scatter_source = ColumnDataSource(dict(x=[0], y=[0], y_upper=[0], y_lower=[0]))
+    plot.circle(
+        source=scatter_source, line_color="steelblue", fill_color="steelblue", legend_label="data"
     )
-    plot.add_layout(Whisker(source=plot_scatter_source, base="x", upper="y_upper", lower="y_lower"))
+    plot.add_layout(Whisker(source=scatter_source, base="x", upper="y_upper", lower="y_lower"))
 
-    plot_fit_source = ColumnDataSource(dict(x=[0], y=[0]))
-    plot_fit = plot.add_glyph(plot_fit_source, Line(x="x", y="y"))
+    fit_source = ColumnDataSource(dict(x=[0], y=[0]))
+    plot.line(source=fit_source, legend_label="best fit")
 
-    plot_bkg_source = ColumnDataSource(dict(x=[0], y=[0]))
-    plot_bkg = plot.add_glyph(
-        plot_bkg_source, Line(x="x", y="y", line_color="green", line_dash="dashed")
-    )
+    bkg_source = ColumnDataSource(dict(x=[0], y=[0]))
+    plot.line(source=bkg_source, line_color="green", line_dash="dashed", legend_label="linear")
 
-    plot_peak_source = ColumnDataSource(dict(xs=[[0]], ys=[[0]]))
-    plot_peak = plot.add_glyph(
-        plot_peak_source, MultiLine(xs="xs", ys="ys", line_color="red", line_dash="dashed")
-    )
+    peak_source = ColumnDataSource(dict(xs=[[0]], ys=[[0]]))
+    plot.multi_line(source=peak_source, line_color="red", line_dash="dashed", legend_label="peak")
 
     fit_from_span = Span(location=None, dimension="height", line_dash="dashed")
     plot.add_layout(fit_from_span)
@@ -329,21 +309,9 @@ def create():
     fit_to_span = Span(location=None, dimension="height", line_dash="dashed")
     plot.add_layout(fit_to_span)
 
-    plot.add_layout(
-        Legend(
-            items=[
-                ("data", [plot_scatter]),
-                ("best fit", [plot_fit]),
-                ("peak", [plot_peak]),
-                ("linear", [plot_bkg]),
-            ],
-            location="top_left",
-            click_policy="hide",
-        )
-    )
-
-    plot.add_tools(PanTool(), WheelZoomTool(), ResetTool())
+    plot.y_range.only_visible = True
     plot.toolbar.logo = None
+    plot.legend.click_policy = "hide"
 
     # Scan select
     def scan_table_select_callback(_attr, old, new):
