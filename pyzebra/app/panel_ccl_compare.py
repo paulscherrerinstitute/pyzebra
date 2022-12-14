@@ -44,9 +44,7 @@ from bokeh.models import (
 )
 
 import pyzebra
-from pyzebra.ccl_io import EXPORT_TARGETS
-from pyzebra.ccl_process import AREA_METHODS
-
+from pyzebra import AREA_METHODS, EXPORT_TARGETS
 
 javaScript = """
 let j = 0;

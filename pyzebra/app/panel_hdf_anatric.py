@@ -19,7 +19,7 @@ from bokeh.models import (
 )
 
 import pyzebra
-from pyzebra.anatric import DATA_FACTORY_IMPLEMENTATION, REFLECTION_PRINTER_FORMATS
+from pyzebra import DATA_FACTORY_IMPLEMENTATION, REFLECTION_PRINTER_FORMATS
 
 
 def create():

@@ -2,19 +2,21 @@ import logging
 import sys
 from io import StringIO
 
-import pyzebra
 from bokeh.io import curdoc
 from bokeh.layouts import column, row
 from bokeh.models import Button, Panel, Tabs, TextAreaInput, TextInput
 
-import panel_ccl_integrate
-import panel_ccl_compare
-import panel_hdf_anatric
-import panel_hdf_param_study
-import panel_hdf_viewer
-import panel_param_study
-import panel_spind
-import panel_ccl_prepare
+import pyzebra
+from pyzebra.app import (
+    panel_ccl_compare,
+    panel_ccl_integrate,
+    panel_ccl_prepare,
+    panel_hdf_anatric,
+    panel_hdf_param_study,
+    panel_hdf_viewer,
+    panel_param_study,
+    panel_spind,
+)
 
 doc = curdoc()
 

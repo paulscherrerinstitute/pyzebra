@@ -12,6 +12,6 @@ def find_proposal_path(proposal):
                 # found it
                 break
     else:
-        raise ValueError(f"Can not find data for proposal '{proposal}'.")
+        raise ValueError(f"Can not find data for proposal '{proposal}'")
 
     return proposal_path

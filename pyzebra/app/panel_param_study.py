@@ -52,7 +52,7 @@ from bokeh.palettes import Category10, Plasma256
 from scipy import interpolate
 
 import pyzebra
-from pyzebra.ccl_process import AREA_METHODS
+from pyzebra import AREA_METHODS
 
 javaScript = """
 let j = 0;

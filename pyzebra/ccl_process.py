@@ -4,7 +4,7 @@ import numpy as np
 from lmfit.models import GaussianModel, LinearModel, PseudoVoigtModel, VoigtModel
 from scipy.integrate import simpson, trapezoid
 
-from .ccl_io import CCL_ANGLES
+from pyzebra import CCL_ANGLES
 
 PARAM_PRECISIONS = {
     "twotheta": 0.1,
