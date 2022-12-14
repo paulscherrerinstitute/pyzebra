@@ -1,7 +1,6 @@
 import subprocess
 import xml.etree.ElementTree as ET
 
-
 DATA_FACTORY_IMPLEMENTATION = ["trics", "morph", "d10"]
 
 REFLECTION_PRINTER_FORMATS = [

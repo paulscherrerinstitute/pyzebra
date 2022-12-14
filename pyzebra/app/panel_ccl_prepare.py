@@ -42,7 +42,6 @@ from bokeh.palettes import Dark2
 
 import pyzebra
 
-
 javaScript = """
 let j = 0;
 for (let i = 0; i < js_data.data['fname'].length; i++) {
