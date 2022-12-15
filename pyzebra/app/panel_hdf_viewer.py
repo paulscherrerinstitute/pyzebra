@@ -7,41 +7,30 @@ from bokeh.events import MouseEnter
 from bokeh.io import curdoc
 from bokeh.layouts import column, gridplot, row
 from bokeh.models import (
-    BasicTicker,
     BoxEditTool,
-    BoxZoomTool,
     Button,
     CellEditor,
     CheckboxGroup,
     ColumnDataSource,
-    DataRange1d,
     DataTable,
     Div,
     FileInput,
-    Grid,
     HoverTool,
-    Image,
-    Line,
     LinearAxis,
     LinearColorMapper,
     MultiSelect,
     NumberFormatter,
     Panel,
-    PanTool,
-    Plot,
     Range1d,
-    Rect,
-    ResetTool,
     Select,
     Slider,
     Spacer,
     Spinner,
     TableColumn,
     Tabs,
-    Title,
-    WheelZoomTool,
 )
-from bokeh.palettes import Cividis256, Greys256, Plasma256  # pylint: disable=E0611
+from bokeh.palettes import Cividis256, Greys256, Plasma256
+from bokeh.plotting import figure
 
 import pyzebra
 
@@ -246,7 +235,7 @@ def create():
             metadata_table_source.data.update(geom=["bisecting"])
 
         _update_image()
-        _update_overview_plot()
+        _update_proj_plots()
 
     def scan_table_source_callback(_attr, _old, new):
         # unfortunately, we don't know if the change comes from data update or user input
@@ -255,7 +244,7 @@ def create():
             scan["export"] = export
 
     scan_table_source = ColumnDataSource(
-        dict(scan=[], fit=[], export=[], twotheta=[], gamma=[], omega=[], chi=[], phi=[], nu=[],)
+        dict(scan=[], fit=[], export=[], twotheta=[], gamma=[], omega=[], chi=[], phi=[], nu=[])
     )
     scan_table_source.on_change("data", scan_table_source_callback)
     scan_table_source.selected.on_change("indices", scan_table_select_callback)
@@ -290,7 +279,7 @@ def create():
         if dataset:
             pyzebra.normalize_dataset(dataset, new)
             _update_image()
-            _update_overview_plot()
+            _update_proj_plots()
 
     monitor_spinner = Spinner(title="Monitor:", mode="int", value=100_000, low=1, width=145)
     monitor_spinner.on_change("value", monitor_spinner_callback)
@@ -308,7 +297,7 @@ def create():
         pyzebra.merge_h5_scans(scan_into, scan_from)
         _update_table()
         _update_image()
-        _update_overview_plot()
+        _update_proj_plots()
 
     merge_button = Button(label="Merge into current", width=145)
     merge_button.on_click(merge_button_callback)
@@ -317,7 +306,7 @@ def create():
         pyzebra.restore_scan(_get_selected_scan())
         _update_table()
         _update_image()
-        _update_overview_plot()
+        _update_proj_plots()
 
     restore_button = Button(label="Restore scan", width=145)
     restore_button.on_click(restore_button_callback)
@@ -335,9 +324,7 @@ def create():
             x=np.mean(current_image, axis=1), y=np.arange(0, IMAGE_H) + 0.5
         )
 
-        image_source.data.update(
-            h=[np.zeros((1, 1))], k=[np.zeros((1, 1))], l=[np.zeros((1, 1))],
-        )
+        image_source.data.update(h=[np.zeros((1, 1))], k=[np.zeros((1, 1))], l=[np.zeros((1, 1))])
         image_source.data.update(image=[current_image])
 
         if main_auto_checkbox.active:
@@ -389,35 +376,35 @@ def create():
             )
 
         detcenter_table_source.data.update(
-            gamma=[gamma_c], nu=[nu_c], omega=[omega_c], chi=[chi_c], phi=[phi_c],
+            gamma=[gamma_c], nu=[nu_c], omega=[omega_c], chi=[chi_c], phi=[phi_c]
         )
 
-    def _update_overview_plot():
+    def _update_proj_plots():
         scan = _get_selected_scan()
         counts = scan["counts"]
         n_im, n_y, n_x = counts.shape
-        overview_x = np.mean(counts, axis=1)
-        overview_y = np.mean(counts, axis=2)
+        im_proj_x = np.mean(counts, axis=1)
+        im_proj_y = np.mean(counts, axis=2)
 
         # normalize for simpler colormapping
-        overview_max_val = max(np.max(overview_x), np.max(overview_y))
-        overview_x = 1000 * overview_x / overview_max_val
-        overview_y = 1000 * overview_y / overview_max_val
+        im_proj_max_val = max(np.max(im_proj_x), np.max(im_proj_y))
+        im_proj_x = 1000 * im_proj_x / im_proj_max_val
+        im_proj_y = 1000 * im_proj_y / im_proj_max_val
 
-        overview_plot_x_image_source.data.update(image=[overview_x], dw=[n_x], dh=[n_im])
-        overview_plot_y_image_source.data.update(image=[overview_y], dw=[n_y], dh=[n_im])
+        proj_x_image_source.data.update(image=[im_proj_x], dw=[n_x], dh=[n_im])
+        proj_y_image_source.data.update(image=[im_proj_y], dw=[n_y], dh=[n_im])
 
         if proj_auto_checkbox.active:
-            im_min = min(np.min(overview_x), np.min(overview_y))
-            im_max = max(np.max(overview_x), np.max(overview_y))
+            im_min = min(np.min(im_proj_x), np.min(im_proj_y))
+            im_max = max(np.max(im_proj_x), np.max(im_proj_y))
 
             proj_display_min_spinner.value = im_min
             proj_display_max_spinner.value = im_max
 
-            overview_plot_x_image_glyph.color_mapper.low = im_min
-            overview_plot_y_image_glyph.color_mapper.low = im_min
-            overview_plot_x_image_glyph.color_mapper.high = im_max
-            overview_plot_y_image_glyph.color_mapper.high = im_max
+            proj_x_image_glyph.color_mapper.low = im_min
+            proj_y_image_glyph.color_mapper.low = im_min
+            proj_x_image_glyph.color_mapper.high = im_max
+            proj_y_image_glyph.color_mapper.high = im_max
 
         frame_range.start = 0
         frame_range.end = n_im
@@ -426,7 +413,7 @@ def create():
         frame_range.bounds = (0, n_im)
 
         scan_motor = scan["scan_motor"]
-        overview_plot_y.axis[1].axis_label = f"Scanning motor, {scan_motor}"
+        proj_y_plot.axis[1].axis_label = f"Scanning motor, {scan_motor}"
 
         var = scan[scan_motor]
         var_start = var[0]
@@ -472,26 +459,23 @@ def create():
     index_slider.js_link("value_throttled", index_spinner, "value")
     index_spinner.js_link("value", index_slider, "value")
 
-    plot = Plot(
+    # image viewer figure
+    plot = figure(
         x_range=Range1d(0, IMAGE_W, bounds=(0, IMAGE_W)),
         y_range=Range1d(0, IMAGE_H, bounds=(0, IMAGE_H)),
+        x_axis_location="above",
+        y_axis_location="right",
         plot_height=IMAGE_PLOT_H,
         plot_width=IMAGE_PLOT_W,
         toolbar_location="left",
+        tools="pan,box_zoom,wheel_zoom,reset",
+        active_scroll="wheel_zoom",
     )
 
-    # ---- tools
+    plot.yaxis.major_label_orientation = "vertical"
+    plot.toolbar.tools[2].maintain_focus = False
     plot.toolbar.logo = None
 
-    # ---- axes
-    plot.add_layout(LinearAxis(), place="above")
-    plot.add_layout(LinearAxis(major_label_orientation="vertical"), place="right")
-
-    # ---- grid lines
-    plot.add_layout(Grid(dimension=0, ticker=BasicTicker()))
-    plot.add_layout(Grid(dimension=1, ticker=BasicTicker()))
-
-    # ---- rgba image glyph
     image_source = ColumnDataSource(
         dict(
             image=[np.zeros((IMAGE_H, IMAGE_W), dtype="float32")],
@@ -508,22 +492,13 @@ def create():
         )
     )
 
-    h_glyph = Image(image="h", x="x", y="y", dw="dw", dh="dh", global_alpha=0)
-    k_glyph = Image(image="k", x="x", y="y", dw="dw", dh="dh", global_alpha=0)
-    l_glyph = Image(image="l", x="x", y="y", dw="dw", dh="dh", global_alpha=0)
-    gamma_glyph = Image(image="gamma", x="x", y="y", dw="dw", dh="dh", global_alpha=0)
-    nu_glyph = Image(image="nu", x="x", y="y", dw="dw", dh="dh", global_alpha=0)
-    omega_glyph = Image(image="omega", x="x", y="y", dw="dw", dh="dh", global_alpha=0)
-
-    plot.add_glyph(image_source, h_glyph)
-    plot.add_glyph(image_source, k_glyph)
-    plot.add_glyph(image_source, l_glyph)
-    plot.add_glyph(image_source, gamma_glyph)
-    plot.add_glyph(image_source, nu_glyph)
-    plot.add_glyph(image_source, omega_glyph)
-
-    image_glyph = Image(image="image", x="x", y="y", dw="dw", dh="dh")
-    plot.add_glyph(image_source, image_glyph, name="image_glyph")
+    image_glyph = plot.image(source=image_source).glyph
+    plot.image(source=image_source, image="h", global_alpha=0)
+    plot.image(source=image_source, image="k", global_alpha=0)
+    plot.image(source=image_source, image="l", global_alpha=0)
+    plot.image(source=image_source, image="gamma", global_alpha=0)
+    plot.image(source=image_source, image="nu", global_alpha=0)
+    plot.image(source=image_source, image="omega", global_alpha=0)
 
     # calculate hkl-indices of first mouse entry
     def mouse_enter_callback(_event):
@@ -535,42 +510,37 @@ def create():
 
     plot.on_event(MouseEnter, mouse_enter_callback)
 
-    # ---- projections
-    proj_v = Plot(
+    # Single frame projection plots
+    proj_v = figure(
         x_range=plot.x_range,
-        y_range=DataRange1d(),
+        y_axis_location="right",
         plot_height=150,
         plot_width=IMAGE_PLOT_W,
+        tools="",
         toolbar_location=None,
     )
 
-    proj_v.add_layout(LinearAxis(major_label_orientation="vertical"), place="right")
-    proj_v.add_layout(LinearAxis(major_label_text_font_size="0pt"), place="below")
-
-    proj_v.add_layout(Grid(dimension=0, ticker=BasicTicker()))
-    proj_v.add_layout(Grid(dimension=1, ticker=BasicTicker()))
+    proj_v.yaxis.major_label_orientation = "vertical"
+    proj_v.xaxis.major_label_text_font_size = "0pt"
 
     proj_v_line_source = ColumnDataSource(dict(x=[], y=[]))
-    proj_v.add_glyph(proj_v_line_source, Line(x="x", y="y", line_color="steelblue"))
+    proj_v.line(source=proj_v_line_source, line_color="steelblue")
 
-    proj_h = Plot(
-        x_range=DataRange1d(),
+    proj_h = figure(
+        x_axis_location="above",
         y_range=plot.y_range,
         plot_height=IMAGE_PLOT_H,
         plot_width=150,
+        tools="",
         toolbar_location=None,
     )
 
-    proj_h.add_layout(LinearAxis(), place="above")
-    proj_h.add_layout(LinearAxis(major_label_text_font_size="0pt"), place="left")
-
-    proj_h.add_layout(Grid(dimension=0, ticker=BasicTicker()))
-    proj_h.add_layout(Grid(dimension=1, ticker=BasicTicker()))
+    proj_h.yaxis.major_label_text_font_size = "0pt"
 
     proj_h_line_source = ColumnDataSource(dict(x=[], y=[]))
-    proj_h.add_glyph(proj_h_line_source, Line(x="x", y="y", line_color="steelblue"))
+    proj_h.line(source=proj_h_line_source, line_color="steelblue")
 
-    # add tools
+    # extra tools
     hovertool = HoverTool(
         tooltips=[
             ("intensity", "@image"),
@@ -584,10 +554,7 @@ def create():
     )
 
     box_edit_source = ColumnDataSource(dict(x=[], y=[], width=[], height=[]))
-    box_edit_glyph = Rect(
-        x="x", y="y", width="width", height="height", fill_alpha=0, line_color="red"
-    )
-    box_edit_renderer = plot.add_glyph(box_edit_source, box_edit_glyph)
+    box_edit_renderer = plot.rect(source=box_edit_source, fill_alpha=0, line_color="red")
     boxedittool = BoxEditTool(renderers=[box_edit_renderer], num_objects=1)
 
     def box_edit_callback(_attr, _old, new):
@@ -608,126 +575,74 @@ def create():
 
     box_edit_source.on_change("data", box_edit_callback)
 
-    wheelzoomtool = WheelZoomTool(maintain_focus=False)
-    plot.add_tools(
-        PanTool(), BoxZoomTool(), wheelzoomtool, ResetTool(), hovertool, boxedittool,
-    )
-    plot.toolbar.active_scroll = wheelzoomtool
+    plot.add_tools(hovertool, boxedittool)
 
+    # Overview projection plots
     # shared frame ranges
     frame_range = Range1d(0, 1, bounds=(0, 1))
     scanning_motor_range = Range1d(0, 1, bounds=(0, 1))
 
     det_x_range = Range1d(0, IMAGE_W, bounds=(0, IMAGE_W))
     gamma_range = Range1d(0, 1, bounds=(0, 1))
-    overview_plot_x = Plot(
-        title=Title(text="Projections on X-axis"),
+    proj_x_plot = figure(
+        title="Projections on X-axis",
+        x_axis_label="Coordinate X, pix",
+        y_axis_label="Frame",
         x_range=det_x_range,
         y_range=frame_range,
         extra_x_ranges={"gamma": gamma_range},
         extra_y_ranges={"scanning_motor": scanning_motor_range},
         plot_height=450,
         plot_width=IMAGE_PLOT_W - 3,
+        tools="pan,box_zoom,wheel_zoom,reset",
+        active_scroll="wheel_zoom",
     )
 
-    # ---- tools
-    wheelzoomtool = WheelZoomTool(maintain_focus=False)
-    overview_plot_x.toolbar.logo = None
-    overview_plot_x.add_tools(
-        PanTool(), BoxZoomTool(), wheelzoomtool, ResetTool(),
-    )
-    overview_plot_x.toolbar.active_scroll = wheelzoomtool
+    proj_x_plot.yaxis.major_label_orientation = "vertical"
+    proj_x_plot.toolbar.tools[2].maintain_focus = False
 
-    # ---- axes
-    overview_plot_x.add_layout(LinearAxis(axis_label="Coordinate X, pix"), place="below")
-    overview_plot_x.add_layout(
-        LinearAxis(x_range_name="gamma", axis_label="Gamma, deg"), place="above"
-    )
-    overview_plot_x.add_layout(
-        LinearAxis(axis_label="Frame", major_label_orientation="vertical"), place="left"
-    )
+    proj_x_plot.add_layout(LinearAxis(x_range_name="gamma", axis_label="Gamma, deg"), place="above")
 
-    # ---- grid lines
-    overview_plot_x.add_layout(Grid(dimension=0, ticker=BasicTicker()))
-    overview_plot_x.add_layout(Grid(dimension=1, ticker=BasicTicker()))
-
-    # ---- rgba image glyph
-    overview_plot_x_image_source = ColumnDataSource(
+    proj_x_image_source = ColumnDataSource(
         dict(image=[np.zeros((1, 1), dtype="float32")], x=[0], y=[0], dw=[IMAGE_W], dh=[1])
     )
 
-    overview_plot_x_image_glyph = Image(image="image", x="x", y="y", dw="dw", dh="dh")
-    overview_plot_x.add_glyph(
-        overview_plot_x_image_source, overview_plot_x_image_glyph, name="image_glyph"
-    )
+    proj_x_image_glyph = proj_x_plot.image(source=proj_x_image_source).glyph
 
     det_y_range = Range1d(0, IMAGE_H, bounds=(0, IMAGE_H))
     nu_range = Range1d(0, 1, bounds=(0, 1))
-    overview_plot_y = Plot(
-        title=Title(text="Projections on Y-axis"),
+    proj_y_plot = figure(
+        title="Projections on Y-axis",
+        x_axis_label="Coordinate Y, pix",
+        y_axis_label="Scanning motor",
+        y_axis_location="right",
         x_range=det_y_range,
         y_range=frame_range,
         extra_x_ranges={"nu": nu_range},
         extra_y_ranges={"scanning_motor": scanning_motor_range},
         plot_height=450,
         plot_width=IMAGE_PLOT_H + 22,
+        tools="pan,box_zoom,wheel_zoom,reset",
+        active_scroll="wheel_zoom",
     )
 
-    # ---- tools
-    wheelzoomtool = WheelZoomTool(maintain_focus=False)
-    overview_plot_y.toolbar.logo = None
-    overview_plot_y.add_tools(
-        PanTool(), BoxZoomTool(), wheelzoomtool, ResetTool(),
-    )
-    overview_plot_y.toolbar.active_scroll = wheelzoomtool
+    proj_y_plot.yaxis.y_range_name = "scanning_motor"
+    proj_y_plot.yaxis.major_label_orientation = "vertical"
+    proj_y_plot.toolbar.tools[2].maintain_focus = False
 
-    # ---- axes
-    overview_plot_y.add_layout(LinearAxis(axis_label="Coordinate Y, pix"), place="below")
-    overview_plot_y.add_layout(LinearAxis(x_range_name="nu", axis_label="Nu, deg"), place="above")
-    overview_plot_y.add_layout(
-        LinearAxis(
-            y_range_name="scanning_motor",
-            axis_label="Scanning motor",
-            major_label_orientation="vertical",
-        ),
-        place="right",
-    )
+    proj_y_plot.add_layout(LinearAxis(x_range_name="nu", axis_label="Nu, deg"), place="above")
 
-    # ---- grid lines
-    overview_plot_y.add_layout(Grid(dimension=0, ticker=BasicTicker()))
-    overview_plot_y.add_layout(Grid(dimension=1, ticker=BasicTicker()))
-
-    # ---- rgba image glyph
-    overview_plot_y_image_source = ColumnDataSource(
+    proj_y_image_source = ColumnDataSource(
         dict(image=[np.zeros((1, 1), dtype="float32")], x=[0], y=[0], dw=[IMAGE_H], dh=[1])
     )
 
-    overview_plot_y_image_glyph = Image(image="image", x="x", y="y", dw="dw", dh="dh")
-    overview_plot_y.add_glyph(
-        overview_plot_y_image_source, overview_plot_y_image_glyph, name="image_glyph"
-    )
+    proj_y_image_glyph = proj_y_plot.image(source=proj_y_image_source).glyph
 
-    roi_avg_plot = Plot(
-        x_range=DataRange1d(),
-        y_range=DataRange1d(),
-        plot_height=150,
-        plot_width=IMAGE_PLOT_W,
-        toolbar_location="left",
-    )
-
-    # ---- tools
-    roi_avg_plot.toolbar.logo = None
-
-    # ---- axes
-    roi_avg_plot.add_layout(LinearAxis(), place="below")
-    roi_avg_plot.add_layout(LinearAxis(major_label_orientation="vertical"), place="left")
-
-    # ---- grid lines
-    roi_avg_plot.add_layout(Grid(dimension=0, ticker=BasicTicker()))
-    roi_avg_plot.add_layout(Grid(dimension=1, ticker=BasicTicker()))
+    # ROI slice plot
+    roi_avg_plot = figure(plot_height=150, plot_width=IMAGE_PLOT_W, tools="", toolbar_location=None)
 
     roi_avg_plot_line_source = ColumnDataSource(dict(x=[], y=[]))
-    roi_avg_plot.add_glyph(roi_avg_plot_line_source, Line(x="x", y="y", line_color="steelblue"))
+    roi_avg_plot.line(source=roi_avg_plot_line_source, line_color="steelblue")
 
     cmap_dict = {
         "gray": Greys256,
@@ -738,8 +653,8 @@ def create():
 
     def colormap_callback(_attr, _old, new):
         image_glyph.color_mapper = LinearColorMapper(palette=cmap_dict[new])
-        overview_plot_x_image_glyph.color_mapper = LinearColorMapper(palette=cmap_dict[new])
-        overview_plot_y_image_glyph.color_mapper = LinearColorMapper(palette=cmap_dict[new])
+        proj_x_image_glyph.color_mapper = LinearColorMapper(palette=cmap_dict[new])
+        proj_y_image_glyph.color_mapper = LinearColorMapper(palette=cmap_dict[new])
 
     colormap = Select(title="Colormap:", options=list(cmap_dict.keys()), width=210)
     colormap.on_change("value", colormap_callback)
@@ -801,7 +716,7 @@ def create():
             proj_display_min_spinner.disabled = False
             proj_display_max_spinner.disabled = False
 
-        _update_overview_plot()
+        _update_proj_plots()
 
     proj_auto_checkbox = CheckboxGroup(
         labels=["Projections Intensity Range"], active=[0], width=145, margin=[10, 5, 0, 5]
@@ -810,8 +725,8 @@ def create():
 
     def proj_display_max_spinner_callback(_attr, _old_value, new_value):
         proj_display_min_spinner.high = new_value - PROJ_STEP
-        overview_plot_x_image_glyph.color_mapper.high = new_value
-        overview_plot_y_image_glyph.color_mapper.high = new_value
+        proj_x_image_glyph.color_mapper.high = new_value
+        proj_y_image_glyph.color_mapper.high = new_value
 
     proj_display_max_spinner = Spinner(
         low=0 + PROJ_STEP,
@@ -825,8 +740,8 @@ def create():
 
     def proj_display_min_spinner_callback(_attr, _old_value, new_value):
         proj_display_max_spinner.low = new_value + PROJ_STEP
-        overview_plot_x_image_glyph.color_mapper.low = new_value
-        overview_plot_y_image_glyph.color_mapper.low = new_value
+        proj_x_image_glyph.color_mapper.low = new_value
+        proj_y_image_glyph.color_mapper.low = new_value
 
     proj_display_min_spinner = Spinner(
         low=0,
@@ -1021,13 +936,10 @@ def create():
         row(column(add_event_button, remove_event_button), peak_tables),
     )
 
-    layout_overview = column(
+    layout_proj = column(
         gridplot(
-            [[overview_plot_x, overview_plot_y]],
-            toolbar_options=dict(logo=None),
-            merge_tools=True,
-            toolbar_location="left",
-        ),
+            [[proj_x_plot, proj_y_plot]], toolbar_options={"logo": None}, toolbar_location="right"
+        )
     )
 
     scan_layout = column(
@@ -1038,7 +950,7 @@ def create():
 
     tab_layout = row(
         column(import_layout, colormap_layout),
-        column(row(scan_layout, layout_overview), layout_controls),
+        column(row(scan_layout, layout_proj), layout_controls),
         column(roi_avg_plot, layout_image),
     )
 
