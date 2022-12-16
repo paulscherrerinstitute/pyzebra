@@ -8,37 +8,28 @@ import numpy as np
 from bokeh.layouts import column, row
 from bokeh.models import (
     Arrow,
-    BoxZoomTool,
     Button,
     CheckboxGroup,
     ColumnDataSource,
     CustomJS,
     Div,
-    Ellipse,
     FileInput,
     Legend,
     LegendItem,
-    LinearAxis,
-    MultiLine,
     MultiSelect,
     NormalHead,
     NumericInput,
     Panel,
-    PanTool,
-    Plot,
     RadioGroup,
     Range1d,
-    ResetTool,
-    Scatter,
     Select,
     Spacer,
     Spinner,
-    Text,
     TextAreaInput,
     TextInput,
-    WheelZoomTool,
 )
 from bokeh.palettes import Dark2
+from bokeh.plotting import figure
 
 import pyzebra
 
@@ -69,9 +60,9 @@ SORT_OPT_NB = ["gamma", "nu", "omega"]
 
 
 def create():
-    ang_lims = None
-    cif_data = None
-    params = None
+    ang_lims = {}
+    cif_data = {}
+    params = {}
     res_files = {}
     js_data = ColumnDataSource(data=dict(content=[""], fname=[""]))
 
@@ -595,7 +586,7 @@ def create():
                 scan_c.append(col_value)
                 scan_l.append(md_fnames[file_flag_vec[j]])
 
-        ellipse_source.data.update(x=el_x, y=el_y, w=el_w, h=el_h, c=el_c)
+        ellipse_source.data.update(x=el_x, y=el_y, width=el_w, height=el_h, c=el_c)
         scan_source.data.update(
             xs=scan_xs, ys=scan_ys, x=scan_x, y=scan_y, m=scan_m, s=scan_s, c=scan_c, l=scan_l
         )
@@ -608,9 +599,7 @@ def create():
         arrow2.y_end = y_c[1]
 
         kvect_source.data.update(
-            text_x=[x_c[0] / 2, y_c[0] / 2 - 0.1],
-            text_y=[x_c[1] - 0.1, y_c[1] / 2],
-            text=["h", "k"],
+            x=[x_c[0] / 2, y_c[0] / 2 - 0.1], y=[x_c[1] - 0.1, y_c[1] / 2], text=["h", "k"]
         )
 
         # Legend items for different file entries (symbol)
@@ -637,38 +626,35 @@ def create():
     plot_file = Button(label="Plot selected file(s)", button_type="primary", width=200)
     plot_file.on_click(plot_file_callback)
 
-    plot = Plot(x_range=Range1d(), y_range=Range1d(), plot_height=450, plot_width=600)
-    plot.add_tools(PanTool(), WheelZoomTool(), BoxZoomTool(), ResetTool())
+    plot = figure(
+        x_range=Range1d(),
+        y_range=Range1d(),
+        plot_height=450,
+        plot_width=600,
+        tools="pan,wheel_zoom,reset",
+    )
     plot.toolbar.logo = None
-
-    plot.add_layout(LinearAxis(), place="left")
-    plot.add_layout(LinearAxis(), place="below")
 
     arrow1 = Arrow(x_start=0, y_start=0, x_end=0, y_end=0, end=NormalHead(size=10), visible=False)
     plot.add_layout(arrow1)
     arrow2 = Arrow(x_start=0, y_start=0, x_end=0, y_end=0, end=NormalHead(size=10), visible=False)
     plot.add_layout(arrow2)
 
-    kvect_source = ColumnDataSource(dict(text_x=[], text_y=[], text=[]))
-    plot.add_glyph(kvect_source, Text(x="text_x", y="text_y", text="text"))
+    kvect_source = ColumnDataSource(dict(x=[], y=[], text=[]))
+    plot.text(source=kvect_source)
 
     grid_source = ColumnDataSource(dict(xs=[], ys=[]))
-    minor_grid_source = ColumnDataSource(dict(xs=[], ys=[]))
-    plot.add_glyph(grid_source, MultiLine(xs="xs", ys="ys", line_color="gray"))
-    plot.add_glyph(
-        minor_grid_source, MultiLine(xs="xs", ys="ys", line_color="gray", line_dash="dotted")
-    )
+    plot.multi_line(source=grid_source, line_color="gray")
 
-    ellipse_source = ColumnDataSource(dict(x=[], y=[], w=[], h=[], c=[]))
-    ellipse = plot.add_glyph(
-        ellipse_source, Ellipse(x="x", y="y", width="w", height="h", fill_color="c", line_color="c")
-    )
+    minor_grid_source = ColumnDataSource(dict(xs=[], ys=[]))
+    plot.multi_line(source=minor_grid_source, line_color="gray", line_dash="dotted")
+
+    ellipse_source = ColumnDataSource(dict(x=[], y=[], width=[], height=[], c=[]))
+    ellipse = plot.ellipse(source=ellipse_source, fill_color="c", line_color="c").glyph
 
     scan_source = ColumnDataSource(dict(xs=[], ys=[], x=[], y=[], m=[], s=[], c=[], l=[]))
-    mline = plot.add_glyph(scan_source, MultiLine(xs="xs", ys="ys", line_color="c"))
-    scatter = plot.add_glyph(
-        scan_source, Scatter(x="x", y="y", marker="m", size="s", fill_color="c", line_color="c")
-    )
+    mline = plot.multi_line(source=scan_source, line_color="c")
+    scatter = plot.scatter(source=scan_source, marker="m", size="s", fill_color="c", line_color="c")
 
     plot.add_layout(Legend(items=[], location="top_left", click_policy="hide"))
 
