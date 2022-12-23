@@ -2,7 +2,6 @@ import base64
 import io
 import os
 import tempfile
-import types
 
 import numpy as np
 from bokeh.io import curdoc
@@ -11,15 +10,12 @@ from bokeh.models import (
     Button,
     CellEditor,
     CheckboxEditor,
-    CheckboxGroup,
     ColumnDataSource,
     CustomJS,
     DataTable,
     Div,
-    Dropdown,
     FileInput,
     MultiSelect,
-    NumberEditor,
     Panel,
     RadioGroup,
     Select,
@@ -33,7 +29,7 @@ from bokeh.models import (
 from bokeh.plotting import figure
 
 import pyzebra
-from pyzebra import AREA_METHODS, EXPORT_TARGETS
+from pyzebra import EXPORT_TARGETS, app
 
 javaScript = """
 let j = 0;
@@ -61,7 +57,6 @@ def create():
     doc = curdoc()
     dataset1 = []
     dataset2 = []
-    fit_params = {}
     js_data = ColumnDataSource(data=dict(content=["", ""], fname=["", ""], ext=["", ""]))
 
     def file_select_update_for_proposal():
@@ -244,7 +239,7 @@ def create():
                 xs_peak = []
                 ys_peak = []
                 comps = fit.eval_components(x=x_fit)
-                for i, model in enumerate(fit_params):
+                for i, model in enumerate(app_fitctrl.params):
                     if "linear" in model:
                         x_bkg = x_fit
                         y_bkg = comps[f"f{i}_"]
@@ -264,7 +259,7 @@ def create():
                 bkg_source.data.update(x=[], y=[])
                 peak_source.data.update(xs=[], ys=[])
 
-        fit_output_textinput.value = fit_output
+        app_fitctrl.result_textarea.value = fit_output
 
     # Main plot
     plot = figure(
@@ -425,136 +420,21 @@ def create():
     restore_button = Button(label="Restore scan", width=145)
     restore_button.on_click(restore_button_callback)
 
+    app_fitctrl = app.FitControls()
+
     def fit_from_spinner_callback(_attr, _old, new):
         fit_from_span.location = new
 
-    fit_from_spinner = Spinner(title="Fit from:", width=145)
-    fit_from_spinner.on_change("value", fit_from_spinner_callback)
+    app_fitctrl.from_spinner.on_change("value", fit_from_spinner_callback)
 
     def fit_to_spinner_callback(_attr, _old, new):
         fit_to_span.location = new
 
-    fit_to_spinner = Spinner(title="to:", width=145)
-    fit_to_spinner.on_change("value", fit_to_spinner_callback)
-
-    def fitparams_add_dropdown_callback(click):
-        # bokeh requires (str, str) for MultiSelect options
-        new_tag = f"{click.item}-{fitparams_select.tags[0]}"
-        fitparams_select.options.append((new_tag, click.item))
-        fit_params[new_tag] = fitparams_factory(click.item)
-        fitparams_select.tags[0] += 1
-
-    fitparams_add_dropdown = Dropdown(
-        label="Add fit function",
-        menu=[
-            ("Linear", "linear"),
-            ("Gaussian", "gaussian"),
-            ("Voigt", "voigt"),
-            ("Pseudo Voigt", "pvoigt"),
-            # ("Pseudo Voigt1", "pseudovoigt1"),
-        ],
-        width=145,
-    )
-    fitparams_add_dropdown.on_click(fitparams_add_dropdown_callback)
-
-    def fitparams_select_callback(_attr, old, new):
-        # Avoid selection of multiple indicies (via Shift+Click or Ctrl+Click)
-        if len(new) > 1:
-            # drop selection to the previous one
-            fitparams_select.value = old
-            return
-
-        if len(old) > 1:
-            # skip unnecessary update caused by selection drop
-            return
-
-        if new:
-            fitparams_table_source.data.update(fit_params[new[0]])
-        else:
-            fitparams_table_source.data.update(dict(param=[], value=[], vary=[], min=[], max=[]))
-
-    fitparams_select = MultiSelect(options=[], height=120, width=145)
-    fitparams_select.tags = [0]
-    fitparams_select.on_change("value", fitparams_select_callback)
-
-    def fitparams_remove_button_callback():
-        if fitparams_select.value:
-            sel_tag = fitparams_select.value[0]
-            del fit_params[sel_tag]
-            for elem in fitparams_select.options:
-                if elem[0] == sel_tag:
-                    fitparams_select.options.remove(elem)
-                    break
-
-            fitparams_select.value = []
-
-    fitparams_remove_button = Button(label="Remove fit function", width=145)
-    fitparams_remove_button.on_click(fitparams_remove_button_callback)
-
-    def fitparams_factory(function):
-        if function == "linear":
-            params = ["slope", "intercept"]
-        elif function == "gaussian":
-            params = ["amplitude", "center", "sigma"]
-        elif function == "voigt":
-            params = ["amplitude", "center", "sigma", "gamma"]
-        elif function == "pvoigt":
-            params = ["amplitude", "center", "sigma", "fraction"]
-        elif function == "pseudovoigt1":
-            params = ["amplitude", "center", "g_sigma", "l_sigma", "fraction"]
-        else:
-            raise ValueError("Unknown fit function")
-
-        n = len(params)
-        fitparams = dict(
-            param=params, value=[None] * n, vary=[True] * n, min=[None] * n, max=[None] * n
-        )
-
-        if function == "linear":
-            fitparams["value"] = [0, 1]
-            fitparams["vary"] = [False, True]
-            fitparams["min"] = [None, 0]
-
-        elif function == "gaussian":
-            fitparams["min"] = [0, None, None]
-
-        return fitparams
-
-    fitparams_table_source = ColumnDataSource(dict(param=[], value=[], vary=[], min=[], max=[]))
-    fitparams_table = DataTable(
-        source=fitparams_table_source,
-        columns=[
-            TableColumn(field="param", title="Parameter", editor=CellEditor()),
-            TableColumn(field="value", title="Value", editor=NumberEditor()),
-            TableColumn(field="vary", title="Vary", editor=CheckboxEditor()),
-            TableColumn(field="min", title="Min", editor=NumberEditor()),
-            TableColumn(field="max", title="Max", editor=NumberEditor()),
-        ],
-        height=200,
-        width=350,
-        index_position=None,
-        editable=True,
-        auto_edit=True,
-    )
-
-    # start with `background` and `gauss` fit functions added
-    fitparams_add_dropdown_callback(types.SimpleNamespace(item="linear"))
-    fitparams_add_dropdown_callback(types.SimpleNamespace(item="gaussian"))
-    fitparams_select.value = ["gaussian-1"]  # add selection to gauss
-
-    fit_output_textinput = TextAreaInput(title="Fit results:", width=750, height=200)
+    app_fitctrl.to_spinner.on_change("value", fit_to_spinner_callback)
 
     def proc_all_button_callback():
-        for scan in [*dataset1, *dataset2]:
-            if scan["export"]:
-                pyzebra.fit_scan(
-                    scan, fit_params, fit_from=fit_from_spinner.value, fit_to=fit_to_spinner.value
-                )
-                pyzebra.get_area(
-                    scan,
-                    area_method=AREA_METHODS[area_method_radiobutton.active],
-                    lorentz=lorentz_checkbox.active,
-                )
+        app_fitctrl.fit_dataset(dataset1)
+        app_fitctrl.fit_dataset(dataset2)
 
         _update_plot()
         _update_table()
@@ -563,15 +443,9 @@ def create():
     proc_all_button.on_click(proc_all_button_callback)
 
     def proc_button_callback():
-        for scan in _get_selected_scan():
-            pyzebra.fit_scan(
-                scan, fit_params, fit_from=fit_from_spinner.value, fit_to=fit_to_spinner.value
-            )
-            pyzebra.get_area(
-                scan,
-                area_method=AREA_METHODS[area_method_radiobutton.active],
-                lorentz=lorentz_checkbox.active,
-            )
+        scan1, scan2 = _get_selected_scan()
+        app_fitctrl.fit_scan(scan1)
+        app_fitctrl.fit_scan(scan2)
 
         _update_plot()
         _update_table()
@@ -579,15 +453,10 @@ def create():
     proc_button = Button(label="Process Current", width=145)
     proc_button.on_click(proc_button_callback)
 
-    area_method_div = Div(text="Intensity:", margin=(5, 5, 0, 5))
-    area_method_radiobutton = RadioGroup(labels=["Function", "Area"], active=0, width=145)
-
     intensity_diff_div = Div(text="Intensity difference:", margin=(5, 5, 0, 5))
     intensity_diff_radiobutton = RadioGroup(
         labels=["file1 - file2", "file2 - file1"], active=0, width=145
     )
-
-    lorentz_checkbox = CheckboxGroup(labels=["Lorentz Correction"], width=145, margin=(13, 5, 5, 5))
 
     export_preview_textinput = TextAreaInput(title="Export file(s) preview:", width=500, height=400)
 
@@ -648,19 +517,24 @@ def create():
     save_button = Button(label="Download File(s)", button_type="success", width=200)
     save_button.js_on_click(CustomJS(args={"js_data": js_data}, code=javaScript))
 
+    area_method_div = Div(text="Intensity:", margin=(5, 5, 0, 5))
     fitpeak_controls = row(
-        column(fitparams_add_dropdown, fitparams_select, fitparams_remove_button),
-        fitparams_table,
+        column(
+            app_fitctrl.add_function_button,
+            app_fitctrl.function_select,
+            app_fitctrl.remove_function_button,
+        ),
+        app_fitctrl.params_table,
         Spacer(width=20),
         column(
-            fit_from_spinner,
-            lorentz_checkbox,
+            app_fitctrl.from_spinner,
+            app_fitctrl.lorentz_checkbox,
             area_method_div,
-            area_method_radiobutton,
+            app_fitctrl.area_method_radiogroup,
             intensity_diff_div,
             intensity_diff_radiobutton,
         ),
-        column(fit_to_spinner, proc_button, proc_all_button),
+        column(app_fitctrl.to_spinner, proc_button, proc_all_button),
     )
 
     scan_layout = column(
@@ -680,7 +554,7 @@ def create():
 
     tab_layout = column(
         row(import_layout, scan_layout, plot, Spacer(width=30), export_layout),
-        row(fitpeak_controls, fit_output_textinput),
+        row(fitpeak_controls, app_fitctrl.result_textarea),
     )
 
     return Panel(child=tab_layout, title="ccl compare")
