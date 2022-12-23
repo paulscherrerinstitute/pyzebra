@@ -383,6 +383,8 @@ def create():
         proj_x_image_glyph.color_mapper.high = new_value
         proj_y_image_glyph.color_mapper.high = new_value
 
+        _update_proj_plots()
+
     proj_display_max_spinner = Spinner(
         low=0 + PROJ_STEP,
         value=1,
@@ -397,6 +399,8 @@ def create():
         proj_display_max_spinner.low = new_value + PROJ_STEP
         proj_x_image_glyph.color_mapper.low = new_value
         proj_y_image_glyph.color_mapper.low = new_value
+
+        _update_proj_plots()
 
     proj_display_min_spinner = Spinner(
         low=0,

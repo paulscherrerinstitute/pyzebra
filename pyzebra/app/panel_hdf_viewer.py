@@ -681,6 +681,8 @@ def create():
         display_min_spinner.high = new_value - STEP
         image_glyph.color_mapper.high = new_value
 
+        _update_image()
+
     display_max_spinner = Spinner(
         low=0 + STEP,
         value=1,
@@ -694,6 +696,8 @@ def create():
     def display_min_spinner_callback(_attr, _old_value, new_value):
         display_max_spinner.low = new_value + STEP
         image_glyph.color_mapper.low = new_value
+
+        _update_image()
 
     display_min_spinner = Spinner(
         low=0,
@@ -728,6 +732,8 @@ def create():
         proj_x_image_glyph.color_mapper.high = new_value
         proj_y_image_glyph.color_mapper.high = new_value
 
+        _update_proj_plots()
+
     proj_display_max_spinner = Spinner(
         low=0 + PROJ_STEP,
         value=1,
@@ -742,6 +748,8 @@ def create():
         proj_display_max_spinner.low = new_value + PROJ_STEP
         proj_x_image_glyph.color_mapper.low = new_value
         proj_y_image_glyph.color_mapper.low = new_value
+
+        _update_proj_plots()
 
     proj_display_min_spinner = Spinner(
         low=0,
