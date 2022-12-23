@@ -11,7 +11,6 @@ from bokeh.models import (
     CellEditor,
     CheckboxEditor,
     ColumnDataSource,
-    CustomJS,
     DataTable,
     Div,
     FileInput,
@@ -30,32 +29,11 @@ from bokeh.plotting import figure
 import pyzebra
 from pyzebra import EXPORT_TARGETS, app
 
-javaScript = """
-let j = 0;
-for (let i = 0; i < js_data.data['fname'].length; i++) {
-    if (js_data.data['content'][i] === "") continue;
-
-    setTimeout(function() {
-        const blob = new Blob([js_data.data['content'][i]], {type: 'text/plain'})
-        const link = document.createElement('a');
-        document.body.appendChild(link);
-        const url = window.URL.createObjectURL(blob);
-        link.href = url;
-        link.download = js_data.data['fname'][i] + js_data.data['ext'][i];
-        link.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(link);
-    }, 100 * j)
-
-    j++;
-}
-"""
-
 
 def create():
     doc = curdoc()
     dataset = []
-    js_data = ColumnDataSource(data=dict(content=["", ""], fname=["", ""], ext=["", ""]))
+    app_dlfiles = app.DownloadFiles(n_files=2)
 
     def file_select_update_for_proposal():
         proposal_path = proposal_textinput.name
@@ -131,7 +109,7 @@ def create():
             if not new_data:  # first file
                 new_data = file_data
                 pyzebra.merge_duplicates(new_data)
-                js_data.data.update(fname=[base, base])
+                app_dlfiles.set_names([base, base])
             else:
                 pyzebra.merge_datasets(new_data, file_data)
 
@@ -181,7 +159,7 @@ def create():
             if not new_data:  # first file
                 new_data = file_data
                 pyzebra.merge_duplicates(new_data)
-                js_data.data.update(fname=[base, base])
+                app_dlfiles.set_names([base, base])
             else:
                 pyzebra.merge_datasets(new_data, file_data)
 
@@ -455,18 +433,18 @@ def create():
                     content = ""
                 file_content.append(content)
 
-            js_data.data.update(content=file_content)
+            app_dlfiles.set_contents(file_content)
             export_preview_textinput.value = exported_content
 
     def export_target_select_callback(_attr, _old, new):
-        js_data.data.update(ext=EXPORT_TARGETS[new])
+        app_dlfiles.set_extensions(EXPORT_TARGETS[new])
         _update_preview()
 
     export_target_select = Select(
         title="Export target:", options=list(EXPORT_TARGETS.keys()), value="fullprof", width=80
     )
     export_target_select.on_change("value", export_target_select_callback)
-    js_data.data.update(ext=EXPORT_TARGETS[export_target_select.value])
+    app_dlfiles.set_extensions(EXPORT_TARGETS[export_target_select.value])
 
     def hkl_precision_select_callback(_attr, _old, _new):
         _update_preview()
@@ -475,9 +453,6 @@ def create():
         title="hkl precision:", options=["2", "3", "4"], value="2", width=80
     )
     hkl_precision_select.on_change("value", hkl_precision_select_callback)
-
-    save_button = Button(label="Download File(s)", button_type="success", width=200)
-    save_button.js_on_click(CustomJS(args={"js_data": js_data}, code=javaScript))
 
     area_method_div = Div(text="Intensity:", margin=(5, 5, 0, 5))
     fitpeak_controls = row(
@@ -515,7 +490,9 @@ def create():
     export_layout = column(
         export_preview_textinput,
         row(
-            export_target_select, hkl_precision_select, column(Spacer(height=19), row(save_button))
+            export_target_select,
+            hkl_precision_select,
+            column(Spacer(height=19), row(app_dlfiles.button)),
         ),
     )
 

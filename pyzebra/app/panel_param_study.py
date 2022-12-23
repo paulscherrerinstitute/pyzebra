@@ -12,7 +12,6 @@ from bokeh.models import (
     CellEditor,
     CheckboxEditor,
     ColumnDataSource,
-    CustomJS,
     DataTable,
     Div,
     FileInput,
@@ -38,27 +37,6 @@ from scipy import interpolate
 import pyzebra
 from pyzebra import app
 
-javaScript = """
-let j = 0;
-for (let i = 0; i < js_data.data['fname'].length; i++) {
-    if (js_data.data['content'][i] === "") continue;
-
-    setTimeout(function() {
-        const blob = new Blob([js_data.data['content'][i]], {type: 'text/plain'})
-        const link = document.createElement('a');
-        document.body.appendChild(link);
-        const url = window.URL.createObjectURL(blob);
-        link.href = url;
-        link.download = js_data.data['fname'][i] + js_data.data['ext'][i];
-        link.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(link);
-    }, 100 * j)
-
-    j++;
-}
-"""
-
 
 def color_palette(n_colors):
     palette = itertools.cycle(Category10[10])
@@ -68,7 +46,7 @@ def color_palette(n_colors):
 def create():
     doc = curdoc()
     dataset = []
-    js_data = ColumnDataSource(data=dict(content=[""], fname=[""], ext=[""]))
+    app_dlfiles = app.DownloadFiles(n_files=1)
 
     def file_select_update_for_proposal():
         proposal_path = proposal_textinput.name
@@ -138,7 +116,7 @@ def create():
             if not new_data:  # first file
                 new_data = file_data
                 pyzebra.merge_duplicates(new_data)
-                js_data.data.update(fname=[base])
+                app_dlfiles.set_names([base])
             else:
                 pyzebra.merge_datasets(new_data, file_data)
 
@@ -188,7 +166,7 @@ def create():
             if not new_data:  # first file
                 new_data = file_data
                 pyzebra.merge_duplicates(new_data)
-                js_data.data.update(fname=[base])
+                app_dlfiles.set_names([base])
             else:
                 pyzebra.merge_datasets(new_data, file_data)
 
@@ -628,11 +606,8 @@ def create():
                 content = ""
             file_content.append(content)
 
-            js_data.data.update(content=file_content)
+            app_dlfiles.set_contents(file_content)
             export_preview_textinput.value = exported_content
-
-    save_button = Button(label="Download File", button_type="success", width=220)
-    save_button.js_on_click(CustomJS(args={"js_data": js_data}, code=javaScript))
 
     area_method_div = Div(text="Intensity:", margin=(5, 5, 0, 5))
     fitpeak_controls = row(
@@ -667,7 +642,7 @@ def create():
         append_upload_button,
     )
 
-    export_layout = column(export_preview_textinput, row(save_button))
+    export_layout = column(export_preview_textinput, row(app_dlfiles.button))
 
     tab_layout = column(
         row(import_layout, scan_layout, plots, Spacer(width=30), export_layout),

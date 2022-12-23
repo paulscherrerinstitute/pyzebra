@@ -11,7 +11,6 @@ from bokeh.models import (
     Button,
     CheckboxGroup,
     ColumnDataSource,
-    CustomJS,
     Div,
     FileInput,
     Legend,
@@ -32,27 +31,7 @@ from bokeh.palettes import Dark2
 from bokeh.plotting import figure
 
 import pyzebra
-
-javaScript = """
-let j = 0;
-for (let i = 0; i < js_data.data['fname'].length; i++) {
-    if (js_data.data['content'][i] === "") continue;
-
-    setTimeout(function() {
-        const blob = new Blob([js_data.data['content'][i]], {type: 'text/plain'})
-        const link = document.createElement('a');
-        document.body.appendChild(link);
-        const url = window.URL.createObjectURL(blob);
-        link.href = url;
-        link.download = js_data.data['fname'][i];
-        link.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(link);
-    }, 100 * j)
-
-    j++;
-}
-"""
+from pyzebra import app
 
 ANG_CHUNK_DEFAULTS = {"2theta": 30, "gamma": 30, "omega": 30, "chi": 35, "phi": 35, "nu": 10}
 SORT_OPT_BI = ["2theta", "chi", "phi", "omega"]
@@ -64,7 +43,7 @@ def create():
     cif_data = {}
     params = {}
     res_files = {}
-    js_data = ColumnDataSource(data=dict(content=[""], fname=[""]))
+    app_dlfiles = app.DownloadFiles(n_files=1)
 
     anglim_div = Div(text="Angular min/max limits:", margin=(5, 5, 0, 5))
     sttgamma_ti = TextInput(title="stt/gamma", width=100)
@@ -315,14 +294,13 @@ def create():
         sel_file = new[0]
         file_text = res_files[sel_file]
         preview_lists.value = file_text
-        js_data.data.update(content=[file_text], fname=[sel_file])
+        app_dlfiles.set_contents([file_text])
+        app_dlfiles.set_names([sel_file])
 
     created_lists = MultiSelect(title="Created lists:", width=200, height=150)
     created_lists.on_change("value", created_lists_callback)
     preview_lists = TextAreaInput(title="Preview selected list:", width=600, height=150)
 
-    download_file = Button(label="Download file", button_type="success", width=200)
-    download_file.js_on_click(CustomJS(args={"js_data": js_data}, code=javaScript))
     plot_list = Button(label="Plot selected list", button_type="primary", width=200, disabled=True)
 
     measured_data_div = Div(text="Measured data:")
@@ -709,7 +687,7 @@ def create():
         row(ranges_layout, Spacer(width=50), magstruct_layout),
         row(sorting_layout, Spacer(width=30), column(Spacer(height=18), go_button)),
         row(created_lists, preview_lists),
-        row(download_file, plot_list),
+        row(app_dlfiles.button, plot_list),
     )
 
     hkl_layout = column(
