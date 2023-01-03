@@ -24,6 +24,7 @@ for (let i = 0; i < source.data['name'].length; i++) {
 
 class DownloadFiles:
     def __init__(self, n_files):
+        self.n_files = n_files
         source = ColumnDataSource(
             data=dict(content=[""] * n_files, name=[""] * n_files, ext=[""] * n_files)
         )

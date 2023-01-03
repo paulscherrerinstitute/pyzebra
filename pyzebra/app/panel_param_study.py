@@ -1,11 +1,8 @@
-import base64
-import io
 import itertools
 import os
 import tempfile
 
 import numpy as np
-from bokeh.io import curdoc
 from bokeh.layouts import column, row
 from bokeh.models import (
     Button,
@@ -14,17 +11,14 @@ from bokeh.models import (
     ColumnDataSource,
     DataTable,
     Div,
-    FileInput,
     HoverTool,
     LinearColorMapper,
-    MultiSelect,
     NumberEditor,
     Panel,
     Range1d,
     Select,
     Spacer,
     Span,
-    Spinner,
     TableColumn,
     Tabs,
     TextAreaInput,
@@ -44,32 +38,8 @@ def color_palette(n_colors):
 
 
 def create():
-    doc = curdoc()
     dataset = []
     app_dlfiles = app.DownloadFiles(n_files=1)
-
-    def file_select_update_for_proposal():
-        proposal_path = proposal_textinput.name
-        if proposal_path:
-            file_list = []
-            for file in os.listdir(proposal_path):
-                if file.endswith((".ccl", ".dat")):
-                    file_list.append((os.path.join(proposal_path, file), file))
-            file_select.options = file_list
-            file_open_button.disabled = False
-            file_append_button.disabled = False
-        else:
-            file_select.options = []
-            file_open_button.disabled = True
-            file_append_button.disabled = True
-
-    doc.add_periodic_callback(file_select_update_for_proposal, 5000)
-
-    def proposal_textinput_callback(_attr, _old, _new):
-        file_select_update_for_proposal()
-
-    proposal_textinput = doc.proposal_textinput
-    proposal_textinput.on_change("name", proposal_textinput_callback)
 
     def _init_datatable():
         scan_list = [s["idx"] for s in dataset]
@@ -95,123 +65,6 @@ def create():
         merge_options = [(str(i), f"{i} ({idx})") for i, idx in enumerate(scan_list)]
         merge_from_select.options = merge_options
         merge_from_select.value = merge_options[0][0]
-
-    file_select = MultiSelect(title="Available .ccl/.dat files:", width=210, height=250)
-
-    def file_open_button_callback():
-        nonlocal dataset
-        new_data = []
-        for f_path in file_select.value:
-            with open(f_path) as file:
-                f_name = os.path.basename(f_path)
-                base, ext = os.path.splitext(f_name)
-                try:
-                    file_data = pyzebra.parse_1D(file, ext)
-                except:
-                    print(f"Error loading {f_name}")
-                    continue
-
-            pyzebra.normalize_dataset(file_data, monitor_spinner.value)
-
-            if not new_data:  # first file
-                new_data = file_data
-                pyzebra.merge_duplicates(new_data)
-                app_dlfiles.set_names([base])
-            else:
-                pyzebra.merge_datasets(new_data, file_data)
-
-        if new_data:
-            dataset = new_data
-            _init_datatable()
-            append_upload_button.disabled = False
-
-    file_open_button = Button(label="Open New", width=100, disabled=True)
-    file_open_button.on_click(file_open_button_callback)
-
-    def file_append_button_callback():
-        file_data = []
-        for f_path in file_select.value:
-            with open(f_path) as file:
-                f_name = os.path.basename(f_path)
-                _, ext = os.path.splitext(f_name)
-                try:
-                    file_data = pyzebra.parse_1D(file, ext)
-                except:
-                    print(f"Error loading {f_name}")
-                    continue
-
-            pyzebra.normalize_dataset(file_data, monitor_spinner.value)
-            pyzebra.merge_datasets(dataset, file_data)
-
-        if file_data:
-            _init_datatable()
-
-    file_append_button = Button(label="Append", width=100, disabled=True)
-    file_append_button.on_click(file_append_button_callback)
-
-    def upload_button_callback(_attr, _old, _new):
-        nonlocal dataset
-        new_data = []
-        for f_str, f_name in zip(upload_button.value, upload_button.filename):
-            with io.StringIO(base64.b64decode(f_str).decode()) as file:
-                base, ext = os.path.splitext(f_name)
-                try:
-                    file_data = pyzebra.parse_1D(file, ext)
-                except:
-                    print(f"Error loading {f_name}")
-                    continue
-
-            pyzebra.normalize_dataset(file_data, monitor_spinner.value)
-
-            if not new_data:  # first file
-                new_data = file_data
-                pyzebra.merge_duplicates(new_data)
-                app_dlfiles.set_names([base])
-            else:
-                pyzebra.merge_datasets(new_data, file_data)
-
-        if new_data:
-            dataset = new_data
-            _init_datatable()
-            append_upload_button.disabled = False
-
-    upload_div = Div(text="or upload new .ccl/.dat files:", margin=(5, 5, 0, 5))
-    upload_button = FileInput(accept=".ccl,.dat", multiple=True, width=200)
-    # for on_change("value", ...) or on_change("filename", ...),
-    # see https://github.com/bokeh/bokeh/issues/11461
-    upload_button.on_change("filename", upload_button_callback)
-
-    def append_upload_button_callback(_attr, _old, _new):
-        file_data = []
-        for f_str, f_name in zip(append_upload_button.value, append_upload_button.filename):
-            with io.StringIO(base64.b64decode(f_str).decode()) as file:
-                _, ext = os.path.splitext(f_name)
-                try:
-                    file_data = pyzebra.parse_1D(file, ext)
-                except:
-                    print(f"Error loading {f_name}")
-                    continue
-
-            pyzebra.normalize_dataset(file_data, monitor_spinner.value)
-            pyzebra.merge_datasets(dataset, file_data)
-
-        if file_data:
-            _init_datatable()
-
-    append_upload_div = Div(text="append extra files:", margin=(5, 5, 0, 5))
-    append_upload_button = FileInput(accept=".ccl,.dat", multiple=True, width=200, disabled=True)
-    # for on_change("value", ...) or on_change("filename", ...),
-    # see https://github.com/bokeh/bokeh/issues/11461
-    append_upload_button.on_change("filename", append_upload_button_callback)
-
-    def monitor_spinner_callback(_attr, _old, new):
-        if dataset:
-            pyzebra.normalize_dataset(dataset, new)
-            _update_single_scan_plot()
-            _update_overview()
-
-    monitor_spinner = Spinner(title="Monitor:", mode="int", value=100_000, low=1, width=145)
-    monitor_spinner.on_change("value", monitor_spinner_callback)
 
     def scan_motor_select_callback(_attr, _old, new):
         if dataset:
@@ -343,6 +196,14 @@ def create():
                 y_upper.append(param_fit_val + param_fit_std)
 
         param_scatter_source.data.update(x=x, y=y, y_lower=y_lower, y_upper=y_upper)
+
+    def _monitor_change():
+        _update_single_scan_plot()
+        _update_overview()
+
+    app_inputctrl = app.InputControls(
+        dataset, app_dlfiles, on_file_open=_init_datatable, on_monitor_change=_monitor_change
+    )
 
     # Main plot
     plot = figure(
@@ -629,17 +490,19 @@ def create():
 
     scan_layout = column(
         scan_table,
-        row(monitor_spinner, scan_motor_select, param_select),
+        row(app_inputctrl.monitor_spinner, scan_motor_select, param_select),
         row(column(Spacer(height=19), row(restore_button, merge_button)), merge_from_select),
     )
 
+    upload_div = Div(text="or upload new .ccl/.dat files:", margin=(5, 5, 0, 5))
+    append_upload_div = Div(text="append extra files:", margin=(5, 5, 0, 5))
     import_layout = column(
-        file_select,
-        row(file_open_button, file_append_button),
+        app_inputctrl.filelist_select,
+        row(app_inputctrl.open_button, app_inputctrl.append_button),
         upload_div,
-        upload_button,
+        app_inputctrl.upload_button,
         append_upload_div,
-        append_upload_button,
+        app_inputctrl.append_upload_button,
     )
 
     export_layout = column(export_preview_textinput, row(app_dlfiles.button))
