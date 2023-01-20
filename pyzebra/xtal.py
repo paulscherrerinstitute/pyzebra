@@ -371,7 +371,7 @@ def ang2hkl(wave, ddist, gammad, om, ch, ph, nud, ub, x, y):
     return hkl
 
 
-def ang2hkl_1d(wave, ddist, ga, om, ch, ph, nu, ub):
+def ang2hkl_1d(wave, ga, om, ch, ph, nu, ub):
     """Calculate hkl-indices of a reflection from its position (angles) at the 1d-detector"""
     z1 = z1frmd(wave, ga, om, ch, ph, nu)
     ubinv = np.linalg.inv(ub)

@@ -313,12 +313,6 @@ def create():
     cmap = Dark2[8]
     syms = ["circle", "inverted_triangle", "square", "diamond", "star", "triangle"]
 
-    # Define resolution function
-    def _res_fun(stt, wave, res_mult):
-        expr = np.tan(stt / 2 * np.pi / 180)
-        fwhm = np.sqrt(0.4639 * expr**2 - 0.4452 * expr + 0.1506) * res_mult  # res in deg
-        return fwhm
-
     def plot_file_callback():
         orth_dir = list(map(float, hkl_normal.value.split()))
         cut_tol = hkl_delta.value
@@ -348,7 +342,8 @@ def create():
         md_fnames = measured_data.filename
         md_fdata = measured_data.value
 
-        # Load first data cile, read angles and define matrices to perform conversion to cartesian coordinates and back
+        # Load first data file, read angles and define matrices to perform conversion to cartesian
+        # coordinates and back
         with io.StringIO(base64.b64decode(md_fdata[0]).decode()) as file:
             _, ext = os.path.splitext(md_fnames[0])
             try:
@@ -362,9 +357,6 @@ def create():
         gamma = file_data[0]["gamma_cell"] * np.pi / 180.0
 
         # reciprocal angle parameters
-        alpha_star = np.arccos(
-            (np.cos(beta) * np.cos(gamma) - np.cos(alpha)) / (np.sin(beta) * np.sin(gamma))
-        )
         beta_star = np.arccos(
             (np.cos(alpha) * np.cos(gamma) - np.cos(beta)) / (np.sin(alpha) * np.sin(gamma))
         )
@@ -372,7 +364,7 @@ def create():
             (np.cos(alpha) * np.cos(beta) - np.cos(gamma)) / (np.sin(alpha) * np.sin(beta))
         )
 
-        # conversion matrix:
+        # conversion matrix
         M = np.array(
             [
                 [1, np.cos(gamma_star), np.cos(beta_star)],
@@ -380,7 +372,6 @@ def create():
                 [0, 0, np.sin(beta_star) * np.sin(alpha)],
             ]
         )
-        M_inv = np.linalg.inv(M)
 
         # Calculate in-plane y-direction
         x_c = M @ x_dir
@@ -401,13 +392,13 @@ def create():
         res_vec_y = []
         res_N = 10
 
-        for j in range(len(md_fnames)):
+        for j, md_fname in enumerate(md_fnames):
             with io.StringIO(base64.b64decode(md_fdata[j]).decode()) as file:
-                _, ext = os.path.splitext(md_fnames[j])
+                _, ext = os.path.splitext(md_fname)
                 try:
                     file_data = pyzebra.parse_1D(file, ext)
                 except:
-                    print(f"Error loading {md_fnames[j]}")
+                    print(f"Error loading {md_fname}")
                     return
 
             # Loop throguh all data
@@ -418,39 +409,31 @@ def create():
                 phi = scan["phi"]
                 nud = 0  # 1d detector
                 ub = scan["ub"]
-                ddist = float(scan["detectorDistance"])
                 counts = scan["counts"]
                 mon = scan["monitor"]
-
-                # Determine wavelength from mcvl value (is wavelength stored anywhere???)
-                mcvl = scan["mcvl"]
-                if mcvl == 2.2:
-                    wave = 1.178
-                elif mcvl == 7.0:
-                    wave = 1.383
-                else:
-                    wave = 2.3
+                wave = scan["wavelength"]
 
                 # Calculate resolution in degrees
-                res = _res_fun(gammad, wave, res_mult)
+                expr = np.tan(gammad / 2 * np.pi / 180)
+                res = np.sqrt(0.4639 * expr**2 - 0.4452 * expr + 0.1506) * res_mult  # res in deg
 
                 # convert to resolution in hkl along scan line
                 ang2hkl_1d = pyzebra.ang2hkl_1d
                 res_x = []
                 res_y = []
                 for _om in np.linspace(om[0], om[-1], num=res_N):
-                    expr1 = ang2hkl_1d(wave, ddist, gammad, _om + res / 2, chi, phi, nud, ub)
-                    expr2 = ang2hkl_1d(wave, ddist, gammad, _om - res / 2, chi, phi, nud, ub)
+                    expr1 = ang2hkl_1d(wave, gammad, _om + res / 2, chi, phi, nud, ub)
+                    expr2 = ang2hkl_1d(wave, gammad, _om - res / 2, chi, phi, nud, ub)
                     hkl_temp = M @ (np.abs(expr1 - expr2) / 2)
                     res_x.append(hkl_temp[0])
                     res_y.append(hkl_temp[1])
 
                 # Get first and final hkl
-                hkl1 = ang2hkl_1d(wave, ddist, gammad, om[0], chi, phi, nud, ub)
-                hkl2 = ang2hkl_1d(wave, ddist, gammad, om[-1], chi, phi, nud, ub)
+                hkl1 = ang2hkl_1d(wave, gammad, om[0], chi, phi, nud, ub)
+                hkl2 = ang2hkl_1d(wave, gammad, om[-1], chi, phi, nud, ub)
 
                 # Get hkl at best intensity
-                hkl_m = ang2hkl_1d(wave, ddist, gammad, om[np.argmax(counts)], chi, phi, nud, ub)
+                hkl_m = ang2hkl_1d(wave, gammad, om[np.argmax(counts)], chi, phi, nud, ub)
 
                 # Estimate intensity for marker size scaling
                 y1 = counts[0]
@@ -483,6 +466,7 @@ def create():
         plot.y_range.start = plot.y_range.reset_start = -4
         plot.y_range.end = plot.y_range.reset_end = 3.5
 
+        # Plot grid lines
         xs, ys = [], []
         xs_minor, ys_minor = [], []
         if grid_flag:

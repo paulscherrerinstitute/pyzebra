@@ -29,7 +29,7 @@ META_VARS_FLOAT = (
     "phi",
     "nu",
     "temp",
-    "wavelenght",
+    "wavelength",
     "a",
     "b",
     "c",
