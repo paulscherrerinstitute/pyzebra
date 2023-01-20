@@ -326,7 +326,7 @@ def create():
         x_dir = list(map(float, hkl_in_plane_x.value.split()))
         y_dir = list(map(float, hkl_in_plane_y.value.split()))
 
-        k = np.array(k_vectors.value.split()).astype(float).reshape(3, 3)
+        k = np.array(k_vectors.value.split()).astype(float).reshape(-1, 3)
         tol_k = 0.1
 
         # Plotting options
