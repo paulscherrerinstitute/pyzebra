@@ -628,7 +628,7 @@ def create():
     plot.multi_line(source=minor_grid_source, line_color="gray", line_dash="dotted")
 
     ellipse_source = ColumnDataSource(dict(x=[], y=[], width=[], height=[], c=[]))
-    ellipse = plot.ellipse(source=ellipse_source, fill_color="c", line_color="c").glyph
+    ellipse = plot.ellipse(source=ellipse_source, fill_color="c", line_color="c")
 
     scan_source = ColumnDataSource(dict(xs=[], ys=[], x=[], y=[], m=[], s=[], c=[], l=[]))
     mline = plot.multi_line(source=scan_source, line_color="c")
