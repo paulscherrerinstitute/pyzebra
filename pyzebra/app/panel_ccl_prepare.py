@@ -29,6 +29,7 @@ from bokeh.models import (
 )
 from bokeh.palettes import Dark2
 from bokeh.plotting import figure
+from scipy.integrate import simpson, trapezoid
 
 import pyzebra
 from pyzebra import app
@@ -401,6 +402,8 @@ def create():
                     print(f"Error loading {md_fname}")
                     return
 
+            pyzebra.normalize_dataset(file_data)
+
             # Loop throguh all data
             for scan in file_data:
                 om = scan["omega"]
@@ -410,7 +413,6 @@ def create():
                 nud = 0  # 1d detector
                 ub = scan["ub"]
                 counts = scan["counts"]
-                mon = scan["monitor"]
                 wave = scan["wavelength"]
 
                 # Calculate resolution in degrees
@@ -436,14 +438,9 @@ def create():
                 hkl_m = ang2hkl_1d(wave, gammad, om[np.argmax(counts)], chi, phi, nud, ub)
 
                 # Estimate intensity for marker size scaling
-                y1 = counts[0]
-                y2 = counts[-1]
-                x1 = om[0]
-                x2 = om[-1]
-                a = (y1 - y2) / (x1 - x2)
-                b = y1 - a * x1
-                intensity_exp = np.sum(counts - (a * om + b))
-                c = int(intensity_exp / mon * 10000)
+                y_bkg = [counts[0], counts[-1]]
+                x_bkg = [om[0], om[-1]]
+                c = int(simpson(counts, x=om) - trapezoid(y_bkg, x=x_bkg))
 
                 # Recognize k_flag_vec
                 reduced_hkl_m = np.minimum(1 - hkl_m % 1, hkl_m % 1)
