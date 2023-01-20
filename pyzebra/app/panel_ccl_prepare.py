@@ -446,13 +446,14 @@ def create():
                 c = int(intensity_exp / mon * 10000)
 
                 # Recognize k_flag_vec
-                min_hkl_m = np.minimum(1 - hkl_m % 1, hkl_m % 1)
-                for j2, _k in enumerate(k):
-                    if all(np.abs(min_hkl_m - _k) < tol_k):
-                        k_flag_vec.append(j2)
+                reduced_hkl_m = np.minimum(1 - hkl_m % 1, hkl_m % 1)
+                for ind, _k in enumerate(k):
+                    if all(np.abs(reduced_hkl_m - _k) < tol_k):
+                        k_flag_vec.append(ind)
                         break
                 else:
-                    k_flag_vec.append(len(k))
+                    # not required
+                    continue
 
                 # Save data
                 hkl_coord.append([hkl1, hkl2, hkl_m])
