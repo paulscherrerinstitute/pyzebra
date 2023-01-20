@@ -321,7 +321,7 @@ def create():
         y_dir = list(map(float, hkl_in_plane_y.value.split()))
 
         k = np.array(k_vectors.value.split()).astype(float).reshape(-1, 3)
-        tol_k = 0.1
+        tol_k = tol_k_ni.value
 
         # Plotting options
         grid_flag = 1
@@ -641,6 +641,7 @@ def create():
         title="k vectors:", value="0.0 0.0 0.0\n0.5 0.0 0.0\n0.5 0.5 0.0", width=150
     )
     res_mult_ni = NumericInput(title="Resolution mult:", value=10, mode="int", width=100)
+    tol_k_ni = NumericInput(title="k tolerance:", value=0.01, mode="float", width=100)
 
     fileinput_layout = row(open_cfl_div, open_cfl, open_cif_div, open_cif, open_geom_div, open_geom)
 
@@ -684,7 +685,7 @@ def create():
         row(measured_data_div, measured_data, plot_file),
         plot,
         row(hkl_layout, k_vectors),
-        row(disting_layout, res_mult_ni),
+        row(disting_layout, column(tol_k_ni, res_mult_ni)),
     )
 
     tab_layout = row(column1_layout, column2_layout)
