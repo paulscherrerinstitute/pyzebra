@@ -975,7 +975,7 @@ def calculate_hkl(scan, index):
     gammad = scan["gamma"][index]
     om = scan["omega"][index]
     nud = scan["nu"]
-    ub = scan["ub"]
+    ub_inv = np.linalg.inv(scan["ub"])
     geometry = scan["zebra_mode"]
 
     if geometry == "bi":
@@ -990,7 +990,7 @@ def calculate_hkl(scan, index):
     for xi in np.arange(IMAGE_W):
         for yi in np.arange(IMAGE_H):
             h[yi, xi], k[yi, xi], l[yi, xi] = pyzebra.ang2hkl(
-                wave, ddist, gammad, om, chi, phi, nud, ub, xi, yi
+                wave, ddist, gammad, om, chi, phi, nud, ub_inv, xi, yi
             )
 
     return h, k, l

@@ -138,7 +138,7 @@ class PlotHKL:
                     chi = scan["chi"]
                     phi = scan["phi"]
                     nud = 0  # 1d detector
-                    ub = scan["ub"]
+                    ub_inv = np.linalg.inv(scan["ub"])
                     counts = scan["counts"]
                     wave = scan["wavelength"]
 
@@ -153,18 +153,18 @@ class PlotHKL:
                     res_x = []
                     res_y = []
                     for _om in np.linspace(om[0], om[-1], num=res_N):
-                        expr1 = ang2hkl_1d(wave, gammad, _om + res / 2, chi, phi, nud, ub)
-                        expr2 = ang2hkl_1d(wave, gammad, _om - res / 2, chi, phi, nud, ub)
+                        expr1 = ang2hkl_1d(wave, gammad, _om + res / 2, chi, phi, nud, ub_inv)
+                        expr2 = ang2hkl_1d(wave, gammad, _om - res / 2, chi, phi, nud, ub_inv)
                         hkl_temp = M @ (np.abs(expr1 - expr2) / 2)
                         res_x.append(hkl_temp[0])
                         res_y.append(hkl_temp[1])
 
                     # Get first and final hkl
-                    hkl1 = ang2hkl_1d(wave, gammad, om[0], chi, phi, nud, ub)
-                    hkl2 = ang2hkl_1d(wave, gammad, om[-1], chi, phi, nud, ub)
+                    hkl1 = ang2hkl_1d(wave, gammad, om[0], chi, phi, nud, ub_inv)
+                    hkl2 = ang2hkl_1d(wave, gammad, om[-1], chi, phi, nud, ub_inv)
 
                     # Get hkl at best intensity
-                    hkl_m = ang2hkl_1d(wave, gammad, om[np.argmax(counts)], chi, phi, nud, ub)
+                    hkl_m = ang2hkl_1d(wave, gammad, om[np.argmax(counts)], chi, phi, nud, ub_inv)
 
                     # Estimate intensity for marker size scaling
                     y_bkg = [counts[0], counts[-1]]
