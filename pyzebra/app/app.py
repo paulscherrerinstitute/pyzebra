@@ -15,6 +15,7 @@ from pyzebra.app import (
     panel_hdf_param_study,
     panel_hdf_viewer,
     panel_param_study,
+    panel_plot_data,
     panel_spind,
 )
 
@@ -68,6 +69,7 @@ doc.add_root(
                 panel_hdf_viewer.create(),
                 panel_hdf_anatric.create(),
                 panel_ccl_prepare.create(),
+                panel_plot_data.create(),
                 panel_ccl_integrate.create(),
                 panel_ccl_compare.create(),
                 panel_param_study.create(),
