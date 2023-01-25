@@ -22,21 +22,21 @@ def z4frgn(wave, ga, nu):
 
 
 @njit(cache=True)
-def phimat(phi):
-    """BUSING AND LEVY CONVENTION ROTATION MATRIX FOR PHI OR OMEGA
+def phimat_T(phi):
+    """TRANSPOSED BUSING AND LEVY CONVENTION ROTATION MATRIX FOR PHI OR OMEGA
 
     Args:
         PHI
 
     Returns:
-        DUM
+        DUM_T
     """
     ph_r = phi / pi_r
 
-    dum = np.zeros(9).reshape(3, 3)
+    dum = np.zeros((3, 3))
     dum[0, 0] = np.cos(ph_r)
-    dum[0, 1] = np.sin(ph_r)
-    dum[1, 0] = -dum[0, 1]
+    dum[1, 0] = np.sin(ph_r)
+    dum[0, 1] = -dum[1, 0]
     dum[1, 1] = dum[0, 0]
     dum[2, 2] = 1
 
@@ -54,30 +54,28 @@ def z1frnb(wave, ga, nu, om):
         Z1
     """
     z4 = z4frgn(wave, ga, nu)
-    dum = phimat(phi=om)
-    dumt = np.transpose(dum)
-    z3 = dumt.dot(z4)
+    z3 = phimat_T(phi=om).dot(z4)
 
     return z3
 
 
 @njit(cache=True)
-def chimat(chi):
-    """BUSING AND LEVY CONVENTION ROTATION MATRIX FOR CHI
+def chimat_T(chi):
+    """TRANSPOSED BUSING AND LEVY CONVENTION ROTATION MATRIX FOR CHI
 
     Args:
         CHI
 
     Returns:
-        DUM
+        DUM_T
     """
     ch_r = chi / pi_r
 
-    dum = np.zeros(9).reshape(3, 3)
+    dum = np.zeros((3, 3))
     dum[0, 0] = np.cos(ch_r)
-    dum[0, 2] = np.sin(ch_r)
+    dum[2, 0] = np.sin(ch_r)
     dum[1, 1] = 1
-    dum[2, 0] = -dum[0, 2]
+    dum[0, 2] = -dum[2, 0]
     dum[2, 2] = dum[0, 0]
 
     return dum
@@ -93,13 +91,8 @@ def z1frz3(z3, chi, phi):
     Returns:
         Z1
     """
-    dum1 = chimat(chi)
-    dum2 = np.transpose(dum1)
-    z2 = dum2.dot(z3)
-
-    dum1 = phimat(phi)
-    dum2 = np.transpose(dum1)
-    z1 = dum2.dot(z2)
+    z2 = chimat_T(chi).dot(z3)
+    z1 = phimat_T(phi).dot(z2)
 
     return z1
 
