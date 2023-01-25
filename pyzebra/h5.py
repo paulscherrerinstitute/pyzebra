@@ -111,9 +111,9 @@ def read_detector_data(filepath, cami_meta=None):
         if len(scan["gamma"]) == 1:
             scan["gamma"] = np.ones(n) * scan["gamma"]
             scan["twotheta"] = np.ones(n) * scan["twotheta"]
-        scan["nu"] = h5f["/entry1/ZEBRA/area_detector2/tilt_angle"][:1]
-        scan["ddist"] = h5f["/entry1/ZEBRA/area_detector2/distance"][:1]
-        scan["wave"] = h5f["/entry1/ZEBRA/monochromator/wavelength"][:1]
+        scan["nu"] = h5f["/entry1/ZEBRA/area_detector2/tilt_angle"][0]
+        scan["ddist"] = h5f["/entry1/ZEBRA/area_detector2/distance"][0]
+        scan["wave"] = h5f["/entry1/ZEBRA/monochromator/wavelength"][0]
         scan["chi"] = h5f["/entry1/sample/chi"][:]
         if len(scan["chi"]) == 1:
             scan["chi"] = np.ones(n) * scan["chi"]

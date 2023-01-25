@@ -4,6 +4,7 @@ from numba import njit
 pi_r = 180 / np.pi
 
 
+@njit(cache=True)
 def z4frgn(wave, ga, nu):
     """CALCULATES DIFFRACTION VECTOR IN LAB SYSTEM FROM GA AND NU
 
@@ -15,12 +16,9 @@ def z4frgn(wave, ga, nu):
     """
     ga_r = ga / pi_r
     nu_r = nu / pi_r
-    z4 = [0.0, 0.0, 0.0]
-    z4[0] = (np.sin(ga_r) * np.cos(nu_r)) / wave
-    z4[1] = (np.cos(ga_r) * np.cos(nu_r) - 1.0) / wave
-    z4[2] = (np.sin(nu_r)) / wave
+    z4 = [np.sin(ga_r) * np.cos(nu_r), np.cos(ga_r) * np.cos(nu_r) - 1.0, np.sin(nu_r)]
 
-    return z4
+    return np.array(z4) / wave
 
 
 @njit(cache=True)
@@ -45,6 +43,7 @@ def phimat(phi):
     return dum
 
 
+@njit(cache=True)
 def z1frnb(wave, ga, nu, om):
     """CALCULATE DIFFRACTION VECTOR Z1 FROM GA, OM, NU, ASSUMING CH=PH=0
 
