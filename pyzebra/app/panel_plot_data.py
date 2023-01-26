@@ -157,11 +157,22 @@ def create():
         y_slice = y[ind[0], ind[1], ind[2]]
         I_slice = I_matrix[ind[0], ind[1], ind[2]]
 
-        # Define meshgrid limits for plotting (upper and lower limit + how fine mesh should be)
-        min_x = np.min(x_slice)
-        max_x = np.max(x_slice)
-        min_y = np.min(y_slice)
-        max_y = np.max(y_slice)
+        # Meshgrid limits for plotting
+        if auto_range_cb.active:
+            min_x = np.min(x_slice)
+            max_x = np.max(x_slice)
+            min_y = np.min(y_slice)
+            max_y = np.max(y_slice)
+            xrange_min_ni.value = min_x
+            xrange_max_ni.value = max_x
+            yrange_min_ni.value = min_y
+            yrange_max_ni.value = max_y
+        else:
+            min_x = xrange_min_ni.value
+            max_x = xrange_max_ni.value
+            min_y = yrange_min_ni.value
+            max_y = yrange_max_ni.value
+
         delta_x = xrange_step_ni.value
         delta_y = yrange_step_ni.value
 
@@ -240,23 +251,38 @@ def create():
     display_max_ni = NumericInput(title="max:", value=1, mode="float", width=70)
     display_max_ni.on_change("value", display_max_ni_callback)
 
-    # xrange_min_ni = NumericInput(title="x range min:", value=0, mode="float", width=70)
-    # xrange_max_ni = NumericInput(title="max:", value=1, mode="float", width=70)
+    xrange_min_ni = NumericInput(title="x range min:", value=0, mode="float", width=70)
+    xrange_max_ni = NumericInput(title="max:", value=1, mode="float", width=70)
     xrange_step_ni = NumericInput(title="x mesh:", value=0.01, mode="float", width=70)
 
-    # yrange_min_ni = NumericInput(title="y range min:", value=0, mode="float", width=70)
-    # yrange_max_ni = NumericInput(title="max:", value=1, mode="float", width=70)
+    yrange_min_ni = NumericInput(title="y range min:", value=0, mode="float", width=70)
+    yrange_max_ni = NumericInput(title="max:", value=1, mode="float", width=70)
     yrange_step_ni = NumericInput(title="y mesh:", value=0.01, mode="float", width=70)
 
+    def auto_range_cb_callback(_attr, _old, new):
+        if new:
+            xrange_min_ni.disabled = True
+            xrange_max_ni.disabled = True
+            yrange_min_ni.disabled = True
+            yrange_max_ni.disabled = True
+        else:
+            xrange_min_ni.disabled = False
+            xrange_max_ni.disabled = False
+            yrange_min_ni.disabled = False
+            yrange_max_ni.disabled = False
+
+    auto_range_cb = CheckboxGroup(labels=["Auto range:"], width=110)
+    auto_range_cb.on_change("active", auto_range_cb_callback)
+    auto_range_cb.active = [0]
+
     range_layout = row(
-        # xrange_min_ni,
-        # xrange_max_ni,
-        # Spacer(width=10),
+        column(Spacer(height=20), auto_range_cb),
+        xrange_min_ni,
+        xrange_max_ni,
+        yrange_min_ni,
+        yrange_max_ni,
+        Spacer(width=27),
         xrange_step_ni,
-        Spacer(width=50),
-        # yrange_min_ni,
-        # yrange_max_ni,
-        # Spacer(width=10),
         yrange_step_ni,
     )
     cm_layout = row(colormap_select, display_min_ni, display_max_ni)
