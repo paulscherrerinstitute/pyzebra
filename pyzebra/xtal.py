@@ -2,6 +2,13 @@ import numpy as np
 from numba import njit
 
 pi_r = 180 / np.pi
+IMAGE_W = 256
+IMAGE_H = 128
+
+XNORM = 128
+YNORM = 64
+XPIX = 0.734
+YPIX = 1.4809
 
 
 @njit(cache=True)
@@ -279,6 +286,59 @@ def ang2hkl(wave, ddist, gammad, om, ch, ph, nud, ub_inv, x, y):
     ga, nu = det2pol(ddist, gammad, nud, x, y)
     z1 = z1frmd(wave, ga, om, ch, ph, nu)
     hkl = ub_inv @ z1
+
+    return hkl
+
+
+def ang2hkl_det(wave, ddist, gammad, om, chi, phi, nud, ub_inv):
+    """Calculate hkl-indices of a reflection from its position (x,y,angles) at the 2d-detector"""
+    xv, yv = np.meshgrid(range(IMAGE_W), range(IMAGE_H))
+    xobs = (xv.ravel() - XNORM) * XPIX
+    yobs = (yv.ravel() - YNORM) * YPIX
+
+    a = xobs
+    b = ddist * np.cos(yobs / ddist)
+    z = ddist * np.sin(yobs / ddist)
+    d = np.sqrt(a * a + b * b)
+
+    gamma = gammad + np.arctan2(a, b) * pi_r
+    nu = nud + np.arctan2(z, d) * pi_r
+
+    gamma_r = gamma / pi_r
+    nu_r = nu / pi_r
+    z4 = np.vstack(
+        (
+            np.sin(gamma_r) * np.cos(nu_r) / wave,
+            (np.cos(gamma_r) * np.cos(nu_r) - 1) / wave,
+            np.sin(nu_r) / wave,
+        )
+    )
+
+    om_r = om / pi_r
+    dum3 = np.zeros((3, 3))
+    dum3[0, 0] = np.cos(om_r)
+    dum3[1, 0] = np.sin(om_r)
+    dum3[0, 1] = -dum3[1, 0]
+    dum3[1, 1] = dum3[0, 0]
+    dum3[2, 2] = 1
+
+    chi_r = chi / pi_r
+    dum2 = np.zeros((3, 3))
+    dum2[0, 0] = np.cos(chi_r)
+    dum2[2, 0] = np.sin(chi_r)
+    dum2[1, 1] = 1
+    dum2[0, 2] = -dum2[2, 0]
+    dum2[2, 2] = dum2[0, 0]
+
+    phi_r = phi / pi_r
+    dum1 = np.zeros((3, 3))
+    dum1[0, 0] = np.cos(phi_r)
+    dum1[1, 0] = np.sin(phi_r)
+    dum1[0, 1] = -dum1[1, 0]
+    dum1[1, 1] = dum1[0, 0]
+    dum1[2, 2] = 1
+
+    hkl = (ub_inv @ dum1 @ dum2 @ dum3 @ z4).reshape(3, IMAGE_H, IMAGE_W)
 
     return hkl
 

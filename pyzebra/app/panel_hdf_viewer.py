@@ -987,11 +987,7 @@ def calculate_hkl(scan, index):
     else:
         raise ValueError(f"Unknown geometry type '{geometry}'")
 
-    for xi in np.arange(IMAGE_W):
-        for yi in np.arange(IMAGE_H):
-            h[yi, xi], k[yi, xi], l[yi, xi] = pyzebra.ang2hkl(
-                wave, ddist, gammad, om, chi, phi, nud, ub_inv, xi, yi
-            )
+    h, k, l = pyzebra.ang2hkl_det(wave, ddist, gammad, om, chi, phi, nud, ub_inv)
 
     return h, k, l
 
