@@ -194,7 +194,7 @@ def create():
         x_range=DataRange1d(),
         y_range=DataRange1d(),
         plot_height=450,
-        plot_width=600,
+        plot_width=450 + 32,
         tools="pan,wheel_zoom,reset",
     )
     plot.toolbar.logo = None
