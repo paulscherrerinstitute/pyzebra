@@ -29,7 +29,6 @@ from bokeh.models import (
     TableColumn,
     Tabs,
 )
-from bokeh.palettes import Cividis256, Greys256, Plasma256
 from bokeh.plotting import figure
 
 import pyzebra
@@ -275,7 +274,7 @@ def create():
         export = [scan["export"] for scan in dataset]
         scan_table_source.data.update(export=export)
 
-    def monitor_spinner_callback(_attr, old, new):
+    def monitor_spinner_callback(_attr, _old, new):
         if dataset:
             pyzebra.normalize_dataset(dataset, new)
             _update_image()
@@ -333,9 +332,6 @@ def create():
 
             display_min_spinner.value = im_min
             display_max_spinner.value = im_max
-
-            image_glyph.color_mapper.low = im_min
-            image_glyph.color_mapper.high = im_max
 
         if "mf" in scan:
             metadata_table_source.data.update(mf=[scan["mf"][index]])
@@ -400,11 +396,6 @@ def create():
 
             proj_display_min_spinner.value = im_min
             proj_display_max_spinner.value = im_max
-
-            proj_x_image_glyph.color_mapper.low = im_min
-            proj_y_image_glyph.color_mapper.low = im_min
-            proj_x_image_glyph.color_mapper.high = im_max
-            proj_y_image_glyph.color_mapper.high = im_max
 
         frame_range.start = 0
         frame_range.end = n_im
@@ -492,7 +483,8 @@ def create():
         )
     )
 
-    image_glyph = plot.image(source=image_source).glyph
+    color_mapper = LinearColorMapper()
+    plot.image(source=image_source, color_mapper=color_mapper)
     plot.image(source=image_source, image="h", global_alpha=0)
     plot.image(source=image_source, image="k", global_alpha=0)
     plot.image(source=image_source, image="l", global_alpha=0)
@@ -581,6 +573,7 @@ def create():
     # shared frame ranges
     frame_range = Range1d(0, 1, bounds=(0, 1))
     scanning_motor_range = Range1d(0, 1, bounds=(0, 1))
+    color_mapper_proj = LinearColorMapper()
 
     det_x_range = Range1d(0, IMAGE_W, bounds=(0, IMAGE_W))
     gamma_range = Range1d(0, 1, bounds=(0, 1))
@@ -607,7 +600,7 @@ def create():
         dict(image=[np.zeros((1, 1), dtype="float32")], x=[0], y=[0], dw=[IMAGE_W], dh=[1])
     )
 
-    proj_x_image_glyph = proj_x_plot.image(source=proj_x_image_source).glyph
+    proj_x_plot.image(source=proj_x_image_source, color_mapper=color_mapper_proj)
 
     det_y_range = Range1d(0, IMAGE_H, bounds=(0, IMAGE_H))
     nu_range = Range1d(0, 1, bounds=(0, 1))
@@ -636,7 +629,7 @@ def create():
         dict(image=[np.zeros((1, 1), dtype="float32")], x=[0], y=[0], dw=[IMAGE_H], dh=[1])
     )
 
-    proj_y_image_glyph = proj_y_plot.image(source=proj_y_image_source).glyph
+    proj_y_plot.image(source=proj_y_image_source, color_mapper=color_mapper_proj)
 
     # ROI slice plot
     roi_avg_plot = figure(plot_height=150, plot_width=IMAGE_PLOT_W, tools="", toolbar_location=None)
@@ -644,23 +637,17 @@ def create():
     roi_avg_plot_line_source = ColumnDataSource(dict(x=[], y=[]))
     roi_avg_plot.line(source=roi_avg_plot_line_source, line_color="steelblue")
 
-    cmap_dict = {
-        "gray": Greys256,
-        "gray_reversed": Greys256[::-1],
-        "plasma": Plasma256,
-        "cividis": Cividis256,
-    }
+    def colormap_select_callback(_attr, _old, new):
+        color_mapper.palette = new
+        color_mapper_proj.palette = new
 
-    def colormap_callback(_attr, _old, new):
-        image_glyph.color_mapper = LinearColorMapper(palette=cmap_dict[new])
-        proj_x_image_glyph.color_mapper = LinearColorMapper(palette=cmap_dict[new])
-        proj_y_image_glyph.color_mapper = LinearColorMapper(palette=cmap_dict[new])
-
-    colormap = Select(title="Colormap:", options=list(cmap_dict.keys()), width=210)
-    colormap.on_change("value", colormap_callback)
-    colormap.value = "plasma"
-
-    STEP = 1
+    colormap_select = Select(
+        title="Colormap:",
+        options=[("Greys256", "greys"), ("Plasma256", "plasma"), ("Cividis256", "cividis")],
+        width=210,
+    )
+    colormap_select.on_change("value", colormap_select_callback)
+    colormap_select.value = "Plasma256"
 
     def main_auto_checkbox_callback(state):
         if state:
@@ -678,39 +665,20 @@ def create():
     main_auto_checkbox.on_click(main_auto_checkbox_callback)
 
     def display_max_spinner_callback(_attr, _old_value, new_value):
-        display_min_spinner.high = new_value - STEP
-        image_glyph.color_mapper.high = new_value
-
-        _update_image()
+        color_mapper.high = new_value
 
     display_max_spinner = Spinner(
-        low=0 + STEP,
-        value=1,
-        step=STEP,
-        disabled=bool(main_auto_checkbox.active),
-        width=100,
-        height=31,
+        value=1, disabled=bool(main_auto_checkbox.active), mode="int", width=100, height=31
     )
     display_max_spinner.on_change("value", display_max_spinner_callback)
 
     def display_min_spinner_callback(_attr, _old_value, new_value):
-        display_max_spinner.low = new_value + STEP
-        image_glyph.color_mapper.low = new_value
-
-        _update_image()
+        color_mapper.low = new_value
 
     display_min_spinner = Spinner(
-        low=0,
-        high=1 - STEP,
-        value=0,
-        step=STEP,
-        disabled=bool(main_auto_checkbox.active),
-        width=100,
-        height=31,
+        value=0, disabled=bool(main_auto_checkbox.active), mode="int", width=100, height=31
     )
     display_min_spinner.on_change("value", display_min_spinner_callback)
-
-    PROJ_STEP = 1
 
     def proj_auto_checkbox_callback(state):
         if state:
@@ -728,37 +696,18 @@ def create():
     proj_auto_checkbox.on_click(proj_auto_checkbox_callback)
 
     def proj_display_max_spinner_callback(_attr, _old_value, new_value):
-        proj_display_min_spinner.high = new_value - PROJ_STEP
-        proj_x_image_glyph.color_mapper.high = new_value
-        proj_y_image_glyph.color_mapper.high = new_value
-
-        _update_proj_plots()
+        color_mapper_proj.high = new_value
 
     proj_display_max_spinner = Spinner(
-        low=0 + PROJ_STEP,
-        value=1,
-        step=PROJ_STEP,
-        disabled=bool(proj_auto_checkbox.active),
-        width=100,
-        height=31,
+        value=1, disabled=bool(proj_auto_checkbox.active), mode="int", width=100, height=31
     )
     proj_display_max_spinner.on_change("value", proj_display_max_spinner_callback)
 
     def proj_display_min_spinner_callback(_attr, _old_value, new_value):
-        proj_display_max_spinner.low = new_value + PROJ_STEP
-        proj_x_image_glyph.color_mapper.low = new_value
-        proj_y_image_glyph.color_mapper.low = new_value
-
-        _update_proj_plots()
+        color_mapper_proj.low = new_value
 
     proj_display_min_spinner = Spinner(
-        low=0,
-        high=1 - PROJ_STEP,
-        value=0,
-        step=PROJ_STEP,
-        disabled=bool(proj_auto_checkbox.active),
-        width=100,
-        height=31,
+        value=0, disabled=bool(proj_auto_checkbox.active), mode="int", width=100, height=31
     )
     proj_display_min_spinner.on_change("value", proj_display_min_spinner_callback)
 
@@ -932,7 +881,7 @@ def create():
 
     layout_image = column(gridplot([[proj_v, None], [plot, proj_h]], merge_tools=False))
     colormap_layout = column(
-        colormap,
+        colormap_select,
         main_auto_checkbox,
         row(display_min_spinner, display_max_spinner),
         proj_auto_checkbox,
