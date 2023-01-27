@@ -359,16 +359,3 @@ def ang_proc(wave, ddist, gammad, om, ch, ph, nud, x, y):
     ch, ph, ga, om = fixdnu(wave, z1, ch2, ph2, nu)
 
     return ch, ph, ga, om
-
-
-def gauss(x, *p):
-    """Defines Gaussian function
-
-    Args:
-        A - amplitude, mu - position of the center, sigma - width
-
-    Returns:
-        Gaussian function
-    """
-    A, mu, sigma = p
-    return A * np.exp(-((x - mu) ** 2) / (2.0 * sigma**2))
