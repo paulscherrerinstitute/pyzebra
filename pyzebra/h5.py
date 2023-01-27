@@ -131,7 +131,7 @@ def read_detector_data(filepath, cami_meta=None):
             # a default motor for a single frame file
             scan["scan_motor"] = "omega"
         else:
-            for var in ("omega", "gamma", "nu", "chi", "phi"):
+            for var in ("omega", "gamma", "chi", "phi"):  # TODO: also nu?
                 if abs(scan[var][0] - scan[var][-1]) > 0.1:
                     scan["scan_motor"] = var
                     break
