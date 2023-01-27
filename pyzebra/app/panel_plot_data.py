@@ -276,7 +276,7 @@ def create():
     auto_range_cb.active = [0]
 
     range_layout = row(
-        column(Spacer(height=20), auto_range_cb),
+        column(Spacer(height=19), auto_range_cb),
         xrange_min_ni,
         xrange_max_ni,
         yrange_min_ni,

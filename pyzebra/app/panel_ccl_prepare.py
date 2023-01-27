@@ -298,7 +298,7 @@ def create():
     wavelen_layout = column(wavelen_div, row(wavelen_select, wavelen_input))
     anglim_layout = column(anglim_div, row(sttgamma_ti, omega_ti, chinu_ti, phi_ti))
     cryst_layout = column(cryst_div, row(cryst_space_group, cryst_cell))
-    ubmat_layout = row(column(Spacer(height=18), ub_matrix_calc), ub_matrix)
+    ubmat_layout = row(column(Spacer(height=19), ub_matrix_calc), ub_matrix)
     ranges_layout = column(ranges_div, row(ranges_hkl, ranges_srang))
     magstruct_layout = column(magstruct_div, row(magstruct_lattice, magstruct_kvec))
     sorting_layout = row(
@@ -319,7 +319,7 @@ def create():
         cryst_layout,
         ubmat_layout,
         row(ranges_layout, Spacer(width=50), magstruct_layout),
-        row(sorting_layout, Spacer(width=30), column(Spacer(height=18), go_button)),
+        row(sorting_layout, Spacer(width=30), column(Spacer(height=19), go_button)),
         row(created_lists, preview_lists),
         row(app_dlfiles.button, plot_list),
     )

@@ -22,7 +22,7 @@ from pyzebra.app import (
 doc = curdoc()
 
 sys.stdout = StringIO()
-stdout_textareainput = TextAreaInput(title="print output:", height=150)
+stdout_textareainput = TextAreaInput(title="print output:")
 
 bokeh_stream = StringIO()
 bokeh_handler = logging.StreamHandler(bokeh_stream)
@@ -30,7 +30,7 @@ bokeh_handler.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
 bokeh_logger = logging.getLogger("bokeh")
 bokeh_logger.setLevel(logging.WARNING)
 bokeh_logger.addHandler(bokeh_handler)
-bokeh_log_textareainput = TextAreaInput(title="server output:", height=150)
+bokeh_log_textareainput = TextAreaInput(title="server output:")
 
 
 def proposal_textinput_callback(_attr, _old, _new):

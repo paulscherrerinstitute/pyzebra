@@ -668,7 +668,7 @@ def create():
         color_mapper.high = new_value
 
     display_max_spinner = Spinner(
-        value=1, disabled=bool(main_auto_checkbox.active), mode="int", width=100, height=31
+        value=1, disabled=bool(main_auto_checkbox.active), mode="int", width=100
     )
     display_max_spinner.on_change("value", display_max_spinner_callback)
 
@@ -676,7 +676,7 @@ def create():
         color_mapper.low = new_value
 
     display_min_spinner = Spinner(
-        value=0, disabled=bool(main_auto_checkbox.active), mode="int", width=100, height=31
+        value=0, disabled=bool(main_auto_checkbox.active), mode="int", width=100
     )
     display_min_spinner.on_change("value", display_min_spinner_callback)
 
@@ -699,7 +699,7 @@ def create():
         color_mapper_proj.high = new_value
 
     proj_display_max_spinner = Spinner(
-        value=1, disabled=bool(proj_auto_checkbox.active), mode="int", width=100, height=31
+        value=1, disabled=bool(proj_auto_checkbox.active), mode="int", width=100
     )
     proj_display_max_spinner.on_change("value", proj_display_max_spinner_callback)
 
@@ -707,7 +707,7 @@ def create():
         color_mapper_proj.low = new_value
 
     proj_display_min_spinner = Spinner(
-        value=0, disabled=bool(proj_auto_checkbox.active), mode="int", width=100, height=31
+        value=0, disabled=bool(proj_auto_checkbox.active), mode="int", width=100
     )
     proj_display_min_spinner.on_change("value", proj_display_min_spinner_callback)
 
