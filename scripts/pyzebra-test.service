@@ -1,10 +1,10 @@
 [Unit]
-Description=pyzebra-test web server (runs on port 5006)
+Description=pyzebra-test web server
 
 [Service]
 Type=simple
 User=pyzebra
-ExecStart=/bin/bash /usr/local/sbin/pyzebra-test-start.sh
+ExecStart=/bin/bash /usr/local/sbin/pyzebra-test.sh
 Restart=always
 
 [Install]

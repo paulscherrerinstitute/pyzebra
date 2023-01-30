@@ -3,7 +3,7 @@ Description=pyzebra web server
 
 [Service]
 Type=simple
-ExecStart=/bin/bash /usr/local/sbin/pyzebra-start.sh
+ExecStart=/bin/bash /usr/local/sbin/pyzebra.sh
 Restart=always
 
 [Install]
