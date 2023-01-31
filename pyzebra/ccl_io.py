@@ -104,38 +104,41 @@ def parse_1D(fileobj, data_type):
 
     # read metadata
     for line in fileobj:
-        if "=" in line:
-            variable, value = line.split("=", 1)
-            variable = variable.strip()
-            value = value.strip()
-
-            try:
-                if variable in META_VARS_STR:
-                    metadata[variable] = value
-
-                elif variable in META_VARS_FLOAT:
-                    if variable == "2-theta":  # fix that angle name not to be an expression
-                        variable = "twotheta"
-                    if variable in ("a", "b", "c", "alpha", "beta", "gamma"):
-                        variable += "_cell"
-                    metadata[variable] = float(value)
-
-                elif variable in META_UB_MATRIX:
-                    if variable == "UB":
-                        metadata["ub"] = np.array(literal_eval(value)).reshape(3, 3)
-                    else:
-                        if "ub" not in metadata:
-                            metadata["ub"] = np.zeros((3, 3))
-                        row = int(variable[-2]) - 1
-                        metadata["ub"][row, :] = list(map(float, value.split()))
-
-            except Exception:
-                print(f"Error reading {variable} with value '{value}'")
-                metadata[variable] = 0
-
         if "#data" in line:
             # this is the end of metadata and the start of data section
             break
+
+        if "=" not in line:
+            # skip comments / empty lines
+            continue
+
+        var_name, value = line.split("=", 1)
+        var_name = var_name.strip()
+        value = value.strip()
+
+        try:
+            if var_name in META_VARS_STR:
+                metadata[var_name] = value
+
+            elif var_name in META_VARS_FLOAT:
+                if var_name == "2-theta":  # fix that angle name not to be an expression
+                    var_name = "twotheta"
+                if var_name in ("a", "b", "c", "alpha", "beta", "gamma"):
+                    var_name += "_cell"
+                metadata[var_name] = float(value)
+
+            elif var_name in META_UB_MATRIX:
+                if var_name == "UB":
+                    metadata["ub"] = np.array(literal_eval(value)).reshape(3, 3)
+                else:
+                    if "ub" not in metadata:
+                        metadata["ub"] = np.zeros((3, 3))
+                    row = int(var_name[-2]) - 1
+                    metadata["ub"][row, :] = list(map(float, value.split()))
+
+        except Exception:
+            print(f"Error reading {var_name} with value '{value}'")
+            metadata[var_name] = 0
 
     # handle older files that don't contain "zebra_mode" metadata
     if "zebra_mode" not in metadata:
