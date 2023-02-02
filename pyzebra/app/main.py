@@ -1,6 +1,6 @@
+import argparse
 import logging
 import sys
-from io import StringIO
 
 from bokeh.io import curdoc
 from bokeh.layouts import column, row
@@ -20,16 +20,33 @@ from pyzebra.app import (
 )
 
 doc = curdoc()
+doc.title = "pyzebra"
 
-sys.stdout = StringIO()
-stdout_textareainput = TextAreaInput(title="print output:")
+parser = argparse.ArgumentParser()
 
-bokeh_stream = StringIO()
-bokeh_handler = logging.StreamHandler(bokeh_stream)
-bokeh_handler.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
-bokeh_logger = logging.getLogger("bokeh")
-bokeh_logger.setLevel(logging.WARNING)
-bokeh_logger.addHandler(bokeh_handler)
+parser.add_argument(
+    "--anatric-path", type=str, default=pyzebra.ANATRIC_PATH, help="path to anatric executable"
+)
+
+parser.add_argument(
+    "--sxtal-refgen-path",
+    type=str,
+    default=pyzebra.SXTAL_REFGEN_PATH,
+    help="path to Sxtal_Refgen executable",
+)
+
+parser.add_argument("--spind-path", type=str, default=None, help="path to spind scripts folder")
+
+args = parser.parse_args()
+
+doc.anatric_path = args.anatric_path
+doc.spind_path = args.spind_path
+doc.sxtal_refgen_path = args.sxtal_refgen_path
+
+# In app_hooks.py a StreamHandler was added to "bokeh" logger
+bokeh_stream = logging.getLogger("bokeh").handlers[0].stream
+
+log_textareainput = TextAreaInput(title="logging output:")
 bokeh_log_textareainput = TextAreaInput(title="server output:")
 
 
@@ -77,13 +94,13 @@ doc.add_root(
                 panel_spind.create(),
             ]
         ),
-        row(stdout_textareainput, bokeh_log_textareainput, sizing_mode="scale_both"),
+        row(log_textareainput, bokeh_log_textareainput, sizing_mode="scale_both"),
     )
 )
 
 
 def update_stdout():
-    stdout_textareainput.value = sys.stdout.getvalue()
+    log_textareainput.value = sys.stdout.getvalue()
     bokeh_log_textareainput.value = bokeh_stream.getvalue()
 
 
