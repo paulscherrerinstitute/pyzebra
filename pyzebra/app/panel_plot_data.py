@@ -70,7 +70,8 @@ def create():
 
             # Change parameter
             if flag_ub:
-                det_data["ub"] = np.array(redef_ub_ti.value.strip().split()).reshape(3, 3)
+                ub = list(map(float, redef_ub_ti.value.strip().split()))
+                det_data["ub"] = np.array(ub).reshape(3, 3)
 
             # Convert h k l for all images in file
             h_temp = np.empty(np.shape(det_data["counts"]))
@@ -92,7 +93,8 @@ def create():
                 I_matrix = np.append(I_matrix, det_data["counts"], axis=0)
 
         if flag_lattice:
-            lattice = np.array(redef_lattice_ti.value.strip().split())
+            vals = list(map(float, redef_lattice_ti.value.strip().split()))
+            lattice = np.array(vals)
         else:
             lattice = det_data["cell"]
 
