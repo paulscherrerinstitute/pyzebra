@@ -51,11 +51,6 @@ class PlotHKL:
             k = np.array(k_vectors.value.split()).astype(float).reshape(-1, 3)
             tol_k = tol_k_ni.value
 
-            # Plotting options
-            grid_flag = 1
-            grid_minor_flag = 1
-            grid_div = 2  # Number of minor division lines per unit
-
             # different symbols based on file number
             file_flag = 0 in disting_opt_cb.active
             # scale marker size according to intensity
@@ -144,9 +139,7 @@ class PlotHKL:
 
                     # Calculate resolution in degrees
                     expr = np.tan(gammad / 2 * np.pi / 180)
-                    res = (
-                        np.sqrt(0.4639 * expr**2 - 0.4452 * expr + 0.1506) * res_mult
-                    )  # res in deg
+                    res = np.sqrt(0.4639 * expr**2 - 0.4452 * expr + 0.1506) * res_mult
 
                     # convert to resolution in hkl along scan line
                     ang2hkl_1d = pyzebra.ang2hkl_1d
@@ -196,29 +189,27 @@ class PlotHKL:
             # Plot grid lines
             xs, ys = [], []
             xs_minor, ys_minor = [], []
-            if grid_flag:
-                for yy in np.arange(min_grid_y, max_grid_y, 1):
-                    hkl1 = M @ [0, yy, 0]
-                    xs.append([min_grid_y, max_grid_y])
-                    ys.append([hkl1[1], hkl1[1]])
+            for yy in np.arange(min_grid_y, max_grid_y, 1):
+                hkl1 = M @ [0, yy, 0]
+                xs.append([min_grid_y, max_grid_y])
+                ys.append([hkl1[1], hkl1[1]])
 
-                for xx in np.arange(min_grid_x, max_grid_x, 1):
-                    hkl1 = M @ [xx, min_grid_x, 0]
-                    hkl2 = M @ [xx, max_grid_x, 0]
-                    xs.append([hkl1[0], hkl2[0]])
-                    ys.append([hkl1[1], hkl2[1]])
+            for xx in np.arange(min_grid_x, max_grid_x, 1):
+                hkl1 = M @ [xx, min_grid_x, 0]
+                hkl2 = M @ [xx, max_grid_x, 0]
+                xs.append([hkl1[0], hkl2[0]])
+                ys.append([hkl1[1], hkl2[1]])
 
-                if grid_minor_flag:
-                    for yy in np.arange(min_grid_y, max_grid_y, 1 / grid_div):
-                        hkl1 = M @ [0, yy, 0]
-                        xs_minor.append([min_grid_y, max_grid_y])
-                        ys_minor.append([hkl1[1], hkl1[1]])
+            for yy in np.arange(min_grid_y, max_grid_y, 0.5):
+                hkl1 = M @ [0, yy, 0]
+                xs_minor.append([min_grid_y, max_grid_y])
+                ys_minor.append([hkl1[1], hkl1[1]])
 
-                    for xx in np.arange(min_grid_x, max_grid_x, 1 / grid_div):
-                        hkl1 = M @ [xx, min_grid_x, 0]
-                        hkl2 = M @ [xx, max_grid_x, 0]
-                        xs_minor.append([hkl1[0], hkl2[0]])
-                        ys_minor.append([hkl1[1], hkl2[1]])
+            for xx in np.arange(min_grid_x, max_grid_x, 0.5):
+                hkl1 = M @ [xx, min_grid_x, 0]
+                hkl2 = M @ [xx, max_grid_x, 0]
+                xs_minor.append([hkl1[0], hkl2[0]])
+                ys_minor.append([hkl1[1], hkl2[1]])
 
             grid_source.data.update(xs=xs, ys=ys)
             minor_grid_source.data.update(xs=xs_minor, ys=ys_minor)

@@ -119,7 +119,7 @@ def create():
         )
 
         # Convert all hkls to cartesian
-        hkl = [[h[:, :, :], k[:, :, :], l[:, :, :]]]
+        hkl = [[h, k, l]]
         hkl = np.transpose(hkl)
         hkl_c = np.matmul(M, hkl)
 
@@ -153,9 +153,9 @@ def create():
         y = np.transpose(y)
 
         # Get slices:
-        x_slice = x[ind[0], ind[1], ind[2]]
-        y_slice = y[ind[0], ind[1], ind[2]]
-        I_slice = I_matrix[ind[0], ind[1], ind[2]]
+        x_slice = x[ind]
+        y_slice = y[ind]
+        I_slice = I_matrix[ind]
 
         # Meshgrid limits for plotting
         if auto_range_cb.active:
