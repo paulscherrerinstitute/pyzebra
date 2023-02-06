@@ -15,6 +15,7 @@ from bokeh.models import (
     Panel,
     Select,
     Spacer,
+    Spinner,
     TextInput,
 )
 from bokeh.plotting import figure
@@ -43,7 +44,7 @@ def create():
         orth_dir = list(map(float, hkl_normal.value.split()))
 
         # Where should cut be along orthogonal direction (Mutliplication factor onto orth_dir)
-        orth_cut = 0.0
+        orth_cut = hkl_cut.value
 
         # Width of cut
         delta = hkl_delta.value
@@ -207,6 +208,7 @@ def create():
 
     hkl_div = Div(text="HKL:", margin=(5, 5, 0, 5))
     hkl_normal = TextInput(title="normal", value="0 0 1", width=70)
+    hkl_cut = Spinner(title="cut", value=0, step=0.1, width=70)
     hkl_delta = NumericInput(title="delta", value=0.1, mode="float", width=70)
     hkl_in_plane_x = TextInput(title="in-plane X", value="1 0 0", width=70)
 
@@ -294,7 +296,13 @@ def create():
         column(
             hkl_div,
             row(
-                hkl_normal, hkl_delta, Spacer(width=10), hkl_in_plane_x, Spacer(width=50), cm_layout
+                hkl_normal,
+                hkl_cut,
+                hkl_delta,
+                Spacer(width=10),
+                hkl_in_plane_x,
+                Spacer(width=50),
+                cm_layout,
             ),
             row(column(Spacer(height=7), redef_lattice_cb), redef_lattice_ti),
             row(column(Spacer(height=7), redef_ub_cb), redef_ub_ti),
