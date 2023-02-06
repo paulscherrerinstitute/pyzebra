@@ -132,6 +132,7 @@ def create():
 
         # Calculate y-direction in plot (orthogonal to x-direction and out-of-plane direction)
         y_c = np.cross(x_c, o_c)
+        hkl_in_plane_y.value = " ".join([f"{val:.1f}" for val in y_c])
 
         # Calculate distance of all points to plane
         Q = np.array(o_c) * orth_cut
@@ -211,6 +212,7 @@ def create():
     hkl_cut = Spinner(title="cut", value=0, step=0.1, width=70)
     hkl_delta = NumericInput(title="delta", value=0.1, mode="float", width=70)
     hkl_in_plane_x = TextInput(title="in-plane X", value="1 0 0", width=70)
+    hkl_in_plane_y = TextInput(title="in-plane Y", value="", width=100, disabled=True)
 
     def redef_lattice_cb_callback(_attr, _old, new):
         if new:
@@ -301,7 +303,8 @@ def create():
                 hkl_delta,
                 Spacer(width=10),
                 hkl_in_plane_x,
-                Spacer(width=50),
+                hkl_in_plane_y,
+                Spacer(width=10),
                 cm_layout,
             ),
             row(column(Spacer(height=7), redef_lattice_cb), redef_lattice_ti),

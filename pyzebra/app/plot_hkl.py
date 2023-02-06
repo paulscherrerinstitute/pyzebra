@@ -46,7 +46,6 @@ class PlotHKL:
             cut_tol = hkl_delta.value
             cut_or = hkl_cut.value
             x_dir = list(map(float, hkl_in_plane_x.value.split()))
-            y_dir = list(map(float, hkl_in_plane_y.value.split()))
 
             k = np.array(k_vectors.value.split()).astype(float).reshape(-1, 3)
             tol_k = tol_k_ni.value
@@ -98,8 +97,11 @@ class PlotHKL:
 
             # Calculate in-plane y-direction
             x_c = M @ x_dir
-            y_c = M @ y_dir
             o_c = M @ orth_dir
+
+            # Calculate y-direction in plot (orthogonal to x-direction and out-of-plane direction)
+            y_c = np.cross(x_c, o_c)
+            hkl_in_plane_y.value = " ".join([f"{val:.1f}" for val in y_c])
 
             # Normalize all directions
             y_c = y_c / np.linalg.norm(y_c)
@@ -349,7 +351,7 @@ class PlotHKL:
         hkl_cut = Spinner(title="cut", value=0, step=0.1, width=70)
         hkl_delta = NumericInput(title="delta", value=0.1, mode="float", width=70)
         hkl_in_plane_x = TextInput(title="in-plane X", value="1 0 0", width=70)
-        hkl_in_plane_y = TextInput(title="in-plane Y", value="0 1 0", width=70)
+        hkl_in_plane_y = TextInput(title="in-plane Y", value="", width=100, disabled=True)
 
         disting_opt_div = Div(text="Distinguish options:", margin=(5, 5, 0, 5))
         disting_opt_cb = CheckboxGroup(
