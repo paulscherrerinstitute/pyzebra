@@ -27,10 +27,11 @@ from pyzebra.app.panel_hdf_viewer import calculate_hkl
 
 
 def create():
+    _update_slice = None
     measured_data_div = Div(text="Measured data:")
     measured_data = FileInput(accept=".hdf", multiple=True, width=200)
 
-    def plot_file_callback():
+    def _prepare_plotting():
         flag_ub = bool(redef_ub_cb.active)
         flag_lattice = bool(redef_lattice_cb.active)
 
@@ -43,12 +44,6 @@ def create():
         # where delta is max distance a data point can have from cut in rlu units
         orth_dir = list(map(float, hkl_normal.value.split()))
 
-        # Where should cut be along orthogonal direction (Mutliplication factor onto orth_dir)
-        orth_cut = hkl_cut.value
-
-        # Width of cut
-        delta = hkl_delta.value
-
         # Load data files
         md_fnames = measured_data.filename
         md_fdata = measured_data.value
@@ -59,7 +54,7 @@ def create():
                 det_data = pyzebra.read_detector_data(io.BytesIO(base64.b64decode(fdata)))
             except:
                 print(f"Error loading {fname}")
-                return
+                return None
 
             if ind == 0:
                 if not flag_ub:
@@ -134,62 +129,76 @@ def create():
         y_c = np.cross(x_c, o_c)
         hkl_in_plane_y.value = " ".join([f"{val:.1f}" for val in y_c])
 
-        # Calculate distance of all points to plane
-        Q = np.array(o_c) * orth_cut
-        N = o_c / np.sqrt(np.sum(o_c**2))
-        v = np.empty(np.shape(hkl_c))
-        v[:, :, :, :, 0] = hkl_c[:, :, :, :, 0] - Q
-        dist = np.abs(np.dot(N, v))
-        dist = np.squeeze(dist)
-        dist = np.transpose(dist)
+        def _update_slice():
+            # Where should cut be along orthogonal direction (Mutliplication factor onto orth_dir)
+            orth_cut = hkl_cut.value
 
-        # Find points within acceptable distance of plane defined by o_c
-        ind = np.where(abs(dist) < delta)
+            # Width of cut
+            delta = hkl_delta.value
 
-        # Project points onto axes
-        x = np.dot(x_c / np.sqrt(np.sum(x_c**2)), hkl_c)
-        y = np.dot(y_c / np.sqrt(np.sum(y_c**2)), hkl_c)
+            # Calculate distance of all points to plane
+            Q = np.array(o_c) * orth_cut
+            N = o_c / np.sqrt(np.sum(o_c**2))
+            v = np.empty(np.shape(hkl_c))
+            v[:, :, :, :, 0] = hkl_c[:, :, :, :, 0] - Q
+            dist = np.abs(np.dot(N, v))
+            dist = np.squeeze(dist)
+            dist = np.transpose(dist)
 
-        # take care of dimensions
-        x = np.squeeze(x)
-        x = np.transpose(x)
-        y = np.squeeze(y)
-        y = np.transpose(y)
+            # Find points within acceptable distance of plane defined by o_c
+            ind = np.where(abs(dist) < delta)
 
-        # Get slices:
-        x_slice = x[ind]
-        y_slice = y[ind]
-        I_slice = I_matrix[ind]
+            # Project points onto axes
+            x = np.dot(x_c / np.sqrt(np.sum(x_c**2)), hkl_c)
+            y = np.dot(y_c / np.sqrt(np.sum(y_c**2)), hkl_c)
 
-        # Meshgrid limits for plotting
-        if auto_range_cb.active:
-            min_x = np.min(x_slice)
-            max_x = np.max(x_slice)
-            min_y = np.min(y_slice)
-            max_y = np.max(y_slice)
-            xrange_min_ni.value = min_x
-            xrange_max_ni.value = max_x
-            yrange_min_ni.value = min_y
-            yrange_max_ni.value = max_y
-        else:
-            min_x = xrange_min_ni.value
-            max_x = xrange_max_ni.value
-            min_y = yrange_min_ni.value
-            max_y = yrange_max_ni.value
+            # take care of dimensions
+            x = np.squeeze(x)
+            x = np.transpose(x)
+            y = np.squeeze(y)
+            y = np.transpose(y)
 
-        delta_x = xrange_step_ni.value
-        delta_y = yrange_step_ni.value
+            # Get slices:
+            x_slice = x[ind]
+            y_slice = y[ind]
+            I_slice = I_matrix[ind]
 
-        # Create interpolated mesh grid for plotting
-        grid_x, grid_y = np.mgrid[min_x:max_x:delta_x, min_y:max_y:delta_y]
-        I = interpolate.griddata((x_slice, y_slice), I_slice, (grid_x, grid_y))
+            # Meshgrid limits for plotting
+            if auto_range_cb.active:
+                min_x = np.min(x_slice)
+                max_x = np.max(x_slice)
+                min_y = np.min(y_slice)
+                max_y = np.max(y_slice)
+                xrange_min_ni.value = min_x
+                xrange_max_ni.value = max_x
+                yrange_min_ni.value = min_y
+                yrange_max_ni.value = max_y
+            else:
+                min_x = xrange_min_ni.value
+                max_x = xrange_max_ni.value
+                min_y = yrange_min_ni.value
+                max_y = yrange_max_ni.value
 
-        # Update plot
-        display_min_ni.value = 0
-        display_max_ni.value = np.max(I_slice) * 0.25
-        image_source.data.update(
-            image=[I.T], x=[min_x], dw=[max_x - min_x], y=[min_y], dh=[max_y - min_y]
-        )
+            delta_x = xrange_step_ni.value
+            delta_y = yrange_step_ni.value
+
+            # Create interpolated mesh grid for plotting
+            grid_x, grid_y = np.mgrid[min_x:max_x:delta_x, min_y:max_y:delta_y]
+            I = interpolate.griddata((x_slice, y_slice), I_slice, (grid_x, grid_y))
+
+            # Update plot
+            display_min_ni.value = 0
+            display_max_ni.value = np.max(I_slice) * 0.25
+            image_source.data.update(
+                image=[I.T], x=[min_x], dw=[max_x - min_x], y=[min_y], dh=[max_y - min_y]
+            )
+
+        return _update_slice
+
+    def plot_file_callback():
+        nonlocal _update_slice
+        _update_slice = _prepare_plotting()
+        _update_slice()
 
     plot_file = Button(label="Plot selected file(s)", button_type="primary", width=200)
     plot_file.on_click(plot_file_callback)
@@ -209,7 +218,14 @@ def create():
 
     hkl_div = Div(text="HKL:", margin=(5, 5, 0, 5))
     hkl_normal = TextInput(title="normal", value="0 0 1", width=70)
+
+    def hkl_cut_callback(_attr, _old, _new):
+        if _update_slice is not None:
+            _update_slice()
+
     hkl_cut = Spinner(title="cut", value=0, step=0.1, width=70)
+    hkl_cut.on_change("value_throttled", hkl_cut_callback)
+
     hkl_delta = NumericInput(title="delta", value=0.1, mode="float", width=70)
     hkl_in_plane_x = TextInput(title="in-plane X", value="1 0 0", width=70)
     hkl_in_plane_y = TextInput(title="in-plane Y", value="", width=100, disabled=True)

@@ -31,6 +31,7 @@ import pyzebra
 
 class PlotHKL:
     def __init__(self):
+        _update_slice = None
         measured_data_div = Div(text="Measured data:")
         measured_data = FileInput(accept=".ccl", multiple=True, width=200)
 
@@ -41,23 +42,13 @@ class PlotHKL:
         cmap = Dark2[8]
         syms = ["circle", "inverted_triangle", "square", "diamond", "star", "triangle"]
 
-        def plot_file_callback():
+        def _prepare_plotting():
             orth_dir = list(map(float, hkl_normal.value.split()))
-            cut_tol = hkl_delta.value
-            cut_or = hkl_cut.value
             x_dir = list(map(float, hkl_in_plane_x.value.split()))
 
             k = np.array(k_vectors.value.split()).astype(float).reshape(-1, 3)
             tol_k = tol_k_ni.value
 
-            # different symbols based on file number
-            file_flag = 0 in disting_opt_cb.active
-            # scale marker size according to intensity
-            intensity_flag = 1 in disting_opt_cb.active
-            # use color to mark different propagation vectors
-            prop_legend_flag = 2 in disting_opt_cb.active
-            # use resolution ellipsis
-            res_flag = disting_opt_rb.active
             # multiplier for resolution function (in case of samples with large mosaicity)
             res_mult = res_mult_ni.value
 
@@ -72,7 +63,7 @@ class PlotHKL:
                     file_data = pyzebra.parse_1D(file, ext)
                 except:
                     print(f"Error loading {md_fnames[0]}")
-                    return
+                    return None
 
             alpha = file_data[0]["alpha_cell"] * np.pi / 180.0
             beta = file_data[0]["beta_cell"] * np.pi / 180.0
@@ -124,7 +115,7 @@ class PlotHKL:
                         file_data = pyzebra.parse_1D(file, ext)
                     except:
                         print(f"Error loading {md_fname}")
-                        return
+                        return None
 
                 pyzebra.normalize_dataset(file_data)
 
@@ -216,63 +207,6 @@ class PlotHKL:
             grid_source.data.update(xs=xs, ys=ys)
             minor_grid_source.data.update(xs=xs_minor, ys=ys_minor)
 
-            el_x, el_y, el_w, el_h, el_c = [], [], [], [], []
-            scan_xs, scan_ys, scan_x, scan_y = [], [], [], []
-            scan_m, scan_s, scan_c, scan_l = [], [], [], []
-            for j in range(len(hkl_coord)):
-                # Get middle hkl from list
-                hklm = M @ hkl_coord[j][2]
-
-                # Decide if point is in the cut
-                proj = np.dot(hklm, o_c)
-                if abs(proj - cut_or) >= cut_tol:
-                    continue
-
-                hkl1 = M @ hkl_coord[j][0]
-                hkl2 = M @ hkl_coord[j][1]
-
-                if intensity_flag:
-                    markersize = max(1, int(intensity_vec[j] / max(intensity_vec) * 20))
-                else:
-                    markersize = 4
-
-                if file_flag:
-                    plot_symbol = syms[file_flag_vec[j]]
-                else:
-                    plot_symbol = "circle"
-
-                if prop_legend_flag:
-                    col_value = cmap[k_flag_vec[j]]
-                else:
-                    col_value = "black"
-
-                if res_flag:
-                    # Generate series of ellipses along scan line
-                    el_x.extend(np.linspace(hkl1[0], hkl2[0], num=res_N))
-                    el_y.extend(np.linspace(hkl1[1], hkl2[1], num=res_N))
-                    el_w.extend(np.array(res_vec_x[j]) * 2)
-                    el_h.extend(np.array(res_vec_y[j]) * 2)
-                    el_c.extend([col_value] * res_N)
-                else:
-                    # Plot scan line
-                    scan_xs.append([hkl1[0], hkl2[0]])
-                    scan_ys.append([hkl1[1], hkl2[1]])
-
-                    # Plot middle point of scan
-                    scan_x.append(hklm[0])
-                    scan_y.append(hklm[1])
-                    scan_m.append(plot_symbol)
-                    scan_s.append(markersize)
-
-                    # Color and legend label
-                    scan_c.append(col_value)
-                    scan_l.append(md_fnames[file_flag_vec[j]])
-
-            ellipse_source.data.update(x=el_x, y=el_y, width=el_w, height=el_h, c=el_c)
-            scan_source.data.update(
-                xs=scan_xs, ys=scan_ys, x=scan_x, y=scan_y, m=scan_m, s=scan_s, c=scan_c, l=scan_l
-            )
-
             arrow1.visible = True
             arrow1.x_end = x_c[0]
             arrow1.y_end = x_c[1]
@@ -284,26 +218,110 @@ class PlotHKL:
                 x=[x_c[0] / 2, y_c[0] / 2 - 0.1], y=[x_c[1] - 0.1, y_c[1] / 2], text=["h", "k"]
             )
 
-            # Legend items for different file entries (symbol)
-            legend_items = []
-            if not res_flag and file_flag:
-                labels, inds = np.unique(scan_source.data["l"], return_index=True)
-                for label, ind in zip(labels, inds):
-                    legend_items.append(LegendItem(label=label, renderers=[scatter], index=ind))
+            def _update_slice():
+                cut_tol = hkl_delta.value
+                cut_or = hkl_cut.value
 
-            # Legend items for propagation vector (color)
-            if prop_legend_flag:
-                if res_flag:
-                    source, render = ellipse_source, ellipse
-                else:
-                    source, render = scan_source, mline
+                # different symbols based on file number
+                file_flag = 0 in disting_opt_cb.active
+                # scale marker size according to intensity
+                intensity_flag = 1 in disting_opt_cb.active
+                # use color to mark different propagation vectors
+                prop_legend_flag = 2 in disting_opt_cb.active
+                # use resolution ellipsis
+                res_flag = disting_opt_rb.active
 
-                labels, inds = np.unique(source.data["c"], return_index=True)
-                for label, ind in zip(labels, inds):
-                    label = f"k={k[cmap.index(label)]}"
-                    legend_items.append(LegendItem(label=label, renderers=[render], index=ind))
+                el_x, el_y, el_w, el_h, el_c = [], [], [], [], []
+                scan_xs, scan_ys, scan_x, scan_y = [], [], [], []
+                scan_m, scan_s, scan_c, scan_l = [], [], [], []
+                for j in range(len(hkl_coord)):
+                    # Get middle hkl from list
+                    hklm = M @ hkl_coord[j][2]
 
-            plot.legend.items = legend_items
+                    # Decide if point is in the cut
+                    proj = np.dot(hklm, o_c)
+                    if abs(proj - cut_or) >= cut_tol:
+                        continue
+
+                    hkl1 = M @ hkl_coord[j][0]
+                    hkl2 = M @ hkl_coord[j][1]
+
+                    if intensity_flag:
+                        markersize = max(1, int(intensity_vec[j] / max(intensity_vec) * 20))
+                    else:
+                        markersize = 4
+
+                    if file_flag:
+                        plot_symbol = syms[file_flag_vec[j]]
+                    else:
+                        plot_symbol = "circle"
+
+                    if prop_legend_flag:
+                        col_value = cmap[k_flag_vec[j]]
+                    else:
+                        col_value = "black"
+
+                    if res_flag:
+                        # Generate series of ellipses along scan line
+                        el_x.extend(np.linspace(hkl1[0], hkl2[0], num=res_N))
+                        el_y.extend(np.linspace(hkl1[1], hkl2[1], num=res_N))
+                        el_w.extend(np.array(res_vec_x[j]) * 2)
+                        el_h.extend(np.array(res_vec_y[j]) * 2)
+                        el_c.extend([col_value] * res_N)
+                    else:
+                        # Plot scan line
+                        scan_xs.append([hkl1[0], hkl2[0]])
+                        scan_ys.append([hkl1[1], hkl2[1]])
+
+                        # Plot middle point of scan
+                        scan_x.append(hklm[0])
+                        scan_y.append(hklm[1])
+                        scan_m.append(plot_symbol)
+                        scan_s.append(markersize)
+
+                        # Color and legend label
+                        scan_c.append(col_value)
+                        scan_l.append(md_fnames[file_flag_vec[j]])
+
+                ellipse_source.data.update(x=el_x, y=el_y, width=el_w, height=el_h, c=el_c)
+                scan_source.data.update(
+                    xs=scan_xs,
+                    ys=scan_ys,
+                    x=scan_x,
+                    y=scan_y,
+                    m=scan_m,
+                    s=scan_s,
+                    c=scan_c,
+                    l=scan_l,
+                )
+
+                # Legend items for different file entries (symbol)
+                legend_items = []
+                if not res_flag and file_flag:
+                    labels, inds = np.unique(scan_source.data["l"], return_index=True)
+                    for label, ind in zip(labels, inds):
+                        legend_items.append(LegendItem(label=label, renderers=[scatter], index=ind))
+
+                # Legend items for propagation vector (color)
+                if prop_legend_flag:
+                    if res_flag:
+                        source, render = ellipse_source, ellipse
+                    else:
+                        source, render = scan_source, mline
+
+                    labels, inds = np.unique(source.data["c"], return_index=True)
+                    for label, ind in zip(labels, inds):
+                        label = f"k={k[cmap.index(label)]}"
+                        legend_items.append(LegendItem(label=label, renderers=[render], index=ind))
+
+                plot.legend.items = legend_items
+
+            return _update_slice
+
+        def plot_file_callback():
+            nonlocal _update_slice
+            _update_slice = _prepare_plotting()
+            _update_slice()
 
         plot_file = Button(label="Plot selected file(s)", button_type="primary", width=200)
         plot_file.on_click(plot_file_callback)
@@ -348,7 +366,14 @@ class PlotHKL:
 
         hkl_div = Div(text="HKL:", margin=(5, 5, 0, 5))
         hkl_normal = TextInput(title="normal", value="0 0 1", width=70)
+
+        def hkl_cut_callback(_attr, _old, _new):
+            if _update_slice is not None:
+                _update_slice()
+
         hkl_cut = Spinner(title="cut", value=0, step=0.1, width=70)
+        hkl_cut.on_change("value_throttled", hkl_cut_callback)
+
         hkl_delta = NumericInput(title="delta", value=0.1, mode="float", width=70)
         hkl_in_plane_x = TextInput(title="in-plane X", value="1 0 0", width=70)
         hkl_in_plane_y = TextInput(title="in-plane Y", value="", width=100, disabled=True)
