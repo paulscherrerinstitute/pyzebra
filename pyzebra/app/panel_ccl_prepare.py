@@ -301,7 +301,14 @@ def create():
     created_lists.on_change("value", created_lists_callback)
     preview_lists = TextAreaInput(title="Preview selected list:", width=600, height=150)
 
-    plot_list = Button(label="Plot selected list", button_type="primary", width=200, disabled=True)
+    def plot_list_callback():
+        fname = created_lists.value
+        with io.StringIO(preview_lists.value) as fileobj:
+            fdata = pyzebra.parse_hkl(fileobj, fname)
+        _plot(fname, [fdata])
+
+    plot_list = Button(label="Plot selected list", button_type="primary", width=200)
+    plot_list.on_click(plot_list_callback)
 
     # Plot
     upload_data_div = Div(text="Open hkl/mhkl data:")
@@ -314,7 +321,7 @@ def create():
     cmap = Dark2[8]
     syms = ["circle", "inverted_triangle", "square", "diamond", "star", "triangle"]
 
-    def plot_file_callback():
+    def _plot(filenames, filedata):
         orth_dir = list(map(float, hkl_normal.value.split()))
         cut_tol = hkl_delta.value
         cut_or = hkl_cut.value
@@ -371,25 +378,14 @@ def create():
         k_flag_vec = []
         file_flag_vec = []
 
-        ul_fnames = upload_data.filename
-        ul_fdata = upload_data.value
-
-        for j, fname in enumerate(ul_fnames):
-            with io.StringIO(base64.b64decode(ul_fdata[j]).decode()) as file:
-                _, ext = os.path.splitext(fname)
-                try:
-                    file_data = pyzebra.parse_hkl(file, ext)
-                except:
-                    print(f"Error loading {fname}")
-                    return
-
-            for ind in range(len(file_data["counts"])):
+        for j, fdata in enumerate(filedata):
+            for ind in range(len(fdata["counts"])):
                 # Recognize k_flag_vec
-                hkl = np.array([file_data["h"][ind], file_data["k"][ind], file_data["k"][ind]])
+                hkl = np.array([fdata["h"][ind], fdata["k"][ind], fdata["k"][ind]])
                 reduced_hkl_m = np.minimum(1 - hkl % 1, hkl % 1)
-                for ind, _k in enumerate(k):
+                for k_ind, _k in enumerate(k):
                     if all(np.abs(reduced_hkl_m - _k) < tol_k):
-                        k_flag_vec.append(ind)
+                        k_flag_vec.append(k_ind)
                         break
                 else:
                     # not required
@@ -397,7 +393,7 @@ def create():
 
                 # Save data
                 hkl_coord.append(hkl)
-                intensity_vec.append(file_data["counts"][ind])
+                intensity_vec.append(fdata["counts"][ind])
                 file_flag_vec.append(j)
 
         plot.x_range.start = plot.x_range.reset_start = -2
@@ -444,7 +440,7 @@ def create():
             if abs(proj - cut_or) >= cut_tol:
                 continue
 
-            if intensity_flag:
+            if intensity_flag and max(intensity_vec) != 0:
                 markersize = max(1, int(intensity_vec[j] / max(intensity_vec) * 20))
             else:
                 markersize = 4
@@ -467,7 +463,7 @@ def create():
 
             # Color and legend label
             scan_c.append(col_value)
-            scan_l.append(ul_fnames[file_flag_vec[j]])
+            scan_l.append(filenames[file_flag_vec[j]])
 
         scatter_source.data.update(x=scan_x, y=scan_y, m=scan_m, s=scan_s, c=scan_c, l=scan_l)
 
@@ -497,6 +493,23 @@ def create():
                 legend_items.append(LegendItem(label=label, renderers=[scatter], index=ind))
 
         plot.legend.items = legend_items
+
+    def plot_file_callback():
+        fnames = []
+        fdata = []
+        for j, fname in enumerate(upload_data.filename):
+            with io.StringIO(base64.b64decode(upload_data.value[j]).decode()) as file:
+                _, ext = os.path.splitext(fname)
+                try:
+                    file_data = pyzebra.parse_hkl(file, ext)
+                except:
+                    print(f"Error loading {fname}")
+                    return
+
+            fnames.append(fname)
+            fdata.append(file_data)
+
+        _plot(fnames, fdata)
 
     plot_file = Button(label="Plot selected file(s)", button_type="primary", width=200)
     plot_file.on_click(plot_file_callback)
