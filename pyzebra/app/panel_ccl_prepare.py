@@ -4,20 +4,31 @@ import os
 import subprocess
 import tempfile
 
+import numpy as np
 from bokeh.layouts import column, row
 from bokeh.models import (
+    Arrow,
     Button,
+    CheckboxGroup,
+    ColumnDataSource,
     Div,
     FileInput,
+    Legend,
+    LegendItem,
     MultiSelect,
+    NormalHead,
     NumericInput,
     Panel,
     RadioGroup,
+    Range1d,
     Select,
     Spacer,
+    Spinner,
     TextAreaInput,
     TextInput,
 )
+from bokeh.palettes import Dark2
+from bokeh.plotting import figure
 
 import pyzebra
 from pyzebra import app
@@ -292,6 +303,253 @@ def create():
 
     plot_list = Button(label="Plot selected list", button_type="primary", width=200, disabled=True)
 
+    # Plot
+    upload_data_div = Div(text="Open hkl/mhkl data:")
+    upload_data = FileInput(accept=".hkl,.mhkl", multiple=True, width=200)
+
+    min_grid_x = -10
+    max_grid_x = 10
+    min_grid_y = -5
+    max_grid_y = 5
+    cmap = Dark2[8]
+    syms = ["circle", "inverted_triangle", "square", "diamond", "star", "triangle"]
+
+    def plot_file_callback():
+        orth_dir = list(map(float, hkl_normal.value.split()))
+        cut_tol = hkl_delta.value
+        cut_or = hkl_cut.value
+        x_dir = list(map(float, hkl_in_plane_x.value.split()))
+
+        k = np.array(k_vectors.value.split()).astype(float).reshape(-1, 3)
+        tol_k = tol_k_ni.value
+
+        # different symbols based on file number
+        file_flag = 0 in disting_opt_cb.active
+        # scale marker size according to intensity
+        intensity_flag = 1 in disting_opt_cb.active
+        # use color to mark different propagation vectors
+        prop_legend_flag = 2 in disting_opt_cb.active
+
+        lattice = list(map(float, cryst_cell.value.strip().split()))
+        alpha = lattice[3] * np.pi / 180.0
+        beta = lattice[4] * np.pi / 180.0
+        gamma = lattice[5] * np.pi / 180.0
+
+        # reciprocal angle parameters
+        beta_star = np.arccos(
+            (np.cos(alpha) * np.cos(gamma) - np.cos(beta)) / (np.sin(alpha) * np.sin(gamma))
+        )
+        gamma_star = np.arccos(
+            (np.cos(alpha) * np.cos(beta) - np.cos(gamma)) / (np.sin(alpha) * np.sin(beta))
+        )
+
+        # conversion matrix
+        M = np.array(
+            [
+                [1, np.cos(gamma_star), np.cos(beta_star)],
+                [0, np.sin(gamma_star), -np.sin(beta_star) * np.cos(alpha)],
+                [0, 0, np.sin(beta_star) * np.sin(alpha)],
+            ]
+        )
+
+        # Calculate in-plane y-direction
+        x_c = M @ x_dir
+        o_c = M @ orth_dir
+
+        # Calculate y-direction in plot (orthogonal to x-direction and out-of-plane direction)
+        y_c = np.cross(x_c, o_c)
+        hkl_in_plane_y.value = " ".join([f"{val:.1f}" for val in y_c])
+
+        # Normalize all directions
+        y_c = y_c / np.linalg.norm(y_c)
+        x_c = x_c / np.linalg.norm(x_c)
+        o_c = o_c / np.linalg.norm(o_c)
+
+        # Read all data
+        hkl_coord = []
+        intensity_vec = []
+        k_flag_vec = []
+        file_flag_vec = []
+
+        ul_fnames = upload_data.filename
+        ul_fdata = upload_data.value
+
+        for j, fname in enumerate(ul_fnames):
+            with io.StringIO(base64.b64decode(ul_fdata[j]).decode()) as file:
+                _, ext = os.path.splitext(fname)
+                try:
+                    file_data = pyzebra.parse_hkl(file, ext)
+                except:
+                    print(f"Error loading {fname}")
+                    return
+
+            for ind in range(len(file_data["counts"])):
+                # Recognize k_flag_vec
+                hkl = np.array([file_data["h"][ind], file_data["k"][ind], file_data["k"][ind]])
+                reduced_hkl_m = np.minimum(1 - hkl % 1, hkl % 1)
+                for ind, _k in enumerate(k):
+                    if all(np.abs(reduced_hkl_m - _k) < tol_k):
+                        k_flag_vec.append(ind)
+                        break
+                else:
+                    # not required
+                    continue
+
+                # Save data
+                hkl_coord.append(hkl)
+                intensity_vec.append(file_data["counts"][ind])
+                file_flag_vec.append(j)
+
+        plot.x_range.start = plot.x_range.reset_start = -2
+        plot.x_range.end = plot.x_range.reset_end = 5
+        plot.y_range.start = plot.y_range.reset_start = -4
+        plot.y_range.end = plot.y_range.reset_end = 3.5
+
+        # Plot grid lines
+        xs, ys = [], []
+        xs_minor, ys_minor = [], []
+        for yy in np.arange(min_grid_y, max_grid_y, 1):
+            hkl1 = M @ [0, yy, 0]
+            xs.append([min_grid_y, max_grid_y])
+            ys.append([hkl1[1], hkl1[1]])
+
+        for xx in np.arange(min_grid_x, max_grid_x, 1):
+            hkl1 = M @ [xx, min_grid_x, 0]
+            hkl2 = M @ [xx, max_grid_x, 0]
+            xs.append([hkl1[0], hkl2[0]])
+            ys.append([hkl1[1], hkl2[1]])
+
+        for yy in np.arange(min_grid_y, max_grid_y, 0.5):
+            hkl1 = M @ [0, yy, 0]
+            xs_minor.append([min_grid_y, max_grid_y])
+            ys_minor.append([hkl1[1], hkl1[1]])
+
+        for xx in np.arange(min_grid_x, max_grid_x, 0.5):
+            hkl1 = M @ [xx, min_grid_x, 0]
+            hkl2 = M @ [xx, max_grid_x, 0]
+            xs_minor.append([hkl1[0], hkl2[0]])
+            ys_minor.append([hkl1[1], hkl2[1]])
+
+        grid_source.data.update(xs=xs, ys=ys)
+        minor_grid_source.data.update(xs=xs_minor, ys=ys_minor)
+
+        scan_x, scan_y = [], []
+        scan_m, scan_s, scan_c, scan_l = [], [], [], []
+        for j in range(len(hkl_coord)):
+            # Get middle hkl from list
+            hklm = M @ hkl_coord[j]
+
+            # Decide if point is in the cut
+            proj = np.dot(hklm, o_c)
+            if abs(proj - cut_or) >= cut_tol:
+                continue
+
+            if intensity_flag:
+                markersize = max(1, int(intensity_vec[j] / max(intensity_vec) * 20))
+            else:
+                markersize = 4
+
+            if file_flag:
+                plot_symbol = syms[file_flag_vec[j]]
+            else:
+                plot_symbol = "circle"
+
+            if prop_legend_flag:
+                col_value = cmap[k_flag_vec[j]]
+            else:
+                col_value = "black"
+
+            # Plot middle point of scan
+            scan_x.append(hklm[0])
+            scan_y.append(hklm[1])
+            scan_m.append(plot_symbol)
+            scan_s.append(markersize)
+
+            # Color and legend label
+            scan_c.append(col_value)
+            scan_l.append(ul_fnames[file_flag_vec[j]])
+
+        scatter_source.data.update(x=scan_x, y=scan_y, m=scan_m, s=scan_s, c=scan_c, l=scan_l)
+
+        arrow1.visible = True
+        arrow1.x_end = x_c[0]
+        arrow1.y_end = x_c[1]
+        arrow2.visible = True
+        arrow2.x_end = y_c[0]
+        arrow2.y_end = y_c[1]
+
+        kvect_source.data.update(
+            x=[x_c[0] / 2, y_c[0] / 2 - 0.1], y=[x_c[1] - 0.1, y_c[1] / 2], text=["h", "k"]
+        )
+
+        # Legend items for different file entries (symbol)
+        legend_items = []
+        if file_flag:
+            labels, inds = np.unique(scatter_source.data["l"], return_index=True)
+            for label, ind in zip(labels, inds):
+                legend_items.append(LegendItem(label=label, renderers=[scatter], index=ind))
+
+        # Legend items for propagation vector (color)
+        if prop_legend_flag:
+            labels, inds = np.unique(scatter_source.data["c"], return_index=True)
+            for label, ind in zip(labels, inds):
+                label = f"k={k[cmap.index(label)]}"
+                legend_items.append(LegendItem(label=label, renderers=[scatter], index=ind))
+
+        plot.legend.items = legend_items
+
+    plot_file = Button(label="Plot selected file(s)", button_type="primary", width=200)
+    plot_file.on_click(plot_file_callback)
+
+    plot = figure(
+        x_range=Range1d(),
+        y_range=Range1d(),
+        plot_height=450,
+        plot_width=450 + 32,
+        tools="pan,wheel_zoom,reset",
+    )
+    plot.toolbar.logo = None
+
+    grid_source = ColumnDataSource(dict(xs=[], ys=[]))
+    plot.multi_line(source=grid_source, line_color="gray")
+
+    minor_grid_source = ColumnDataSource(dict(xs=[], ys=[]))
+    plot.multi_line(source=minor_grid_source, line_color="gray", line_dash="dotted")
+
+    scatter_source = ColumnDataSource(dict(x=[], y=[], m=[], s=[], c=[], l=[]))
+    scatter = plot.scatter(
+        source=scatter_source, marker="m", size="s", fill_color="c", line_color="c"
+    )
+
+    arrow1 = Arrow(x_start=0, y_start=0, x_end=0, y_end=0, end=NormalHead(size=10), visible=False)
+    plot.add_layout(arrow1)
+    arrow2 = Arrow(x_start=0, y_start=0, x_end=0, y_end=0, end=NormalHead(size=10), visible=False)
+    plot.add_layout(arrow2)
+
+    kvect_source = ColumnDataSource(dict(x=[], y=[], text=[]))
+    plot.text(source=kvect_source)
+
+    plot.add_layout(Legend(items=[], location="top_left", click_policy="hide"))
+
+    hkl_div = Div(text="HKL:", margin=(5, 5, 0, 5))
+    hkl_normal = TextInput(title="normal", value="0 0 1", width=70)
+    hkl_cut = Spinner(title="cut", value=0, step=0.1, width=70)
+    hkl_delta = NumericInput(title="delta", value=0.1, mode="float", width=70)
+    hkl_in_plane_x = TextInput(title="in-plane X", value="1 0 0", width=70)
+    hkl_in_plane_y = TextInput(title="in-plane Y", value="", width=100, disabled=True)
+
+    disting_opt_div = Div(text="Distinguish options:", margin=(5, 5, 0, 5))
+    disting_opt_cb = CheckboxGroup(
+        labels=["files (symbols)", "intensities (size)", "k vectors nucl/magn (colors)"],
+        active=[0, 1, 2],
+        width=200,
+    )
+
+    k_vectors = TextAreaInput(
+        title="k vectors:", value="0.0 0.0 0.0\n0.5 0.0 0.0\n0.5 0.5 0.0", width=150
+    )
+    tol_k_ni = NumericInput(title="k tolerance:", value=0.01, mode="float", width=100)
+
     fileinput_layout = row(open_cfl_div, open_cfl, open_cif_div, open_cif, open_geom_div, open_geom)
 
     geom_layout = column(geom_radiogroup_div, geom_radiogroup)
@@ -324,7 +582,18 @@ def create():
         row(app_dlfiles.button, plot_list),
     )
 
-    column2_layout = app.PlotHKL().layout
+    hkl_layout = column(
+        hkl_div,
+        row(hkl_normal, hkl_cut, hkl_delta, Spacer(width=10), hkl_in_plane_x, hkl_in_plane_y),
+    )
+    disting_layout = column(disting_opt_div, disting_opt_cb)
+
+    column2_layout = column(
+        row(upload_data_div, upload_data, plot_file),
+        plot,
+        row(hkl_layout, k_vectors),
+        row(disting_layout, tol_k_ni),
+    )
 
     tab_layout = row(column1_layout, column2_layout)
 
