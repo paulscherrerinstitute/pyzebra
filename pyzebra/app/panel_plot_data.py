@@ -147,6 +147,9 @@ def create():
 
             # Find points within acceptable distance of plane defined by o_c
             ind = np.where(abs(dist) < delta)
+            if ind[0].size == 0:
+                image_source.data.update(image=[np.zeros((1, 1))])
+                return
 
             # Project points onto axes
             x = np.dot(x_c / np.sqrt(np.sum(x_c**2)), hkl_c)
