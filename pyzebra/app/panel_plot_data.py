@@ -1,5 +1,6 @@
 import base64
 import io
+import os
 
 import numpy as np
 from bokeh.layouts import column, row
@@ -30,6 +31,9 @@ def create():
     _update_slice = None
     measured_data_div = Div(text="Measured data:")
     measured_data = FileInput(accept=".hdf", multiple=True, width=200)
+
+    upload_hkl_div = Div(text="Open hkl/mhkl data:")
+    upload_hkl_fi = FileInput(accept=".hkl,.mhkl", multiple=True, width=200)
 
     def _prepare_plotting():
         flag_ub = bool(redef_ub_cb.active)
@@ -129,6 +133,24 @@ def create():
         y_c = np.cross(x_c, o_c)
         hkl_in_plane_y.value = " ".join([f"{val:.1f}" for val in y_c])
 
+        # Prepare hkl/mhkl data
+        hkl_coord = []
+        for j, fname in enumerate(upload_hkl_fi.filename):
+            with io.StringIO(base64.b64decode(upload_hkl_fi.value[j]).decode()) as file:
+                _, ext = os.path.splitext(fname)
+                try:
+                    fdata = pyzebra.parse_hkl(file, ext)
+                except:
+                    print(f"Error loading {fname}")
+                    return
+
+            for ind in range(len(fdata["counts"])):
+                # Recognize k_flag_vec
+                hkl = np.array([fdata["h"][ind], fdata["k"][ind], fdata["k"][ind]])
+
+                # Save data
+                hkl_coord.append(hkl)
+
         def _update_slice():
             # Where should cut be along orthogonal direction (Mutliplication factor onto orth_dir)
             orth_cut = hkl_cut.value
@@ -196,6 +218,22 @@ def create():
                 image=[I.T], x=[min_x], dw=[max_x - min_x], y=[min_y], dh=[max_y - min_y]
             )
 
+            scan_x, scan_y = [], []
+            for j in range(len(hkl_coord)):
+                # Get middle hkl from list
+                hklm = M @ hkl_coord[j]
+
+                # Decide if point is in the cut
+                proj = np.dot(hklm, o_c)
+                if abs(proj - orth_cut) >= delta:
+                    continue
+
+                # Plot middle point of scan
+                scan_x.append(hklm[0])
+                scan_y.append(hklm[1])
+
+            scatter_source.data.update(x=scan_x, y=scan_y)
+
         return _update_slice
 
     def plot_file_callback():
@@ -218,6 +256,9 @@ def create():
     color_mapper = LinearColorMapper(nan_color=(0, 0, 0, 0))
     image_source = ColumnDataSource(dict(image=[np.zeros((1, 1))], x=[0], y=[0], dw=[1], dh=[1]))
     plot.image(source=image_source, color_mapper=color_mapper)
+
+    scatter_source = ColumnDataSource(dict(x=[], y=[]))
+    plot.scatter(source=scatter_source, size=4, fill_color="green", line_color="green")
 
     hkl_div = Div(text="HKL:", margin=(5, 5, 0, 5))
     hkl_normal = TextInput(title="normal", value="0 0 1", width=70)
@@ -312,7 +353,10 @@ def create():
     )
     cm_layout = row(colormap_select, display_min_ni, display_max_ni)
     column1_layout = column(
-        row(measured_data_div, measured_data, plot_file),
+        row(
+            column(row(measured_data_div, measured_data), row(upload_hkl_div, upload_hkl_fi)),
+            plot_file,
+        ),
         plot,
         column(
             hkl_div,

@@ -35,6 +35,9 @@ class PlotHKL:
         measured_data_div = Div(text="Measured data:")
         measured_data = FileInput(accept=".ccl", multiple=True, width=200)
 
+        upload_hkl_div = Div(text="Open hkl/mhkl data:")
+        upload_hkl_fi = FileInput(accept=".hkl,.mhkl", multiple=True, width=200)
+
         min_grid_x = -10
         max_grid_x = 10
         min_grid_y = -5
@@ -218,6 +221,24 @@ class PlotHKL:
                 x=[x_c[0] / 2, y_c[0] / 2 - 0.1], y=[x_c[1] - 0.1, y_c[1] / 2], text=["h", "k"]
             )
 
+            # Prepare hkl/mhkl data
+            hkl_coord2 = []
+            for j, fname in enumerate(upload_hkl_fi.filename):
+                with io.StringIO(base64.b64decode(upload_hkl_fi.value[j]).decode()) as file:
+                    _, ext = os.path.splitext(fname)
+                    try:
+                        fdata = pyzebra.parse_hkl(file, ext)
+                    except:
+                        print(f"Error loading {fname}")
+                        return
+
+                for ind in range(len(fdata["counts"])):
+                    # Recognize k_flag_vec
+                    hkl = np.array([fdata["h"][ind], fdata["k"][ind], fdata["k"][ind]])
+
+                    # Save data
+                    hkl_coord2.append(hkl)
+
             def _update_slice():
                 cut_tol = hkl_delta.value
                 cut_or = hkl_cut.value
@@ -316,6 +337,22 @@ class PlotHKL:
 
                 plot.legend.items = legend_items
 
+                scan_x2, scan_y2 = [], []
+                for j in range(len(hkl_coord2)):
+                    # Get middle hkl from list
+                    hklm = M @ hkl_coord2[j]
+
+                    # Decide if point is in the cut
+                    proj = np.dot(hklm, o_c)
+                    if abs(proj - cut_or) >= cut_tol:
+                        continue
+
+                    # Plot middle point of scan
+                    scan_x2.append(hklm[0])
+                    scan_y2.append(hklm[1])
+
+                scatter_source2.data.update(x=scan_x2, y=scan_y2)
+
             return _update_slice
 
         def plot_file_callback():
@@ -362,6 +399,9 @@ class PlotHKL:
             source=scan_source, marker="m", size="s", fill_color="c", line_color="c"
         )
 
+        scatter_source2 = ColumnDataSource(dict(x=[], y=[]))
+        plot.scatter(source=scatter_source2, size=4, fill_color="green", line_color="green")
+
         plot.add_layout(Legend(items=[], location="top_left", click_policy="hide"))
 
         hkl_div = Div(text="HKL:", margin=(5, 5, 0, 5))
@@ -401,7 +441,10 @@ class PlotHKL:
         disting_layout = column(disting_opt_div, row(disting_opt_cb, disting_opt_rb))
 
         layout = column(
-            row(measured_data_div, measured_data, plot_file),
+            row(
+                column(row(measured_data_div, measured_data), row(upload_hkl_div, upload_hkl_fi)),
+                plot_file,
+            ),
             plot,
             row(hkl_layout, k_vectors),
             row(disting_layout, column(tol_k_ni, res_mult_ni)),
