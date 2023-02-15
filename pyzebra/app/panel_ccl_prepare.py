@@ -532,6 +532,11 @@ def create():
     )
     plot.toolbar.logo = None
 
+    plot.xaxis.visible = False
+    plot.xgrid.visible = False
+    plot.yaxis.visible = False
+    plot.ygrid.visible = False
+
     grid_source = ColumnDataSource(dict(xs=[], ys=[]))
     plot.multi_line(source=grid_source, line_color="gray")
 

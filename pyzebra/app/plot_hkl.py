@@ -372,6 +372,11 @@ class PlotHKL:
         )
         plot.toolbar.logo = None
 
+        plot.xaxis.visible = False
+        plot.xgrid.visible = False
+        plot.yaxis.visible = False
+        plot.ygrid.visible = False
+
         arrow1 = Arrow(
             x_start=0, y_start=0, x_end=0, y_end=0, end=NormalHead(size=10), visible=False
         )
