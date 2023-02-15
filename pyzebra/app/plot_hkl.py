@@ -413,6 +413,12 @@ class PlotHKL:
         res_mult_ni = NumericInput(title="Resolution mult:", value=10, mode="int", width=100)
         tol_k_ni = NumericInput(title="k tolerance:", value=0.01, mode="float", width=100)
 
+        def show_legend_cb_callback(_attr, _old, new):
+            plot.legend.visible = bool(new)
+
+        show_legend_cb = CheckboxGroup(labels=["Show legend"], active=[0])
+        show_legend_cb.on_change("active", show_legend_cb_callback)
+
         layout = column(
             row(
                 column(row(measured_data_div, measured_data), row(upload_hkl_div, upload_hkl_fi)),
@@ -429,6 +435,7 @@ class PlotHKL:
                     disting_opt_div,
                     disting_opt_cb,
                     disting_opt_rb,
+                    show_legend_cb,
                 ),
             ),
         )
