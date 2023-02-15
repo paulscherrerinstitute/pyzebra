@@ -5,7 +5,6 @@ import os
 import numpy as np
 from bokeh.layouts import column, row
 from bokeh.models import (
-    Arrow,
     Button,
     CheckboxGroup,
     ColumnDataSource,
@@ -13,11 +12,9 @@ from bokeh.models import (
     FileInput,
     Legend,
     LegendItem,
-    NormalHead,
     NumericInput,
     RadioGroup,
     Range1d,
-    Spacer,
     Spinner,
     TextAreaInput,
     TextInput,
@@ -210,17 +207,6 @@ class PlotHKL:
             grid_source.data.update(xs=xs, ys=ys)
             minor_grid_source.data.update(xs=xs_minor, ys=ys_minor)
 
-            arrow1.visible = True
-            arrow1.x_end = x_c[0]
-            arrow1.y_end = x_c[1]
-            arrow2.visible = True
-            arrow2.x_end = y_c[0]
-            arrow2.y_end = y_c[1]
-
-            kvect_source.data.update(
-                x=[x_c[0] / 2, y_c[0] / 2 - 0.1], y=[x_c[1] - 0.1, y_c[1] / 2], text=["h", "k"]
-            )
-
             # Prepare hkl/mhkl data
             hkl_coord2 = []
             for j, fname in enumerate(upload_hkl_fi.filename):
@@ -376,18 +362,6 @@ class PlotHKL:
         plot.xgrid.visible = False
         plot.yaxis.visible = False
         plot.ygrid.visible = False
-
-        arrow1 = Arrow(
-            x_start=0, y_start=0, x_end=0, y_end=0, end=NormalHead(size=10), visible=False
-        )
-        plot.add_layout(arrow1)
-        arrow2 = Arrow(
-            x_start=0, y_start=0, x_end=0, y_end=0, end=NormalHead(size=10), visible=False
-        )
-        plot.add_layout(arrow2)
-
-        kvect_source = ColumnDataSource(dict(x=[], y=[], text=[]))
-        plot.text(source=kvect_source)
 
         grid_source = ColumnDataSource(dict(xs=[], ys=[]))
         plot.multi_line(source=grid_source, line_color="gray")

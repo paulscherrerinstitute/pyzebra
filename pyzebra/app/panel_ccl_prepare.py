@@ -7,7 +7,6 @@ import tempfile
 import numpy as np
 from bokeh.layouts import column, row
 from bokeh.models import (
-    Arrow,
     Button,
     CheckboxGroup,
     ColumnDataSource,
@@ -16,7 +15,6 @@ from bokeh.models import (
     Legend,
     LegendItem,
     MultiSelect,
-    NormalHead,
     NumericInput,
     Panel,
     RadioGroup,
@@ -423,17 +421,6 @@ def create():
         grid_source.data.update(xs=xs, ys=ys)
         minor_grid_source.data.update(xs=xs_minor, ys=ys_minor)
 
-        arrow1.visible = True
-        arrow1.x_end = x_c[0]
-        arrow1.y_end = x_c[1]
-        arrow2.visible = True
-        arrow2.x_end = y_c[0]
-        arrow2.y_end = y_c[1]
-
-        kvect_source.data.update(
-            x=[x_c[0] / 2, y_c[0] / 2 - 0.1], y=[x_c[1] - 0.1, y_c[1] / 2], text=["h", "k"]
-        )
-
         def _update_slice():
             cut_tol = hkl_delta.value
             cut_or = hkl_cut.value
@@ -547,14 +534,6 @@ def create():
     scatter = plot.scatter(
         source=scatter_source, marker="m", size="s", fill_color="c", line_color="c"
     )
-
-    arrow1 = Arrow(x_start=0, y_start=0, x_end=0, y_end=0, end=NormalHead(size=10), visible=False)
-    plot.add_layout(arrow1)
-    arrow2 = Arrow(x_start=0, y_start=0, x_end=0, y_end=0, end=NormalHead(size=10), visible=False)
-    plot.add_layout(arrow2)
-
-    kvect_source = ColumnDataSource(dict(x=[], y=[], text=[]))
-    plot.text(source=kvect_source)
 
     plot.add_layout(Legend(items=[], location="top_left", click_policy="hide"))
 
