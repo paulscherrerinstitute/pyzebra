@@ -7,6 +7,7 @@ from bokeh.layouts import column, row
 from bokeh.models import (
     Button,
     CheckboxGroup,
+    ColorBar,
     ColumnDataSource,
     DataRange1d,
     Div,
@@ -247,15 +248,17 @@ def create():
     plot = figure(
         x_range=DataRange1d(),
         y_range=DataRange1d(),
-        plot_height=550,
-        plot_width=550 + 32,
+        plot_height=550 + 27,
+        plot_width=550 + 117,
         tools="pan,wheel_zoom,reset",
     )
     plot.toolbar.logo = None
 
-    color_mapper = LinearColorMapper(nan_color=(0, 0, 0, 0))
+    color_mapper = LinearColorMapper(nan_color=(0, 0, 0, 0), low=0, high=1)
     image_source = ColumnDataSource(dict(image=[np.zeros((1, 1))], x=[0], y=[0], dw=[1], dh=[1]))
     plot.image(source=image_source, color_mapper=color_mapper)
+
+    plot.add_layout(ColorBar(color_mapper=color_mapper, width=15), "right")
 
     scatter_source = ColumnDataSource(dict(x=[], y=[]))
     plot.scatter(source=scatter_source, size=4, fill_color="green", line_color="green")
