@@ -32,7 +32,7 @@ import pyzebra
 class PlotHKL:
     def __init__(self):
         _update_slice = None
-        measured_data_div = Div(text="Measured data:")
+        measured_data_div = Div(text="Measured <b>CCL</b> data:")
         measured_data = FileInput(accept=".ccl", multiple=True, width=200)
 
         upload_hkl_div = Div(text="Open hkl/mhkl data:")
@@ -366,8 +366,8 @@ class PlotHKL:
         plot = figure(
             x_range=Range1d(),
             y_range=Range1d(),
-            plot_height=450,
-            plot_width=450 + 32,
+            plot_height=550,
+            plot_width=550 + 32,
             tools="pan,wheel_zoom,reset",
         )
         plot.toolbar.logo = None
@@ -434,19 +434,23 @@ class PlotHKL:
         res_mult_ni = NumericInput(title="Resolution mult:", value=10, mode="int", width=100)
         tol_k_ni = NumericInput(title="k tolerance:", value=0.01, mode="float", width=100)
 
-        hkl_layout = column(
-            hkl_div,
-            row(hkl_normal, hkl_cut, hkl_delta, Spacer(width=10), hkl_in_plane_x, hkl_in_plane_y),
-        )
-        disting_layout = column(disting_opt_div, row(disting_opt_cb, disting_opt_rb))
-
         layout = column(
             row(
                 column(row(measured_data_div, measured_data), row(upload_hkl_div, upload_hkl_fi)),
                 plot_file,
             ),
-            plot,
-            row(hkl_layout, k_vectors),
-            row(disting_layout, column(tol_k_ni, res_mult_ni)),
+            row(
+                plot,
+                column(
+                    hkl_div,
+                    row(hkl_normal, hkl_cut, hkl_delta),
+                    row(hkl_in_plane_x, hkl_in_plane_y),
+                    k_vectors,
+                    row(tol_k_ni, res_mult_ni),
+                    disting_opt_div,
+                    disting_opt_cb,
+                    disting_opt_rb,
+                ),
+            ),
         )
         self.layout = layout

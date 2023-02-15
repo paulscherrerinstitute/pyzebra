@@ -35,8 +35,8 @@ import pyzebra
 
 IMAGE_W = 256
 IMAGE_H = 128
-IMAGE_PLOT_W = int(IMAGE_W * 2) + 52
-IMAGE_PLOT_H = int(IMAGE_H * 2) + 27
+IMAGE_PLOT_W = int(IMAGE_W * 2.4) + 52
+IMAGE_PLOT_H = int(IMAGE_H * 2.4) + 27
 
 
 def create():
@@ -585,7 +585,7 @@ def create():
         y_range=frame_range,
         extra_x_ranges={"gamma": gamma_range},
         extra_y_ranges={"scanning_motor": scanning_motor_range},
-        plot_height=450,
+        plot_height=540,
         plot_width=IMAGE_PLOT_W - 3,
         tools="pan,box_zoom,wheel_zoom,reset",
         active_scroll="wheel_zoom",
@@ -613,7 +613,7 @@ def create():
         y_range=frame_range,
         extra_x_ranges={"nu": nu_range},
         extra_y_ranges={"scanning_motor": scanning_motor_range},
-        plot_height=450,
+        plot_height=540,
         plot_width=IMAGE_PLOT_H + 22,
         tools="pan,box_zoom,wheel_zoom,reset",
         active_scroll="wheel_zoom",

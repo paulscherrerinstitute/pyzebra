@@ -526,8 +526,8 @@ def create():
     plot = figure(
         x_range=Range1d(),
         y_range=Range1d(),
-        plot_height=450,
-        plot_width=450 + 32,
+        plot_height=550,
+        plot_width=550 + 32,
         tools="pan,wheel_zoom,reset",
     )
     plot.toolbar.logo = None
@@ -611,17 +611,20 @@ def create():
         row(app_dlfiles.button, plot_list),
     )
 
-    hkl_layout = column(
-        hkl_div,
-        row(hkl_normal, hkl_cut, hkl_delta, Spacer(width=10), hkl_in_plane_x, hkl_in_plane_y),
-    )
-    disting_layout = column(disting_opt_div, disting_opt_cb)
-
     column2_layout = column(
         row(upload_data_div, upload_data, plot_file),
-        plot,
-        row(hkl_layout, k_vectors),
-        row(disting_layout, tol_k_ni),
+        row(
+            plot,
+            column(
+                hkl_div,
+                row(hkl_normal, hkl_cut, hkl_delta),
+                row(hkl_in_plane_x, hkl_in_plane_y),
+                k_vectors,
+                tol_k_ni,
+                disting_opt_div,
+                disting_opt_cb,
+            ),
+        ),
     )
 
     tab_layout = row(column1_layout, column2_layout)

@@ -29,7 +29,7 @@ from pyzebra.app.panel_hdf_viewer import calculate_hkl
 
 def create():
     _update_slice = None
-    measured_data_div = Div(text="Measured data:")
+    measured_data_div = Div(text="Measured <b>HDF</b> data:")
     measured_data = FileInput(accept=".hdf", multiple=True, width=200)
 
     upload_hkl_div = Div(text="Open hkl/mhkl data:")
@@ -247,8 +247,8 @@ def create():
     plot = figure(
         x_range=DataRange1d(),
         y_range=DataRange1d(),
-        plot_height=450,
-        plot_width=450 + 32,
+        plot_height=550,
+        plot_width=550 + 32,
         tools="pan,wheel_zoom,reset",
     )
     plot.toolbar.logo = None
@@ -341,46 +341,30 @@ def create():
     auto_range_cb.on_change("active", auto_range_cb_callback)
     auto_range_cb.active = [0]
 
-    range_layout = row(
-        column(Spacer(height=19), auto_range_cb),
-        xrange_min_ni,
-        xrange_max_ni,
-        yrange_min_ni,
-        yrange_max_ni,
-        Spacer(width=27),
-        xrange_step_ni,
-        yrange_step_ni,
-    )
-    cm_layout = row(colormap_select, display_min_ni, display_max_ni)
     column1_layout = column(
         row(
             column(row(measured_data_div, measured_data), row(upload_hkl_div, upload_hkl_fi)),
             plot_file,
         ),
-        plot,
-        column(
-            hkl_div,
-            row(
-                hkl_normal,
-                hkl_cut,
-                hkl_delta,
-                Spacer(width=10),
-                hkl_in_plane_x,
-                hkl_in_plane_y,
-                Spacer(width=10),
-                cm_layout,
+        row(
+            plot,
+            column(
+                hkl_div,
+                row(hkl_normal, hkl_cut, hkl_delta),
+                row(hkl_in_plane_x, hkl_in_plane_y),
+                colormap_select,
+                row(display_min_ni, display_max_ni),
+                row(column(Spacer(height=19), auto_range_cb)),
+                row(xrange_min_ni, xrange_max_ni),
+                row(yrange_min_ni, yrange_max_ni),
+                row(xrange_step_ni, yrange_step_ni),
             ),
-            row(column(Spacer(height=7), redef_lattice_cb), redef_lattice_ti),
-            row(column(Spacer(height=7), redef_ub_cb), redef_ub_ti),
-            range_layout,
         ),
+        row(column(Spacer(height=7), redef_lattice_cb), redef_lattice_ti),
+        row(column(Spacer(height=7), redef_ub_cb), redef_ub_ti),
     )
     column2_layout = app.PlotHKL().layout
 
-    hdf_div = Div(text="<b>HDF DATA</b>")
-    ccl_div = Div(text="<b>CCL DATA</b>")
-    tab_layout = row(
-        column(hdf_div, column1_layout), Spacer(width=70), column(ccl_div, column2_layout)
-    )
+    tab_layout = row(column1_layout, Spacer(width=50), column2_layout)
 
     return Panel(child=tab_layout, title="plot data")
