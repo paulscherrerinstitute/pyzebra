@@ -19,7 +19,6 @@ from bokeh.models import (
     NumericInput,
     Panel,
     RadioGroup,
-    Range1d,
     Select,
     Spacer,
     Spinner,
@@ -318,8 +317,8 @@ def create():
 
     min_grid_x = -10
     max_grid_x = 10
-    min_grid_y = -5
-    max_grid_y = 5
+    min_grid_y = -10
+    max_grid_y = 10
     cmap = Dark2[8]
     syms = ["circle", "inverted_triangle", "square", "diamond", "star", "triangle"]
 
@@ -388,11 +387,6 @@ def create():
                 hkl_coord.append(hkl)
                 intensity_vec.append(fdata["counts"][ind])
                 file_flag_vec.append(j)
-
-        plot.x_range.start = plot.x_range.reset_start = -2
-        plot.x_range.end = plot.x_range.reset_end = 5
-        plot.y_range.start = plot.y_range.reset_start = -4
-        plot.y_range.end = plot.y_range.reset_end = 3.5
 
         # Plot grid lines
         xs, ys = [], []
@@ -514,13 +508,7 @@ def create():
     plot_file = Button(label="Plot selected file(s)", button_type="primary", width=200)
     plot_file.on_click(plot_file_callback)
 
-    plot = figure(
-        x_range=Range1d(),
-        y_range=Range1d(),
-        plot_height=550,
-        plot_width=550 + 32,
-        tools="pan,wheel_zoom,reset",
-    )
+    plot = figure(plot_height=550, plot_width=550 + 32, tools="pan,wheel_zoom,reset")
     plot.toolbar.logo = None
 
     plot.xaxis.visible = False
@@ -538,6 +526,9 @@ def create():
     scatter = plot.scatter(
         source=scatter_source, marker="m", size="s", fill_color="c", line_color="c"
     )
+
+    plot.x_range.renderers = [scatter]
+    plot.y_range.renderers = [scatter]
 
     plot.add_layout(Legend(items=[], location="top_left", click_policy="hide"))
 

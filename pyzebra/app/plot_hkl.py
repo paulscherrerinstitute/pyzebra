@@ -15,7 +15,6 @@ from bokeh.models import (
     LegendItem,
     NumericInput,
     RadioGroup,
-    Range1d,
     Spinner,
     TextAreaInput,
     TextInput,
@@ -38,8 +37,8 @@ class PlotHKL:
 
         min_grid_x = -10
         max_grid_x = 10
-        min_grid_y = -5
-        max_grid_y = 5
+        min_grid_y = -10
+        max_grid_y = 10
         cmap = Dark2[8]
         syms = ["circle", "inverted_triangle", "square", "diamond", "star", "triangle"]
 
@@ -174,11 +173,6 @@ class PlotHKL:
                     file_flag_vec.append(j)
                     res_vec_x.append(res_x)
                     res_vec_y.append(res_y)
-
-            plot.x_range.start = plot.x_range.reset_start = -2
-            plot.x_range.end = plot.x_range.reset_end = 5
-            plot.y_range.start = plot.y_range.reset_start = -4
-            plot.y_range.end = plot.y_range.reset_end = 3.5
 
             # Plot grid lines
             xs, ys = [], []
@@ -353,13 +347,7 @@ class PlotHKL:
         plot_file = Button(label="Plot selected file(s)", button_type="primary", width=200)
         plot_file.on_click(plot_file_callback)
 
-        plot = figure(
-            x_range=Range1d(),
-            y_range=Range1d(),
-            plot_height=550,
-            plot_width=550 + 32,
-            tools="pan,wheel_zoom,reset",
-        )
+        plot = figure(plot_height=550, plot_width=550 + 32, tools="pan,wheel_zoom,reset")
         plot.toolbar.logo = None
 
         plot.xaxis.visible = False
@@ -388,6 +376,9 @@ class PlotHKL:
         scatter2 = plot.scatter(
             source=scatter_source2, size=4, fill_color="green", line_color="green"
         )
+
+        plot.x_range.renderers = [ellipse, mline, scatter, scatter2]
+        plot.y_range.renderers = [ellipse, mline, scatter, scatter2]
 
         plot.add_layout(Legend(items=[], location="top_left", click_policy="hide"))
 
