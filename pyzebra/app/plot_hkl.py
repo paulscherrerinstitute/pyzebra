@@ -220,7 +220,7 @@ class PlotHKL:
 
                 for ind in range(len(fdata["counts"])):
                     # Recognize k_flag_vec
-                    hkl = np.array([fdata["h"][ind], fdata["k"][ind], fdata["k"][ind]])
+                    hkl = np.array([fdata["h"][ind], fdata["k"][ind], fdata["l"][ind]])
 
                     # Save data
                     hkl_coord2.append(hkl)

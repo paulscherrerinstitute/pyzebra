@@ -373,7 +373,7 @@ def create():
         for j, fdata in enumerate(filedata):
             for ind in range(len(fdata["counts"])):
                 # Recognize k_flag_vec
-                hkl = np.array([fdata["h"][ind], fdata["k"][ind], fdata["k"][ind]])
+                hkl = np.array([fdata["h"][ind], fdata["k"][ind], fdata["l"][ind]])
                 reduced_hkl_m = np.minimum(1 - hkl % 1, hkl % 1)
                 for k_ind, _k in enumerate(k):
                     if all(np.abs(reduced_hkl_m - _k) < tol_k):
