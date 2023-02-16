@@ -12,6 +12,7 @@ from bokeh.models import (
     ColumnDataSource,
     Div,
     FileInput,
+    HoverTool,
     Legend,
     LegendItem,
     MultiSelect,
@@ -433,7 +434,7 @@ def create():
             prop_legend_flag = 2 in disting_opt_cb.active
 
             scan_x, scan_y = [], []
-            scan_m, scan_s, scan_c, scan_l = [], [], [], []
+            scan_m, scan_s, scan_c, scan_l, scan_hkl = [], [], [], [], []
             for j in range(len(hkl_coord)):
                 # Get middle hkl from list
                 hklm = M @ hkl_coord[j]
@@ -467,8 +468,11 @@ def create():
                 # Color and legend label
                 scan_c.append(col_value)
                 scan_l.append(filenames[file_flag_vec[j]])
+                scan_hkl.append(hkl_coord[j])
 
-            scatter_source.data.update(x=scan_x, y=scan_y, m=scan_m, s=scan_s, c=scan_c, l=scan_l)
+            scatter_source.data.update(
+                x=scan_x, y=scan_y, m=scan_m, s=scan_s, c=scan_c, l=scan_l, hkl=scan_hkl
+            )
 
             # Legend items for different file entries (symbol)
             legend_items = []
@@ -530,12 +534,14 @@ def create():
     minor_grid_source = ColumnDataSource(dict(xs=[], ys=[]))
     plot.multi_line(source=minor_grid_source, line_color="gray", line_dash="dotted")
 
-    scatter_source = ColumnDataSource(dict(x=[], y=[], m=[], s=[], c=[], l=[]))
+    scatter_source = ColumnDataSource(dict(x=[], y=[], m=[], s=[], c=[], l=[], hkl=[]))
     scatter = plot.scatter(
         source=scatter_source, marker="m", size="s", fill_color="c", line_color="c"
     )
 
     plot.add_layout(Legend(items=[], location="top_left", click_policy="hide"))
+
+    plot.add_tools(HoverTool(renderers=[scatter], tooltips=[("hkl", "@hkl")]))
 
     hkl_div = Div(text="HKL:", margin=(5, 5, 0, 5))
     hkl_normal = TextInput(title="normal", value="0 0 1", width=70)

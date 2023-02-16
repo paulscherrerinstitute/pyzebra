@@ -10,6 +10,7 @@ from bokeh.models import (
     ColumnDataSource,
     Div,
     FileInput,
+    HoverTool,
     Legend,
     LegendItem,
     NumericInput,
@@ -240,7 +241,7 @@ class PlotHKL:
 
                 el_x, el_y, el_w, el_h, el_c = [], [], [], [], []
                 scan_xs, scan_ys, scan_x, scan_y = [], [], [], []
-                scan_m, scan_s, scan_c, scan_l = [], [], [], []
+                scan_m, scan_s, scan_c, scan_l, scan_hkl = [], [], [], [], []
                 for j in range(len(hkl_coord)):
                     # Get middle hkl from list
                     hklm = M @ hkl_coord[j][2]
@@ -289,6 +290,7 @@ class PlotHKL:
                         # Color and legend label
                         scan_c.append(col_value)
                         scan_l.append(md_fnames[file_flag_vec[j]])
+                        scan_hkl.append(hkl_coord[j][2])
 
                 ellipse_source.data.update(x=el_x, y=el_y, width=el_w, height=el_h, c=el_c)
                 scan_source.data.update(
@@ -300,6 +302,7 @@ class PlotHKL:
                     s=scan_s,
                     c=scan_c,
                     l=scan_l,
+                    hkl=scan_hkl,
                 )
 
                 # Legend items for different file entries (symbol)
@@ -323,7 +326,7 @@ class PlotHKL:
 
                 plot.legend.items = legend_items
 
-                scan_x2, scan_y2 = [], []
+                scan_x2, scan_y2, scan_hkl2 = [], [], []
                 for j in range(len(hkl_coord2)):
                     # Get middle hkl from list
                     hklm = M @ hkl_coord2[j]
@@ -336,8 +339,9 @@ class PlotHKL:
                     # Plot middle point of scan
                     scan_x2.append(hklm[0])
                     scan_y2.append(hklm[1])
+                    scan_hkl2.append(hkl_coord2[j])
 
-                scatter_source2.data.update(x=scan_x2, y=scan_y2)
+                scatter_source2.data.update(x=scan_x2, y=scan_y2, hkl=scan_hkl2)
 
             return _update_slice
 
@@ -372,16 +376,22 @@ class PlotHKL:
         ellipse_source = ColumnDataSource(dict(x=[], y=[], width=[], height=[], c=[]))
         ellipse = plot.ellipse(source=ellipse_source, fill_color="c", line_color="c")
 
-        scan_source = ColumnDataSource(dict(xs=[], ys=[], x=[], y=[], m=[], s=[], c=[], l=[]))
+        scan_source = ColumnDataSource(
+            dict(xs=[], ys=[], x=[], y=[], m=[], s=[], c=[], l=[], hkl=[])
+        )
         mline = plot.multi_line(source=scan_source, line_color="c")
         scatter = plot.scatter(
             source=scan_source, marker="m", size="s", fill_color="c", line_color="c"
         )
 
-        scatter_source2 = ColumnDataSource(dict(x=[], y=[]))
-        plot.scatter(source=scatter_source2, size=4, fill_color="green", line_color="green")
+        scatter_source2 = ColumnDataSource(dict(x=[], y=[], hkl=[]))
+        scatter2 = plot.scatter(
+            source=scatter_source2, size=4, fill_color="green", line_color="green"
+        )
 
         plot.add_layout(Legend(items=[], location="top_left", click_policy="hide"))
+
+        plot.add_tools(HoverTool(renderers=[scatter, scatter2], tooltips=[("hkl", "@hkl")]))
 
         hkl_div = Div(text="HKL:", margin=(5, 5, 0, 5))
         hkl_normal = TextInput(title="normal", value="0 0 1", width=70)
