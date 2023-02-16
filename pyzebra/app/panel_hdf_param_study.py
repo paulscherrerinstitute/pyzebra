@@ -367,16 +367,16 @@ def create():
     )
     proj_auto_checkbox.on_click(proj_auto_checkbox_callback)
 
-    def proj_display_max_spinner_callback(_attr, _old_value, new_value):
-        color_mapper_proj.high = new_value
+    def proj_display_max_spinner_callback(_attr, _old, new):
+        color_mapper_proj.high = new
 
     proj_display_max_spinner = Spinner(
         value=1, disabled=bool(proj_auto_checkbox.active), mode="int", width=100
     )
     proj_display_max_spinner.on_change("value", proj_display_max_spinner_callback)
 
-    def proj_display_min_spinner_callback(_attr, _old_value, new_value):
-        color_mapper_proj.low = new_value
+    def proj_display_min_spinner_callback(_attr, _old, new):
+        color_mapper_proj.low = new
 
     proj_display_min_spinner = Spinner(
         value=0, disabled=bool(proj_auto_checkbox.active), mode="int", width=100

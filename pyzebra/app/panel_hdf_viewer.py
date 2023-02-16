@@ -18,9 +18,11 @@ from bokeh.models import (
     HoverTool,
     LinearAxis,
     LinearColorMapper,
+    LogColorMapper,
     MultiSelect,
     NumberFormatter,
     Panel,
+    RadioGroup,
     Range1d,
     Select,
     Slider,
@@ -483,8 +485,9 @@ def create():
         )
     )
 
-    color_mapper = LinearColorMapper()
-    plot.image(source=image_source, color_mapper=color_mapper)
+    lin_color_mapper = LinearColorMapper(low=0, high=1)
+    log_color_mapper = LogColorMapper(low=0, high=1)
+    plot_image = plot.image(source=image_source, color_mapper=lin_color_mapper)
     plot.image(source=image_source, image="h", global_alpha=0)
     plot.image(source=image_source, image="k", global_alpha=0)
     plot.image(source=image_source, image="l", global_alpha=0)
@@ -573,7 +576,8 @@ def create():
     # shared frame ranges
     frame_range = Range1d(0, 1, bounds=(0, 1))
     scanning_motor_range = Range1d(0, 1, bounds=(0, 1))
-    color_mapper_proj = LinearColorMapper()
+    lin_color_mapper_proj = LinearColorMapper(low=0, high=1)
+    log_color_mapper_proj = LogColorMapper(low=0, high=1)
 
     det_x_range = Range1d(0, IMAGE_W, bounds=(0, IMAGE_W))
     gamma_range = Range1d(0, 1, bounds=(0, 1))
@@ -600,7 +604,7 @@ def create():
         dict(image=[np.zeros((1, 1), dtype="float32")], x=[0], y=[0], dw=[IMAGE_W], dh=[1])
     )
 
-    proj_x_plot.image(source=proj_x_image_source, color_mapper=color_mapper_proj)
+    proj_x_image = proj_x_plot.image(source=proj_x_image_source, color_mapper=lin_color_mapper_proj)
 
     det_y_range = Range1d(0, IMAGE_H, bounds=(0, IMAGE_H))
     nu_range = Range1d(0, 1, bounds=(0, 1))
@@ -629,7 +633,7 @@ def create():
         dict(image=[np.zeros((1, 1), dtype="float32")], x=[0], y=[0], dw=[IMAGE_H], dh=[1])
     )
 
-    proj_y_plot.image(source=proj_y_image_source, color_mapper=color_mapper_proj)
+    proj_y_image = proj_y_plot.image(source=proj_y_image_source, color_mapper=lin_color_mapper_proj)
 
     # ROI slice plot
     roi_avg_plot = figure(plot_height=150, plot_width=IMAGE_PLOT_W, tools="", toolbar_location=None)
@@ -638,16 +642,40 @@ def create():
     roi_avg_plot.line(source=roi_avg_plot_line_source, line_color="steelblue")
 
     def colormap_select_callback(_attr, _old, new):
-        color_mapper.palette = new
-        color_mapper_proj.palette = new
+        lin_color_mapper.palette = new
+        log_color_mapper.palette = new
+        lin_color_mapper_proj.palette = new
+        log_color_mapper_proj.palette = new
 
     colormap_select = Select(
         title="Colormap:",
         options=[("Greys256", "greys"), ("Plasma256", "plasma"), ("Cividis256", "cividis")],
-        width=210,
+        width=100,
     )
     colormap_select.on_change("value", colormap_select_callback)
     colormap_select.value = "Plasma256"
+
+    def colormap_scale_rg_callback(selection):
+        if selection == 0:  # Linear
+            plot_image.glyph.color_mapper = lin_color_mapper
+            proj_x_image.glyph.color_mapper = lin_color_mapper_proj
+            proj_y_image.glyph.color_mapper = lin_color_mapper_proj
+
+        else:  # Logarithmic
+            if (
+                display_min_spinner.value > 0
+                and display_max_spinner.value > 0
+                and proj_display_min_spinner.value > 0
+                and proj_display_max_spinner.value > 0
+            ):
+                plot_image.glyph.color_mapper = log_color_mapper
+                proj_x_image.glyph.color_mapper = log_color_mapper_proj
+                proj_y_image.glyph.color_mapper = log_color_mapper_proj
+            else:
+                colormap_scale_rg.active = 0
+
+    colormap_scale_rg = RadioGroup(labels=["Linear", "Logarithmic"], active=0, width=100)
+    colormap_scale_rg.on_click(colormap_scale_rg_callback)
 
     def main_auto_checkbox_callback(state):
         if state:
@@ -664,20 +692,21 @@ def create():
     )
     main_auto_checkbox.on_click(main_auto_checkbox_callback)
 
-    def display_max_spinner_callback(_attr, _old_value, new_value):
-        color_mapper.high = new_value
+    def display_max_spinner_callback(_attr, _old, new):
+        lin_color_mapper.high = new
+        log_color_mapper.high = new
+        # TODO: without this _update_image() log color mapper display is delayed
+        _update_image()
 
-    display_max_spinner = Spinner(
-        value=1, disabled=bool(main_auto_checkbox.active), mode="int", width=100
-    )
+    display_max_spinner = Spinner(value=1, disabled=bool(main_auto_checkbox.active), width=100)
     display_max_spinner.on_change("value", display_max_spinner_callback)
 
-    def display_min_spinner_callback(_attr, _old_value, new_value):
-        color_mapper.low = new_value
+    def display_min_spinner_callback(_attr, _old, new):
+        lin_color_mapper.low = new
+        log_color_mapper.low = new
+        _update_image()
 
-    display_min_spinner = Spinner(
-        value=0, disabled=bool(main_auto_checkbox.active), mode="int", width=100
-    )
+    display_min_spinner = Spinner(value=0, disabled=bool(main_auto_checkbox.active), width=100)
     display_min_spinner.on_change("value", display_min_spinner_callback)
 
     def proj_auto_checkbox_callback(state):
@@ -695,20 +724,20 @@ def create():
     )
     proj_auto_checkbox.on_click(proj_auto_checkbox_callback)
 
-    def proj_display_max_spinner_callback(_attr, _old_value, new_value):
-        color_mapper_proj.high = new_value
+    def proj_display_max_spinner_callback(_attr, _old, new):
+        lin_color_mapper_proj.high = new
+        log_color_mapper_proj.high = new
+        _update_proj_plots()
 
-    proj_display_max_spinner = Spinner(
-        value=1, disabled=bool(proj_auto_checkbox.active), mode="int", width=100
-    )
+    proj_display_max_spinner = Spinner(value=1, disabled=bool(proj_auto_checkbox.active), width=100)
     proj_display_max_spinner.on_change("value", proj_display_max_spinner_callback)
 
-    def proj_display_min_spinner_callback(_attr, _old_value, new_value):
-        color_mapper_proj.low = new_value
+    def proj_display_min_spinner_callback(_attr, _old, new):
+        lin_color_mapper_proj.low = new
+        log_color_mapper_proj.low = new
+        _update_proj_plots()
 
-    proj_display_min_spinner = Spinner(
-        value=0, disabled=bool(proj_auto_checkbox.active), mode="int", width=100
-    )
+    proj_display_min_spinner = Spinner(value=0, disabled=bool(proj_auto_checkbox.active), width=100)
     proj_display_min_spinner.on_change("value", proj_display_min_spinner_callback)
 
     events_data = dict(
@@ -881,7 +910,7 @@ def create():
 
     layout_image = column(gridplot([[proj_v, None], [plot, proj_h]], merge_tools=False))
     colormap_layout = column(
-        colormap_select,
+        row(colormap_select, column(Spacer(height=15), colormap_scale_rg)),
         main_auto_checkbox,
         row(display_min_spinner, display_max_spinner),
         proj_auto_checkbox,

@@ -13,8 +13,10 @@ from bokeh.models import (
     Div,
     FileInput,
     LinearColorMapper,
+    LogColorMapper,
     NumericInput,
     Panel,
+    RadioGroup,
     Select,
     Spacer,
     Spinner,
@@ -254,11 +256,15 @@ def create():
     )
     plot.toolbar.logo = None
 
-    color_mapper = LinearColorMapper(nan_color=(0, 0, 0, 0), low=0, high=1)
+    lin_color_mapper = LinearColorMapper(nan_color=(0, 0, 0, 0), low=0, high=1)
+    log_color_mapper = LogColorMapper(nan_color=(0, 0, 0, 0), low=0, high=1)
     image_source = ColumnDataSource(dict(image=[np.zeros((1, 1))], x=[0], y=[0], dw=[1], dh=[1]))
-    plot.image(source=image_source, color_mapper=color_mapper)
+    plot_image = plot.image(source=image_source, color_mapper=lin_color_mapper)
 
-    plot.add_layout(ColorBar(color_mapper=color_mapper, width=15), "right")
+    lin_color_bar = ColorBar(color_mapper=lin_color_mapper, width=15)
+    log_color_bar = ColorBar(color_mapper=log_color_mapper, width=15, visible=False)
+    plot.add_layout(lin_color_bar, "right")
+    plot.add_layout(log_color_bar, "right")
 
     scatter_source = ColumnDataSource(dict(x=[], y=[]))
     plot.scatter(source=scatter_source, size=4, fill_color="green", line_color="green")
@@ -298,7 +304,8 @@ def create():
     redef_ub_ti = TextInput(width=490, disabled=True)
 
     def colormap_select_callback(_attr, _old, new):
-        color_mapper.palette = new
+        lin_color_mapper.palette = new
+        log_color_mapper.palette = new
 
     colormap_select = Select(
         title="Colormap:",
@@ -309,16 +316,35 @@ def create():
     colormap_select.value = "Plasma256"
 
     def display_min_ni_callback(_attr, _old, new):
-        color_mapper.low = new
+        lin_color_mapper.low = new
+        log_color_mapper.low = new
 
     display_min_ni = NumericInput(title="Intensity min:", value=0, mode="float", width=70)
     display_min_ni.on_change("value", display_min_ni_callback)
 
     def display_max_ni_callback(_attr, _old, new):
-        color_mapper.high = new
+        lin_color_mapper.high = new
+        log_color_mapper.high = new
 
     display_max_ni = NumericInput(title="max:", value=1, mode="float", width=70)
     display_max_ni.on_change("value", display_max_ni_callback)
+
+    def colormap_scale_rg_callback(selection):
+        if selection == 0:  # Linear
+            plot_image.glyph.color_mapper = lin_color_mapper
+            lin_color_bar.visible = True
+            log_color_bar.visible = False
+
+        else:  # Logarithmic
+            if display_min_ni.value > 0 and display_max_ni.value > 0:
+                plot_image.glyph.color_mapper = log_color_mapper
+                lin_color_bar.visible = False
+                log_color_bar.visible = True
+            else:
+                colormap_scale_rg.active = 0
+
+    colormap_scale_rg = RadioGroup(labels=["Linear", "Logarithmic"], active=0, width=100)
+    colormap_scale_rg.on_click(colormap_scale_rg_callback)
 
     xrange_min_ni = NumericInput(title="x range min:", value=0, mode="float", width=70)
     xrange_max_ni = NumericInput(title="max:", value=1, mode="float", width=70)
@@ -355,7 +381,7 @@ def create():
                 hkl_div,
                 row(hkl_normal, hkl_cut, hkl_delta),
                 row(hkl_in_plane_x, hkl_in_plane_y),
-                colormap_select,
+                row(colormap_select, column(Spacer(height=15), colormap_scale_rg)),
                 row(display_min_ni, display_max_ni),
                 row(column(Spacer(height=19), auto_range_cb)),
                 row(xrange_min_ni, xrange_max_ni),
