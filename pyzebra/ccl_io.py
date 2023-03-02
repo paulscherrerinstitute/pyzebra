@@ -162,6 +162,10 @@ def parse_1D(fileobj, data_type):
             for param, (param_name, param_type) in zip(line.split(), ccl_first_line):
                 scan[param_name] = param_type(param)
 
+            # rename 0 index scan to 1
+            if scan["idx"] == 0:
+                scan["idx"] = 1
+
             # second line
             next_line = next(fileobj)
             for param, (param_name, param_type) in zip(next_line.split(), ccl_second_line):
