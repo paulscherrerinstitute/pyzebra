@@ -339,9 +339,9 @@ class PlotHKL:
                     hklmy = np.dot(hklm, y_vert)
 
                     if intensity_flag:
-                        markersize = max(1, int(intensity_vec[j] / max(intensity_vec) * 20))
+                        markersize = max(6, int(intensity_vec[j] / max(intensity_vec) * 30))
                     else:
-                        markersize = 4
+                        markersize = 6
 
                     if file_flag:
                         plot_symbol = syms[file_flag_vec[j]]
