@@ -5,6 +5,7 @@ import os
 import numpy as np
 from bokeh.layouts import column, row
 from bokeh.models import (
+    Arrow,
     Button,
     CheckboxGroup,
     ColumnDataSource,
@@ -13,6 +14,7 @@ from bokeh.models import (
     HoverTool,
     Legend,
     LegendItem,
+    NormalHead,
     NumericInput,
     RadioGroup,
     Spinner,
@@ -86,13 +88,44 @@ class PlotHKL:
                 ]
             )
 
-            # Calculate in-plane y-direction
-            x_c = M @ x_dir
-            o_c = M @ orth_dir
+            # Get last lattice vector
+            y_dir = np.cross(x_dir, orth_dir)  # Second axes of plotting plane
 
-            # Calculate y-direction in plot (orthogonal to x-direction and out-of-plane direction)
-            y_c = np.cross(x_c, o_c)
-            hkl_in_plane_y.value = " ".join([f"{val:.1f}" for val in y_c])
+            # Rescale such that smallest element of y-dir vector is 1
+            y_dir2 = y_dir[y_dir != 0]
+            min_val = np.min(np.abs(y_dir2))
+            y_dir = y_dir / min_val
+
+            # Possibly flip direction of ydir:
+            if y_dir[np.argmax(abs(y_dir))] < 0:
+                y_dir = -y_dir
+
+            # Display the resulting y_dir
+            hkl_in_plane_y.value = " ".join([f"{val:.1f}" for val in y_dir])
+
+            # Save length of lattice vectors
+            x_length = np.linalg.norm(x_dir)
+            y_length = np.linalg.norm(y_dir)
+
+            # Save str for labels
+            xlabel_str = " ".join(map(str, x_dir))
+            ylabel_str = " ".join(map(str, y_dir))
+
+            # Normalize lattice vectors
+            y_dir = y_dir / np.linalg.norm(y_dir)
+            x_dir = x_dir / np.linalg.norm(x_dir)
+            orth_dir = orth_dir / np.linalg.norm(orth_dir)
+
+            # Calculate cartesian equivalents of lattice vectors
+            x_c = np.matmul(M, x_dir)
+            y_c = np.matmul(M, y_dir)
+            o_c = np.matmul(M, orth_dir)
+
+            # Calulcate vertical direction in plotting plame
+            y_vert = np.cross(x_c, o_c)  # verical direction in plotting plane
+            if y_vert[np.argmax(abs(y_vert))] < 0:
+                y_vert = -y_vert
+            y_vert = y_vert / np.linalg.norm(y_vert)
 
             # Normalize all directions
             y_c = y_c / np.linalg.norm(y_c)
@@ -104,8 +137,7 @@ class PlotHKL:
             intensity_vec = []
             k_flag_vec = []
             file_flag_vec = []
-            res_vec_x = []
-            res_vec_y = []
+            res_vec = []
             res_N = 10
 
             for j, md_fname in enumerate(md_fnames):
@@ -132,25 +164,17 @@ class PlotHKL:
 
                     # Calculate resolution in degrees
                     expr = np.tan(gammad / 2 * np.pi / 180)
-                    res = np.sqrt(0.4639 * expr**2 - 0.4452 * expr + 0.1506) * res_mult
-
-                    # convert to resolution in hkl along scan line
-                    ang2hkl_1d = pyzebra.ang2hkl_1d
-                    res_x = []
-                    res_y = []
-                    for _om in np.linspace(om[0], om[-1], num=res_N):
-                        expr1 = ang2hkl_1d(wave, gammad, _om + res / 2, chi, phi, nud, ub_inv)
-                        expr2 = ang2hkl_1d(wave, gammad, _om - res / 2, chi, phi, nud, ub_inv)
-                        hkl_temp = M @ (np.abs(expr1 - expr2) / 2)
-                        res_x.append(hkl_temp[0])
-                        res_y.append(hkl_temp[1])
+                    fwhm = np.sqrt(0.4639 * expr**2 - 0.4452 * expr + 0.1506) * res_mult
+                    res = 4 * np.pi / wave * np.sin(fwhm * np.pi / 180)
 
                     # Get first and final hkl
-                    hkl1 = ang2hkl_1d(wave, gammad, om[0], chi, phi, nud, ub_inv)
-                    hkl2 = ang2hkl_1d(wave, gammad, om[-1], chi, phi, nud, ub_inv)
+                    hkl1 = pyzebra.ang2hkl_1d(wave, gammad, om[0], chi, phi, nud, ub_inv)
+                    hkl2 = pyzebra.ang2hkl_1d(wave, gammad, om[-1], chi, phi, nud, ub_inv)
 
                     # Get hkl at best intensity
-                    hkl_m = ang2hkl_1d(wave, gammad, om[np.argmax(counts)], chi, phi, nud, ub_inv)
+                    hkl_m = pyzebra.ang2hkl_1d(
+                        wave, gammad, om[np.argmax(counts)], chi, phi, nud, ub_inv
+                    )
 
                     # Estimate intensity for marker size scaling
                     y_bkg = [counts[0], counts[-1]]
@@ -171,33 +195,91 @@ class PlotHKL:
                     hkl_coord.append([hkl1, hkl2, hkl_m])
                     intensity_vec.append(c)
                     file_flag_vec.append(j)
-                    res_vec_x.append(res_x)
-                    res_vec_y.append(res_y)
+                    res_vec.append(res)
+
+            x_spacing = np.dot(M @ x_dir, x_c) * x_length
+            y_spacing = np.dot(M @ y_dir, y_vert) * y_length
+            y_spacingx = np.dot(M @ y_dir, x_c) * y_length
+
+            # Plot coordinate system
+            arrow1.x_end = x_spacing
+            arrow1.y_end = 0
+            arrow2.x_end = y_spacingx
+            arrow2.y_end = y_spacing
+
+            # Add labels
+            kvect_source.data.update(
+                x=[x_spacing / 4, -0.1],
+                y=[x_spacing / 4 - 0.5, y_spacing / 2],
+                text=[xlabel_str, ylabel_str],
+            )
 
             # Plot grid lines
             xs, ys = [], []
             xs_minor, ys_minor = [], []
             for yy in np.arange(min_grid_y, max_grid_y, 1):
-                hkl1 = M @ [0, yy, 0]
-                xs.append([min_grid_y, max_grid_y])
-                ys.append([hkl1[1], hkl1[1]])
+                # Calculate end and start point
+                hkl1 = min_grid_x * x_dir + yy * y_dir
+                hkl2 = max_grid_x * x_dir + yy * y_dir
+                hkl1 = M @ hkl1
+                hkl2 = M @ hkl2
+
+                # Project points onto axes
+                x1 = np.dot(x_c, hkl1) * x_length
+                y1 = np.dot(y_vert, hkl1) * y_length
+                x2 = np.dot(x_c, hkl2) * x_length
+                y2 = np.dot(y_vert, hkl2) * y_length
+
+                xs.append([x1, x2])
+                ys.append([y1, y2])
 
             for xx in np.arange(min_grid_x, max_grid_x, 1):
-                hkl1 = M @ [xx, min_grid_x, 0]
-                hkl2 = M @ [xx, max_grid_x, 0]
-                xs.append([hkl1[0], hkl2[0]])
-                ys.append([hkl1[1], hkl2[1]])
+                # Calculate end and start point
+                hkl1 = xx * x_dir + min_grid_y * y_dir
+                hkl2 = xx * x_dir + max_grid_y * y_dir
+                hkl1 = M @ hkl1
+                hkl2 = M @ hkl2
+
+                # Project points onto axes
+                x1 = np.dot(x_c, hkl1) * x_length
+                y1 = np.dot(y_vert, hkl1) * y_length
+                x2 = np.dot(x_c, hkl2) * x_length
+                y2 = np.dot(y_vert, hkl2) * y_length
+
+                xs.append([x1, x2])
+                ys.append([y1, y2])
 
             for yy in np.arange(min_grid_y, max_grid_y, 0.5):
-                hkl1 = M @ [0, yy, 0]
-                xs_minor.append([min_grid_y, max_grid_y])
-                ys_minor.append([hkl1[1], hkl1[1]])
+                # Calculate end and start point
+                hkl1 = min_grid_x * x_dir + yy * y_dir
+                hkl2 = max_grid_x * x_dir + yy * y_dir
+                hkl1 = M @ hkl1
+                hkl2 = M @ hkl2
+
+                # Project points onto axes
+                x1 = np.dot(x_c, hkl1) * x_length
+                y1 = np.dot(y_vert, hkl1) * y_length
+                x2 = np.dot(x_c, hkl2) * x_length
+                y2 = np.dot(y_vert, hkl2) * y_length
+
+                xs_minor.append([x1, x2])
+                ys_minor.append([y1, y2])
 
             for xx in np.arange(min_grid_x, max_grid_x, 0.5):
-                hkl1 = M @ [xx, min_grid_x, 0]
-                hkl2 = M @ [xx, max_grid_x, 0]
-                xs_minor.append([hkl1[0], hkl2[0]])
-                ys_minor.append([hkl1[1], hkl2[1]])
+                # Calculate end and start point
+                hkl1 = xx * x_dir + min_grid_y * y_dir
+                hkl2 = xx * x_dir + max_grid_y * y_dir
+                hkl1 = M @ hkl1
+                hkl2 = M @ hkl2
+
+                # Project points onto axes
+                x1 = np.dot(x_c, hkl1) * x_length
+                y1 = np.dot(y_vert, hkl1) * y_length
+                x2 = np.dot(x_c, hkl2) * x_length
+                y2 = np.dot(y_vert, hkl2) * y_length
+
+                xs_minor.append([x1, x2])
+                ys_minor.append([y1, y2])
 
             grid_source.data.update(xs=xs, ys=ys)
             minor_grid_source.data.update(xs=xs_minor, ys=ys_minor)
@@ -248,6 +330,14 @@ class PlotHKL:
                     hkl1 = M @ hkl_coord[j][0]
                     hkl2 = M @ hkl_coord[j][1]
 
+                    # Project onto axes
+                    hkl1x = np.dot(hkl1, x_c)
+                    hkl1y = np.dot(hkl1, y_vert)
+                    hkl2x = np.dot(hkl2, x_c)
+                    hkl2y = np.dot(hkl2, y_vert)
+                    hklmx = np.dot(hklm, x_c)
+                    hklmy = np.dot(hklm, y_vert)
+
                     if intensity_flag:
                         markersize = max(1, int(intensity_vec[j] / max(intensity_vec) * 20))
                     else:
@@ -264,20 +354,21 @@ class PlotHKL:
                         col_value = "black"
 
                     if res_flag:
-                        # Generate series of ellipses along scan line
-                        el_x.extend(np.linspace(hkl1[0], hkl2[0], num=res_N))
-                        el_y.extend(np.linspace(hkl1[1], hkl2[1], num=res_N))
-                        el_w.extend(np.array(res_vec_x[j]) * 2)
-                        el_h.extend(np.array(res_vec_y[j]) * 2)
+                        # Generate series of circles along scan line
+                        res = res_vec[j]
+                        el_x.extend(np.linspace(hkl1x, hkl2x, num=res_N))
+                        el_y.extend(np.linspace(hkl1y, hkl2y, num=res_N))
+                        el_w.extend([res / 2] * res_N)
+                        el_h.extend([res / 2] * res_N)
                         el_c.extend([col_value] * res_N)
                     else:
                         # Plot scan line
-                        scan_xs.append([hkl1[0], hkl2[0]])
-                        scan_ys.append([hkl1[1], hkl2[1]])
+                        scan_xs.append([hkl1x, hkl2x])
+                        scan_ys.append([hkl1y, hkl2y])
 
                         # Plot middle point of scan
-                        scan_x.append(hklm[0])
-                        scan_y.append(hklm[1])
+                        scan_x.append(hklmx)
+                        scan_y.append(hklmy)
                         scan_m.append(plot_symbol)
                         scan_s.append(markersize)
 
@@ -330,9 +421,12 @@ class PlotHKL:
                     if abs(proj - cut_or) >= cut_tol:
                         continue
 
-                    # Plot middle point of scan
-                    scan_x2.append(hklm[0])
-                    scan_y2.append(hklm[1])
+                    # Project onto axes
+                    hklmx = np.dot(hklm, x_c)
+                    hklmy = np.dot(hklm, y_vert)
+
+                    scan_x2.append(hklmx)
+                    scan_y2.append(hklmy)
                     scan_hkl2.append(hkl_coord2[j])
 
                 scatter_source2.data.update(x=scan_x2, y=scan_y2, hkl=scan_hkl2)
@@ -354,6 +448,14 @@ class PlotHKL:
         plot.xgrid.visible = False
         plot.yaxis.visible = False
         plot.ygrid.visible = False
+
+        arrow1 = Arrow(x_start=0, y_start=0, x_end=0, y_end=0, end=NormalHead(size=10))
+        plot.add_layout(arrow1)
+        arrow2 = Arrow(x_start=0, y_start=0, x_end=0, y_end=0, end=NormalHead(size=10))
+        plot.add_layout(arrow2)
+
+        kvect_source = ColumnDataSource(dict(x=[], y=[], text=[]))
+        plot.text(source=kvect_source)
 
         grid_source = ColumnDataSource(dict(xs=[], ys=[]))
         plot.multi_line(source=grid_source, line_color="gray")

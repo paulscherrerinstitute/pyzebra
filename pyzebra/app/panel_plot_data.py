@@ -123,18 +123,54 @@ def create():
             ]
         )
 
+        # Get last lattice vector
+        y_dir = np.cross(x_dir, orth_dir)  # Second axes of plotting plane
+
+        # Rescale such that smallest element of y-dir vector is 1
+        y_dir2 = y_dir[y_dir != 0]
+        min_val = np.min(np.abs(y_dir2))
+        y_dir = y_dir / min_val
+
+        # Possibly flip direction of ydir:
+        if y_dir[np.argmax(abs(y_dir))] < 0:
+            y_dir = -y_dir
+
+        # Display the resulting y_dir
+        hkl_in_plane_y.value = " ".join([f"{val:.1f}" for val in y_dir])
+
+        # # Save length of lattice vectors
+        # x_length = np.linalg.norm(x_dir)
+        # y_length = np.linalg.norm(y_dir)
+
+        # # Save str for labels
+        # xlabel_str = " ".join(map(str, x_dir))
+        # ylabel_str = " ".join(map(str, y_dir))
+
+        # Normalize lattice vectors
+        y_dir = y_dir / np.linalg.norm(y_dir)
+        x_dir = x_dir / np.linalg.norm(x_dir)
+        orth_dir = orth_dir / np.linalg.norm(orth_dir)
+
+        # Calculate cartesian equivalents of lattice vectors
+        x_c = np.matmul(M, x_dir)
+        y_c = np.matmul(M, y_dir)
+        o_c = np.matmul(M, orth_dir)
+
+        # Calulcate vertical direction in plotting plame
+        y_vert = np.cross(x_c, o_c)  # verical direction in plotting plane
+        if y_vert[np.argmax(abs(y_vert))] < 0:
+            y_vert = -y_vert
+        y_vert = y_vert / np.linalg.norm(y_vert)
+
+        # Normalize all directions
+        y_c = y_c / np.linalg.norm(y_c)
+        x_c = x_c / np.linalg.norm(x_c)
+        o_c = o_c / np.linalg.norm(o_c)
+
         # Convert all hkls to cartesian
         hkl = [[h, k, l]]
         hkl = np.transpose(hkl)
         hkl_c = np.matmul(M, hkl)
-
-        # Convert directions to cartesian:
-        x_c = np.matmul(M, x_dir)
-        o_c = np.matmul(M, orth_dir)
-
-        # Calculate y-direction in plot (orthogonal to x-direction and out-of-plane direction)
-        y_c = np.cross(x_c, o_c)
-        hkl_in_plane_y.value = " ".join([f"{val:.1f}" for val in y_c])
 
         # Prepare hkl/mhkl data
         hkl_coord = []
@@ -231,9 +267,13 @@ def create():
                 if abs(proj - orth_cut) >= delta:
                     continue
 
+                # Project onto axes
+                hklmx = np.dot(hklm, x_c)
+                hklmy = np.dot(hklm, y_vert)
+
                 # Plot middle point of scan
-                scan_x.append(hklm[0])
-                scan_y.append(hklm[1])
+                scan_x.append(hklmx)
+                scan_y.append(hklmy)
 
             scatter_source.data.update(x=scan_x, y=scan_y)
 
