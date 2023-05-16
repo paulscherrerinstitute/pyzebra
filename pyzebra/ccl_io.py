@@ -8,41 +8,45 @@ import numpy as np
 META_VARS_STR = (
     "instrument",
     "title",
-    "sample",
+    "comment",
     "user",
-    "ProposalID",
+    "proposal_id",
     "original_filename",
     "date",
     "zebra_mode",
-    "proposal",
-    "proposal_user",
-    "proposal_title",
-    "proposal_email",
-    "detectorDistance",
+    "sample_name",
 )
 
 META_VARS_FLOAT = (
-    "omega",
-    "mf",
-    "2-theta",
-    "chi",
-    "phi",
-    "nu",
-    "temp",
-    "wavelength",
     "a",
     "b",
     "c",
     "alpha",
     "beta",
     "gamma",
+    "omega",
+    "chi",
+    "phi",
+    "temp",
+    "mf",
+    "temperature",
+    "magnetic_field",
     "cex1",
     "cex2",
+    "wavelength",
     "mexz",
     "moml",
     "mcvl",
     "momu",
     "mcvu",
+    "2-theta",
+    "twotheta",
+    "nu",
+    "gamma_angle",
+    "polar_angle",
+    "tilt_angle",
+    "distance",
+    "distance_an",
     "snv",
     "snh",
     "snvm",
@@ -55,6 +59,13 @@ META_VARS_FLOAT = (
     "s2vb",
     "s2hr",
     "s2hl",
+    "a5",
+    "a6",
+    "a4t",
+    "s2ant",
+    "s2anb",
+    "s2anl",
+    "s2anr",
 )
 
 META_UB_MATRIX = ("ub1j", "ub2j", "ub3j", "UB")
@@ -116,6 +127,10 @@ def parse_1D(fileobj, data_type):
         var_name = var_name.strip()
         value = value.strip()
 
+        if value == "UNKNOWN":
+            metadata[var_name] = None
+            continue
+
         try:
             if var_name in META_VARS_STR:
                 metadata[var_name] = value
@@ -123,6 +138,10 @@ def parse_1D(fileobj, data_type):
             elif var_name in META_VARS_FLOAT:
                 if var_name == "2-theta":  # fix that angle name not to be an expression
                     var_name = "twotheta"
+                if var_name == "temperature":
+                    var_name = "temp"
+                if var_name == "magnetic_field":
+                    var_name = "mf"
                 if var_name in ("a", "b", "c", "alpha", "beta", "gamma"):
                     var_name += "_cell"
                 metadata[var_name] = float(value)
@@ -202,9 +221,10 @@ def parse_1D(fileobj, data_type):
             dataset.append({**metadata, **scan})
 
     elif data_type == ".dat":
-        # TODO: this might need to be adapted in the future, when "gamma" will be added to dat files
+        # TODO: this might need to be adapted in the future, when "gamma_angle" will be added to dat files
+        # This happen in April 2023
         if metadata["zebra_mode"] == "nb":
-            metadata["gamma"] = metadata["twotheta"]
+            metadata["gamma_angle"] = metadata["twotheta"]
 
         scan = defaultdict(list)
         scan["export"] = True
