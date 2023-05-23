@@ -811,7 +811,7 @@ def create():
 
         gamma = scan["gamma"][0]
         omega = scan["omega"][0]
-        nu = scan["nu"][0]
+        nu = scan["nu"]
         chi = scan["chi"][0]
         phi = scan["phi"][0]
 
