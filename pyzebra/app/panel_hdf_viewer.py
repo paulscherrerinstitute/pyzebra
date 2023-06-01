@@ -356,8 +356,8 @@ def create():
             gamma_c = gamma[det_c_y, det_c_x]
             nu_c = nu[det_c_y, det_c_x]
             omega_c = omega[det_c_y, det_c_x]
-            chi_c = None
-            phi_c = None
+            chi_c = scan["chi"][index]
+            phi_c = scan["phi"][index]
 
         else:  # zebra_mode == "bi"
             wave = scan["wave"]
@@ -841,10 +841,6 @@ def create():
         intensity = scan["fit"]["intensity"]
         x_pos = scan["fit"]["x_pos"]
         y_pos = scan["fit"]["y_pos"]
-
-        if scan["zebra_mode"] == "nb":
-            chi = None
-            phi = None
 
         events_data["wave"].append(wave)
         events_data["ddist"].append(ddist)

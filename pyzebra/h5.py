@@ -114,10 +114,14 @@ def read_detector_data(filepath, cami_meta=None):
         scan["nu"] = h5f["/entry1/ZEBRA/area_detector2/tilt_angle"][0]
         scan["ddist"] = h5f["/entry1/ZEBRA/area_detector2/distance"][0]
         scan["wave"] = h5f["/entry1/ZEBRA/monochromator/wavelength"][0]
-        scan["chi"] = h5f["/entry1/sample/chi"][:]
+        if scan["zebra_mode"] == "nb":
+            scan["chi"] = np.array([180])
+            scan["phi"] = np.array([0])
+        elif scan["zebra_mode"] == "bi":
+            scan["chi"] = h5f["/entry1/sample/chi"][:]
+            scan["phi"] = h5f["/entry1/sample/phi"][:]
         if len(scan["chi"]) == 1:
             scan["chi"] = np.ones(n) * scan["chi"]
-        scan["phi"] = h5f["/entry1/sample/phi"][:]
         if len(scan["phi"]) == 1:
             scan["phi"] = np.ones(n) * scan["phi"]
         if h5f["/entry1/sample/UB"].size == 0:
