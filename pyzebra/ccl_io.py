@@ -221,10 +221,12 @@ def parse_1D(fileobj, data_type):
             dataset.append({**metadata, **scan})
 
     elif data_type == ".dat":
-        # TODO: this might need to be adapted in the future, when "gamma_angle" will be added to dat files
-        # This happen in April 2023
         if metadata["zebra_mode"] == "nb":
-            metadata["gamma_angle"] = metadata["twotheta"]
+            if "gamma_angle" in metadata:
+                # support for the new format
+                metadata["gamma"] = metadata["gamma_angle"]
+            else:
+                metadata["gamma"] = metadata["twotheta"]
 
         scan = defaultdict(list)
         scan["export"] = True
