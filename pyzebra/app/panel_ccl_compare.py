@@ -243,8 +243,8 @@ def create():
     plot = figure(
         x_axis_label="Scan motor",
         y_axis_label="Counts",
-        plot_height=470,
-        plot_width=700,
+        height=470,
+        width=700,
         tools="pan,wheel_zoom,reset",
     )
 

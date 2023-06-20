@@ -441,7 +441,7 @@ class PlotHKL:
         plot_file = Button(label="Plot selected file(s)", button_type="primary", width=200)
         plot_file.on_click(plot_file_callback)
 
-        plot = figure(plot_height=550, plot_width=550 + 32, tools="pan,wheel_zoom,reset")
+        plot = figure(height=550, width=550 + 32, tools="pan,wheel_zoom,reset")
         plot.toolbar.logo = None
 
         plot.xaxis.visible = False
@@ -517,7 +517,7 @@ class PlotHKL:
         tol_k_ni = NumericInput(title="k tolerance:", value=0.01, mode="float", width=100)
 
         def show_legend_cb_callback(_attr, _old, new):
-            plot.legend.visible = bool(new)
+            plot.legend.visible = 0 in new
 
         show_legend_cb = CheckboxGroup(labels=["Show legend"], active=[0])
         show_legend_cb.on_change("active", show_legend_cb_callback)

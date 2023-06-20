@@ -301,8 +301,8 @@ def create():
         x_range=det_x_range,
         y_range=frame_range,
         extra_y_ranges={"scanning_motor": scanning_motor_range},
-        plot_height=540,
-        plot_width=IMAGE_PLOT_W - 3,
+        height=540,
+        width=IMAGE_PLOT_W - 3,
         tools="pan,box_zoom,wheel_zoom,reset",
         active_scroll="wheel_zoom",
     )
@@ -325,8 +325,8 @@ def create():
         x_range=det_y_range,
         y_range=frame_range,
         extra_y_ranges={"scanning_motor": scanning_motor_range},
-        plot_height=540,
-        plot_width=IMAGE_PLOT_H + 22,
+        height=540,
+        width=IMAGE_PLOT_H + 22,
         tools="pan,box_zoom,wheel_zoom,reset",
         active_scroll="wheel_zoom",
     )
@@ -352,8 +352,8 @@ def create():
     colormap_select.on_change("value", colormap_select_callback)
     colormap_select.value = "Plasma256"
 
-    def proj_auto_checkbox_callback(state):
-        if state:
+    def proj_auto_checkbox_callback(_attr, _old, new):
+        if 0 in new:
             proj_display_min_spinner.disabled = True
             proj_display_max_spinner.disabled = True
         else:
@@ -365,7 +365,7 @@ def create():
     proj_auto_checkbox = CheckboxGroup(
         labels=["Projections Intensity Range"], active=[0], width=145, margin=[10, 5, 0, 5]
     )
-    proj_auto_checkbox.on_click(proj_auto_checkbox_callback)
+    proj_auto_checkbox.on_change("active", proj_auto_checkbox_callback)
 
     def proj_display_max_spinner_callback(_attr, _old, new):
         color_mapper_proj.high = new
@@ -411,8 +411,8 @@ def create():
     param_plot = figure(
         x_axis_label="Parameter",
         y_axis_label="Fit parameter",
-        plot_height=400,
-        plot_width=700,
+        height=400,
+        width=700,
         tools="pan,wheel_zoom,reset",
     )
 

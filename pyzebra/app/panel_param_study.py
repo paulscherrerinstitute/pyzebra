@@ -209,8 +209,8 @@ def create():
     plot = figure(
         x_axis_label="Scan motor",
         y_axis_label="Counts",
-        plot_height=450,
-        plot_width=700,
+        height=450,
+        width=700,
         tools="pan,wheel_zoom,reset",
     )
 
@@ -243,8 +243,8 @@ def create():
     ov_plot = figure(
         x_axis_label="Scan motor",
         y_axis_label="Counts",
-        plot_height=450,
-        plot_width=700,
+        height=450,
+        width=700,
         tools="pan,wheel_zoom,reset",
     )
 
@@ -261,8 +261,8 @@ def create():
         y_axis_label="Param",
         x_range=Range1d(),
         y_range=Range1d(),
-        plot_height=450,
-        plot_width=700,
+        height=450,
+        width=700,
         tools="pan,wheel_zoom,reset",
     )
 
@@ -279,8 +279,8 @@ def create():
     param_plot = figure(
         x_axis_label="Parameter",
         y_axis_label="Fit parameter",
-        plot_height=400,
-        plot_width=700,
+        height=400,
+        width=700,
         tools="pan,wheel_zoom,reset",
     )
 

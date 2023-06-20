@@ -458,8 +458,8 @@ def create():
         y_range=Range1d(0, IMAGE_H, bounds=(0, IMAGE_H)),
         x_axis_location="above",
         y_axis_location="right",
-        plot_height=IMAGE_PLOT_H,
-        plot_width=IMAGE_PLOT_W,
+        height=IMAGE_PLOT_H,
+        width=IMAGE_PLOT_W,
         toolbar_location="left",
         tools="pan,box_zoom,wheel_zoom,reset",
         active_scroll="wheel_zoom",
@@ -509,8 +509,8 @@ def create():
     proj_v = figure(
         x_range=plot.x_range,
         y_axis_location="right",
-        plot_height=150,
-        plot_width=IMAGE_PLOT_W,
+        height=150,
+        width=IMAGE_PLOT_W,
         tools="",
         toolbar_location=None,
     )
@@ -524,8 +524,8 @@ def create():
     proj_h = figure(
         x_axis_location="above",
         y_range=plot.y_range,
-        plot_height=IMAGE_PLOT_H,
-        plot_width=150,
+        height=IMAGE_PLOT_H,
+        width=150,
         tools="",
         toolbar_location=None,
     )
@@ -589,8 +589,8 @@ def create():
         y_range=frame_range,
         extra_x_ranges={"gamma": gamma_range},
         extra_y_ranges={"scanning_motor": scanning_motor_range},
-        plot_height=540,
-        plot_width=IMAGE_PLOT_W - 3,
+        height=540,
+        width=IMAGE_PLOT_W - 3,
         tools="pan,box_zoom,wheel_zoom,reset",
         active_scroll="wheel_zoom",
     )
@@ -617,8 +617,8 @@ def create():
         y_range=frame_range,
         extra_x_ranges={"nu": nu_range},
         extra_y_ranges={"scanning_motor": scanning_motor_range},
-        plot_height=540,
-        plot_width=IMAGE_PLOT_H + 22,
+        height=540,
+        width=IMAGE_PLOT_H + 22,
         tools="pan,box_zoom,wheel_zoom,reset",
         active_scroll="wheel_zoom",
     )
@@ -636,7 +636,7 @@ def create():
     proj_y_image = proj_y_plot.image(source=proj_y_image_source, color_mapper=lin_color_mapper_proj)
 
     # ROI slice plot
-    roi_avg_plot = figure(plot_height=150, plot_width=IMAGE_PLOT_W, tools="", toolbar_location=None)
+    roi_avg_plot = figure(height=150, width=IMAGE_PLOT_W, tools="", toolbar_location=None)
 
     roi_avg_plot_line_source = ColumnDataSource(dict(x=[], y=[]))
     roi_avg_plot.line(source=roi_avg_plot_line_source, line_color="steelblue")
@@ -655,8 +655,8 @@ def create():
     colormap_select.on_change("value", colormap_select_callback)
     colormap_select.value = "Plasma256"
 
-    def colormap_scale_rg_callback(selection):
-        if selection == 0:  # Linear
+    def colormap_scale_rg_callback(_attr, _old, new):
+        if new == 0:  # Linear
             plot_image.glyph.color_mapper = lin_color_mapper
             proj_x_image.glyph.color_mapper = lin_color_mapper_proj
             proj_y_image.glyph.color_mapper = lin_color_mapper_proj
@@ -675,10 +675,10 @@ def create():
                 colormap_scale_rg.active = 0
 
     colormap_scale_rg = RadioGroup(labels=["Linear", "Logarithmic"], active=0, width=100)
-    colormap_scale_rg.on_click(colormap_scale_rg_callback)
+    colormap_scale_rg.on_change("active", colormap_scale_rg_callback)
 
-    def main_auto_checkbox_callback(state):
-        if state:
+    def main_auto_checkbox_callback(_attr, _old, new):
+        if 0 in new:
             display_min_spinner.disabled = True
             display_max_spinner.disabled = True
         else:
@@ -690,7 +690,7 @@ def create():
     main_auto_checkbox = CheckboxGroup(
         labels=["Frame Intensity Range"], active=[0], width=145, margin=[10, 5, 0, 5]
     )
-    main_auto_checkbox.on_click(main_auto_checkbox_callback)
+    main_auto_checkbox.on_change("active", main_auto_checkbox_callback)
 
     def display_max_spinner_callback(_attr, _old, new):
         lin_color_mapper.high = new
@@ -709,8 +709,8 @@ def create():
     display_min_spinner = Spinner(value=0, disabled=bool(main_auto_checkbox.active), width=100)
     display_min_spinner.on_change("value", display_min_spinner_callback)
 
-    def proj_auto_checkbox_callback(state):
-        if state:
+    def proj_auto_checkbox_callback(_attr, _old, new):
+        if 0 in new:
             proj_display_min_spinner.disabled = True
             proj_display_max_spinner.disabled = True
         else:
@@ -722,7 +722,7 @@ def create():
     proj_auto_checkbox = CheckboxGroup(
         labels=["Projections Intensity Range"], active=[0], width=145, margin=[10, 5, 0, 5]
     )
-    proj_auto_checkbox.on_click(proj_auto_checkbox_callback)
+    proj_auto_checkbox.on_change("active", proj_auto_checkbox_callback)
 
     def proj_display_max_spinner_callback(_attr, _old, new):
         lin_color_mapper_proj.high = new

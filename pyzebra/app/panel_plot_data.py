@@ -290,8 +290,8 @@ def create():
     plot = figure(
         x_range=DataRange1d(),
         y_range=DataRange1d(),
-        plot_height=550 + 27,
-        plot_width=550 + 117,
+        height=550 + 27,
+        width=550 + 117,
         tools="pan,wheel_zoom,reset",
     )
     plot.toolbar.logo = None
@@ -324,7 +324,7 @@ def create():
     hkl_in_plane_y = TextInput(title="in-plane Y", value="", width=100, disabled=True)
 
     def redef_lattice_cb_callback(_attr, _old, new):
-        if new:
+        if 0 in new:
             redef_lattice_ti.disabled = False
         else:
             redef_lattice_ti.disabled = True
@@ -334,7 +334,7 @@ def create():
     redef_lattice_ti = TextInput(width=490, disabled=True)
 
     def redef_ub_cb_callback(_attr, _old, new):
-        if new:
+        if 0 in new:
             redef_ub_ti.disabled = False
         else:
             redef_ub_ti.disabled = True
@@ -369,8 +369,8 @@ def create():
     display_max_ni = NumericInput(title="max:", value=1, mode="float", width=70)
     display_max_ni.on_change("value", display_max_ni_callback)
 
-    def colormap_scale_rg_callback(selection):
-        if selection == 0:  # Linear
+    def colormap_scale_rg_callback(_attr, _old, new):
+        if new == 0:  # Linear
             plot_image.glyph.color_mapper = lin_color_mapper
             lin_color_bar.visible = True
             log_color_bar.visible = False
@@ -384,7 +384,7 @@ def create():
                 colormap_scale_rg.active = 0
 
     colormap_scale_rg = RadioGroup(labels=["Linear", "Logarithmic"], active=0, width=100)
-    colormap_scale_rg.on_click(colormap_scale_rg_callback)
+    colormap_scale_rg.on_change("active", colormap_scale_rg_callback)
 
     xrange_min_ni = NumericInput(title="x range min:", value=0, mode="float", width=70)
     xrange_max_ni = NumericInput(title="max:", value=1, mode="float", width=70)
@@ -395,7 +395,7 @@ def create():
     yrange_step_ni = NumericInput(title="y mesh:", value=0.01, mode="float", width=70)
 
     def auto_range_cb_callback(_attr, _old, new):
-        if new:
+        if 0 in new:
             xrange_min_ni.disabled = True
             xrange_max_ni.disabled = True
             yrange_min_ni.disabled = True
