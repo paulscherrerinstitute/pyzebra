@@ -47,9 +47,9 @@ def parse_h5meta(file):
                     if variable in META_STR:
                         pass
                     elif variable in META_CELL:
-                        value = np.array(value.split(",")[:6], dtype=np.float)
+                        value = np.array(value.split(",")[:6], dtype=float)
                     elif variable in META_MATRIX:
-                        value = np.array(value.split(",")[:9], dtype=np.float).reshape(3, 3)
+                        value = np.array(value.split(",")[:9], dtype=float).reshape(3, 3)
                     else:  # default is a single float number
                         value = float(value)
                     content[section][variable] = value
@@ -69,7 +69,7 @@ def read_detector_data(filepath, cami_meta=None):
         ndarray: A 3D array of data, omega, gamma, nu.
     """
     with h5py.File(filepath, "r") as h5f:
-        counts = h5f["/entry1/area_detector2/data"][:].astype(np.float64)
+        counts = h5f["/entry1/area_detector2/data"][:].astype(float)
 
         n, cols, rows = counts.shape
         if "/entry1/experiment_identifier" in h5f:  # old format

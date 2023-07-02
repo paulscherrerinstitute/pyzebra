@@ -34,7 +34,7 @@ def normalize_dataset(dataset, monitor=100_000):
 
 
 def merge_duplicates(dataset):
-    merged = np.zeros(len(dataset), dtype=np.bool)
+    merged = np.zeros(len(dataset), dtype=bool)
     for ind_into, scan_into in enumerate(dataset):
         for ind_from, scan_from in enumerate(dataset[ind_into + 1 :], start=ind_into + 1):
             if _parameters_match(scan_into, scan_from) and not merged[ind_from]:
@@ -82,7 +82,7 @@ def merge_datasets(dataset_into, dataset_from):
         print(f"Scan motors mismatch between datasets: {scan_motors_into} vs {scan_motors_from}")
         return
 
-    merged = np.zeros(len(dataset_from), dtype=np.bool)
+    merged = np.zeros(len(dataset_from), dtype=bool)
     for scan_into in dataset_into:
         for ind, scan_from in enumerate(dataset_from):
             if _parameters_match(scan_into, scan_from) and not merged[ind]:
