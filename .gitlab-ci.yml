@@ -1,0 +1,24 @@
+stages:
+  - deploy-test
+  - deploy-prod
+
+deploy-test:
+  stage: deploy-test
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  script:
+    - cd /opt/pyzebra
+    - git pull origin master --tags
+    - sudo systemctl restart pyzebra-test.service
+
+deploy-prod:
+  stage: deploy-prod
+  rules:
+    - if: $CI_COMMIT_TAG && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: delayed
+      start_in: 10 minutes
+  script:
+    - source /opt/miniconda3/etc/profile.d/conda.sh
+    - conda activate prod
+    - conda update pyzebra -y
+    - sudo systemctl restart pyzebra.service
