@@ -275,7 +275,7 @@ def create():
         frame_range.bounds = (0, n_im)
 
         scan_motor = scan["scan_motor"]
-        proj_y_plot.axis[1].axis_label = f"Scanning motor, {scan_motor}"
+        proj_y_plot.yaxis.axis_label = f"Scanning motor, {scan_motor}"
 
         var = scan[scan_motor]
         var_start = var[0]
