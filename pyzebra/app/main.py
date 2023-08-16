@@ -46,8 +46,8 @@ doc.sxtal_refgen_path = args.sxtal_refgen_path
 # In app_hooks.py a StreamHandler was added to "bokeh" logger
 bokeh_stream = logging.getLogger("bokeh").handlers[0].stream
 
-log_textareainput = TextAreaInput(title="logging output:")
-bokeh_log_textareainput = TextAreaInput(title="bokeh server output:")
+log_textareainput = TextAreaInput(title="Logging output:")
+bokeh_log_textareainput = TextAreaInput(title="Server output:")
 
 
 def proposal_textinput_callback(_attr, _old, _new):
