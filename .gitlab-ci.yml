@@ -1,9 +1,20 @@
 stages:
-  - deploy-test
-  - deploy-prod
+  - build-and-publish
+  - deploy
+
+build-and-publish:
+  stage: build-and-publish
+  rules:
+    - if: $CI_COMMIT_TAG
+  script:
+    - source /opt/miniconda3/etc/profile.d/conda.sh
+    - conda config --add channels conda-forge
+    - conda config --set solver libmamba
+    - conda config --set anaconda_upload yes
+    - conda build --token $ANACONDA_TOKEN /opt/pyzebra/conda-recipe
 
 deploy-test:
-  stage: deploy-test
+  stage: deploy
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   script:
@@ -12,11 +23,10 @@ deploy-test:
     - sudo systemctl restart pyzebra-test.service
 
 deploy-prod:
-  stage: deploy-prod
+  stage: deploy
+  needs: ["build-and-publish"]
   rules:
     - if: $CI_COMMIT_TAG
-      when: delayed
-      start_in: 10 minutes
   script:
     - source /opt/miniconda3/etc/profile.d/conda.sh
     - conda activate prod
