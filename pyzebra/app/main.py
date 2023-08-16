@@ -47,7 +47,7 @@ doc.sxtal_refgen_path = args.sxtal_refgen_path
 bokeh_stream = logging.getLogger("bokeh").handlers[0].stream
 
 log_textareainput = TextAreaInput(title="logging output:")
-bokeh_log_textareainput = TextAreaInput(title="server output:")
+bokeh_log_textareainput = TextAreaInput(title="bokeh server output:")
 
 
 def proposal_textinput_callback(_attr, _old, _new):
